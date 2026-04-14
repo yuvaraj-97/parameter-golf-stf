@@ -1,96 +1,86 @@
-# STF Branch Run Commands (Copy/Paste)
+# One-Shot Branch Commands (Train + Telemetry + Save + Push)
 
 Use these on the pod in `/workspace/parameter-golf`.
 
-## Shared Assumptions
-
-- Dataset: `./data/datasets/fineweb10B_sp1024/`
-- Tokenizer: `./data/tokenizers/fineweb_1024_bpe.model`
-- Vocab size: `1024`
-- Validation cadence: `200`
-- This pod currently has 4x RTX 5090 and all are active.
-
-If you want to keep using all 4 GPUs:
-- use `--nproc_per_node=4`
-
-If you want strict single-GPU comparability:
-- use `--nproc_per_node=1`
-
-## 1) Baseline (if rerun needed)
+## One command pattern
 
 ```bash
-git checkout baseline-repro
-export RUN_ID="2026-04-14_baseline-repro_exp1"
-export DATA_PATH="./data/datasets/fineweb10B_sp1024/"
-export TOKENIZER_PATH="./data/tokenizers/fineweb_1024_bpe.model"
-export VOCAB_SIZE="1024"
-export VAL_LOSS_EVERY="200"
-
-# terminal A: telemetry
-chmod +x scripts/capture_telemetry.sh
-./scripts/capture_telemetry.sh
+bash scripts/run_train_and_save.sh <branch> <iterations> <run_number>
 ```
+
+`run_number` is optional and defaults to `1`.
+
+## Baseline
 
 ```bash
-# terminal B: training
-git checkout baseline-repro
-export RUN_ID="2026-04-14_baseline-repro_exp1"
-export DATA_PATH="./data/datasets/fineweb10B_sp1024/"
-export TOKENIZER_PATH="./data/tokenizers/fineweb_1024_bpe.model"
-export VOCAB_SIZE="1024"
-export VAL_LOSS_EVERY="200"
-torchrun --standalone --nproc_per_node=4 train_gpt.py
+bash scripts/run_train_and_save.sh baseline-repro 2000 1
+bash scripts/run_train_and_save.sh baseline-repro 5000 1
+bash scripts/run_train_and_save.sh baseline-repro 20000 1
 ```
+
+## STF Minimal
 
 ```bash
-# after training (stop telemetry with Ctrl+C first)
-git checkout baseline-repro
-export RUN_ID="2026-04-14_baseline-repro_exp1"
-bash save.sh
+bash scripts/run_train_and_save.sh stf-minimal 2000 1
+bash scripts/run_train_and_save.sh stf-minimal 5000 1
+bash scripts/run_train_and_save.sh stf-minimal 20000 1
 ```
 
-## 2) Next Branch: stf-minimal
+## STF Learned Gate
 
 ```bash
-git checkout stf-minimal
-git pull --ff-only origin stf-minimal
-export RUN_ID="2026-04-14_stf-minimal_exp1"
-export DATA_PATH="./data/datasets/fineweb10B_sp1024/"
-export TOKENIZER_PATH="./data/tokenizers/fineweb_1024_bpe.model"
-export VOCAB_SIZE="1024"
-export VAL_LOSS_EVERY="200"
-
-# terminal A: telemetry
-chmod +x scripts/capture_telemetry.sh
-./scripts/capture_telemetry.sh
+bash scripts/run_train_and_save.sh stf-learned-gate 2000 1
+bash scripts/run_train_and_save.sh stf-learned-gate 5000 1
+bash scripts/run_train_and_save.sh stf-learned-gate 20000 1
 ```
+
+## STF Soft Freeze
 
 ```bash
-# terminal B: training
-git checkout stf-minimal
-export RUN_ID="2026-04-14_stf-minimal_exp1"
-export DATA_PATH="./data/datasets/fineweb10B_sp1024/"
-export TOKENIZER_PATH="./data/tokenizers/fineweb_1024_bpe.model"
-export VOCAB_SIZE="1024"
-export VAL_LOSS_EVERY="200"
-torchrun --standalone --nproc_per_node=4 train_gpt.py
+bash scripts/run_train_and_save.sh stf-soft-freeze 2000 1
+bash scripts/run_train_and_save.sh stf-soft-freeze 5000 1
+bash scripts/run_train_and_save.sh stf-soft-freeze 20000 1
 ```
+
+## STF Reactivation
 
 ```bash
-# after training
-git checkout stf-minimal
-export RUN_ID="2026-04-14_stf-minimal_exp1"
-bash save.sh
+bash scripts/run_train_and_save.sh stf-reactivation 2000 1
+bash scripts/run_train_and_save.sh stf-reactivation 5000 1
+bash scripts/run_train_and_save.sh stf-reactivation 20000 1
 ```
 
-## 3) Remaining Branch Sequence
+## STF Budget Regularization
 
-Repeat the same pattern (branch checkout first, unique `RUN_ID`, telemetry in terminal A, training in terminal B, `bash save.sh` at end):
+```bash
+bash scripts/run_train_and_save.sh stf-budget-regularization 2000 1
+bash scripts/run_train_and_save.sh stf-budget-regularization 5000 1
+bash scripts/run_train_and_save.sh stf-budget-regularization 20000 1
+```
 
-1. `stf-learned-gate`
-2. `stf-soft-freeze`
-3. `stf-reactivation`
-4. `stf-budget-regularization`
-5. `stf-recurrence`
-6. `stf-quantization`
+## STF Recurrence
+
+```bash
+bash scripts/run_train_and_save.sh stf-recurrence 2000 1
+bash scripts/run_train_and_save.sh stf-recurrence 5000 1
+bash scripts/run_train_and_save.sh stf-recurrence 20000 1
+```
+
+## STF Quantization
+
+```bash
+bash scripts/run_train_and_save.sh stf-quantization 2000 1
+bash scripts/run_train_and_save.sh stf-quantization 5000 1
+bash scripts/run_train_and_save.sh stf-quantization 20000 1
+```
+
+## Optional overrides
+
+```bash
+# force single GPU
+NPROC_PER_NODE=1 bash scripts/run_train_and_save.sh stf-minimal 2000 1
+
+# change telemetry sampling interval
+TELEMETRY_INTERVAL_SECONDS=5 bash scripts/run_train_and_save.sh stf-minimal 2000 1
+```
 
