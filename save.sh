@@ -45,6 +45,7 @@ mkdir -p "$RUN_DIR"
 
 cp "logs/${RUN_ID}.txt" "$RUN_DIR/train.log"
 cp "train_gpt.py" "$RUN_DIR/train_gpt.py"
+[ -f "logs/telemetry/${RUN_ID}.csv" ] && cp "logs/telemetry/${RUN_ID}.csv" "$RUN_DIR/telemetry.csv" || echo "skipping missing: logs/telemetry/${RUN_ID}.csv"
 [ -f "final_model.pt" ] && cp "final_model.pt" "$RUN_DIR/final_model.pt" || echo "skipping missing: final_model.pt"
 [ -f "final_model.int8.ptz" ] && cp "final_model.int8.ptz" "$RUN_DIR/final_model.int8.ptz" || echo "skipping missing: final_model.int8.ptz"
 
