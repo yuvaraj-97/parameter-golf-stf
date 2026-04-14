@@ -86,6 +86,21 @@ class Hyperparameters:
     adam_eps = float(os.environ.get("ADAM_EPS", 1e-8))
     grad_clip_norm = float(os.environ.get("GRAD_CLIP_NORM", 0.0))
 
+    # Selective Token Freezing (STF) controls.
+    # Branch-specific default mode is set per branch; override with STF_MODE env var if needed.
+    stf_mode = os.environ.get("STF_MODE", "minimal")
+    stf_warmup_layers = int(os.environ.get("STF_WARMUP_LAYERS", 3))
+    stf_depth_cap = int(os.environ.get("STF_DEPTH_CAP", 0))
+    stf_threshold = float(os.environ.get("STF_THRESHOLD", 0.045))
+    stf_ema_decay = float(os.environ.get("STF_EMA_DECAY", 0.85))
+    stf_min_active_ratio = float(os.environ.get("STF_MIN_ACTIVE_RATIO", 0.35))
+    stf_soft_keep = float(os.environ.get("STF_SOFT_KEEP", 0.15))
+    stf_target_active_ratio = float(os.environ.get("STF_TARGET_ACTIVE_RATIO", 0.45))
+    stf_budget_kp = float(os.environ.get("STF_BUDGET_KP", 2.5))
+    stf_reactivate_every = int(os.environ.get("STF_REACTIVATE_EVERY", 3))
+    stf_recur_mix = float(os.environ.get("STF_RECUR_MIX", 0.35))
+    stf_quant_scale = float(os.environ.get("STF_QUANT_SCALE", 64.0))
+
 # -----------------------------
 # MUON OPTIMIZER 
 # -----------------------------
@@ -659,6 +674,18 @@ class GPT(nn.Module):
         logit_softcap: float,
         rope_base: float,
         qk_gain_init: float,
+        stf_mode: str,
+        stf_warmup_layers: int,
+        stf_depth_cap: int,
+        stf_threshold: float,
+        stf_ema_decay: float,
+        stf_min_active_ratio: float,
+        stf_soft_keep: float,
+        stf_target_active_ratio: float,
+        stf_budget_kp: float,
+        stf_reactivate_every: int,
+        stf_recur_mix: float,
+        stf_quant_scale: float,
     ):
         super().__init__()
         if logit_softcap <= 0.0:
@@ -666,6 +693,18 @@ class GPT(nn.Module):
         self.tie_embeddings = tie_embeddings
         self.tied_embed_init_std = tied_embed_init_std
         self.logit_softcap = logit_softcap
+        self.stf_mode = stf_mode
+        self.stf_warmup_layers = max(stf_warmup_layers, 0)
+        self.stf_depth_cap = max(stf_depth_cap, 0)
+        self.stf_threshold = max(stf_threshold, 0.0)
+        self.stf_ema_decay = min(max(stf_ema_decay, 0.0), 0.9999)
+        self.stf_min_active_ratio = min(max(stf_min_active_ratio, 0.0), 1.0)
+        self.stf_soft_keep = min(max(stf_soft_keep, 0.0), 1.0)
+        self.stf_target_active_ratio = min(max(stf_target_active_ratio, 0.0), 1.0)
+        self.stf_budget_kp = max(stf_budget_kp, 0.0)
+        self.stf_reactivate_every = max(stf_reactivate_every, 0)
+        self.stf_recur_mix = min(max(stf_recur_mix, 0.0), 1.0)
+        self.stf_quant_scale = max(stf_quant_scale, 1.0)
         self.tok_emb = nn.Embedding(vocab_size, model_dim)
         self.num_encoder_layers = num_layers // 2
         self.num_decoder_layers = num_layers - self.num_encoder_layers
@@ -688,6 +727,12 @@ class GPT(nn.Module):
         self.lm_head = None if tie_embeddings else CastedLinear(model_dim, vocab_size, bias=False)
         if self.lm_head is not None:
             self.lm_head._zero_init = True
+        if self.stf_mode == "learned_gate":
+            self.stf_gate_scale = nn.Parameter(torch.full((num_layers,), 8.0, dtype=torch.float32))
+            self.stf_gate_bias = nn.Parameter(torch.zeros((num_layers,), dtype=torch.float32))
+        else:
+            self.register_parameter("stf_gate_scale", None)
+            self.register_parameter("stf_gate_bias", None)
         self._init_weights()
 
     def _init_weights(self) -> None:
@@ -702,15 +747,79 @@ class GPT(nn.Module):
         x = F.rms_norm(x, (x.size(-1),))
         x0 = x
         skips: list[Tensor] = []
+        ema_score: Tensor | None = None
+        budget_prev_active = self.stf_target_active_ratio
+
+        def apply_stf(layer_idx: int, x_in: Tensor, x_out: Tensor) -> Tensor:
+            nonlocal ema_score, budget_prev_active
+            if self.stf_mode == "off":
+                return x_out
+            if layer_idx < self.stf_warmup_layers:
+                return x_out
+            if self.stf_depth_cap > 0 and layer_idx >= self.stf_depth_cap:
+                return x_out
+
+            delta = torch.linalg.vector_norm((x_out - x_in).float(), dim=-1, ord=2, keepdim=True)
+            if ema_score is None:
+                ema_score = delta
+            else:
+                ema_score = self.stf_ema_decay * ema_score + (1.0 - self.stf_ema_decay) * delta
+
+            if self.stf_mode == "learned_gate":
+                if self.stf_gate_scale is None or self.stf_gate_bias is None:
+                    return x_out
+                gate_pre = (
+                    self.stf_gate_scale[layer_idx].to(dtype=ema_score.dtype) * (ema_score - self.stf_threshold)
+                    + self.stf_gate_bias[layer_idx].to(dtype=ema_score.dtype)
+                )
+                gate = torch.sigmoid(gate_pre).to(dtype=x_out.dtype)
+                return gate * x_out + (1.0 - gate) * x_in
+
+            threshold = self.stf_threshold
+            if self.stf_mode == "budget_regularization":
+                threshold = self.stf_threshold * math.exp(
+                    self.stf_budget_kp * (self.stf_target_active_ratio - budget_prev_active)
+                )
+
+            active = ema_score >= threshold
+            if self.stf_reactivate_every > 0 and self.stf_mode == "reactivation":
+                if (layer_idx - self.stf_warmup_layers + 1) % self.stf_reactivate_every == 0:
+                    active = torch.ones_like(active, dtype=torch.bool)
+
+            if self.stf_min_active_ratio > 0.0:
+                token_scores = ema_score.squeeze(-1).reshape(-1)
+                k = min(token_scores.numel(), max(1, int(math.ceil(self.stf_min_active_ratio * token_scores.numel()))))
+                if k < token_scores.numel():
+                    cutoff = torch.topk(token_scores, k, sorted=False).values.min()
+                    active = ema_score >= cutoff
+
+            active_float = active.to(dtype=x_out.dtype)
+            budget_prev_active = float(active_float.mean().detach().item())
+
+            if self.stf_mode == "soft_freeze":
+                frozen = self.stf_soft_keep * x_out + (1.0 - self.stf_soft_keep) * x_in
+                return active_float * x_out + (1.0 - active_float) * frozen
+            if self.stf_mode == "recurrence":
+                recur = self.stf_recur_mix * x_out + (1.0 - self.stf_recur_mix) * x_in
+                return active_float * x_out + (1.0 - active_float) * recur
+            if self.stf_mode == "quantization":
+                quantized = torch.round(x_in * self.stf_quant_scale) / self.stf_quant_scale
+                return active_float * x_out + (1.0 - active_float) * quantized
+            return active_float * x_out + (1.0 - active_float) * x_in
 
         # First half stores skips; second half reuses them in reverse order.
         for i in range(self.num_encoder_layers):
+            x_in = x
             x = self.blocks[i](x, x0)
+            x = apply_stf(i, x_in, x)
             skips.append(x)
         for i in range(self.num_decoder_layers):
             if skips:
                 x = x + self.skip_weights[i].to(dtype=x.dtype)[None, None, :] * skips.pop()
-            x = self.blocks[self.num_encoder_layers + i](x, x0)
+            layer_idx = self.num_encoder_layers + i
+            x_in = x
+            x = self.blocks[layer_idx](x, x0)
+            x = apply_stf(layer_idx, x_in, x)
 
         x = self.final_norm(x).reshape(-1, x.size(-1))
         targets = target_ids.reshape(-1)
@@ -835,6 +944,18 @@ def main() -> None:
         logit_softcap=args.logit_softcap,
         rope_base=args.rope_base,
         qk_gain_init=args.qk_gain_init,
+        stf_mode=args.stf_mode,
+        stf_warmup_layers=args.stf_warmup_layers,
+        stf_depth_cap=args.stf_depth_cap,
+        stf_threshold=args.stf_threshold,
+        stf_ema_decay=args.stf_ema_decay,
+        stf_min_active_ratio=args.stf_min_active_ratio,
+        stf_soft_keep=args.stf_soft_keep,
+        stf_target_active_ratio=args.stf_target_active_ratio,
+        stf_budget_kp=args.stf_budget_kp,
+        stf_reactivate_every=args.stf_reactivate_every,
+        stf_recur_mix=args.stf_recur_mix,
+        stf_quant_scale=args.stf_quant_scale,
     ).to(device).bfloat16()
     for module in base_model.modules():
         if isinstance(module, CastedLinear):
@@ -906,6 +1027,11 @@ def main() -> None:
         f"train_batch_tokens:{args.train_batch_tokens} train_seq_len:{args.train_seq_len} "
         f"iterations:{args.iterations} warmup_steps:{args.warmup_steps} "
         f"max_wallclock_seconds:{args.max_wallclock_seconds:.3f}"
+    )
+    log0(
+        f"stf_mode:{args.stf_mode} stf_warmup_layers:{args.stf_warmup_layers} stf_depth_cap:{args.stf_depth_cap} "
+        f"stf_threshold:{args.stf_threshold} stf_ema_decay:{args.stf_ema_decay} "
+        f"stf_min_active_ratio:{args.stf_min_active_ratio}"
     )
     log0(f"seed:{args.seed}")
 
