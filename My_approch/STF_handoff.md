@@ -92,9 +92,23 @@ bash save.sh
 
 `save.sh` will:
 - copy `logs/$RUN_ID.txt` to a structured run folder
+- copy optional `logs/telemetry/$RUN_ID.csv` when present
 - copy optional `final_model.pt` and `final_model.int8.ptz`
 - write a README with GPU/pod/branch metadata and final metric line
 - commit and push to the current branch
+
+### Optional: capture pod telemetry during training
+
+In a second terminal on the pod:
+
+```bash
+export RUN_ID="<same-run-id-used-in-training>"
+chmod +x scripts/capture_telemetry.sh
+./scripts/capture_telemetry.sh
+```
+
+This writes `logs/telemetry/$RUN_ID.csv` every 15 seconds.  
+After training finishes, stop telemetry with `Ctrl+C`, then run `bash save.sh`.
 
 ## 7) Suggested branch execution order
 
