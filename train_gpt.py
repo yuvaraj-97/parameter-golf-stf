@@ -88,10 +88,10 @@ class Hyperparameters:
 
     # Selective Token Freezing (STF) controls.
     # Branch-specific default mode is set per branch; override with STF_MODE env var if needed.
-    stf_mode = os.environ.get("STF_MODE", "minimal")
+    stf_mode = os.environ.get("STF_MODE", "learned_gate")
     stf_warmup_layers = int(os.environ.get("STF_WARMUP_LAYERS", 3))
     stf_depth_cap = int(os.environ.get("STF_DEPTH_CAP", 0))
-    stf_threshold = float(os.environ.get("STF_THRESHOLD", 0.045))
+    stf_threshold = float(os.environ.get("STF_THRESHOLD", 0.020))
     stf_ema_decay = float(os.environ.get("STF_EMA_DECAY", 0.85))
     stf_min_active_ratio = float(os.environ.get("STF_MIN_ACTIVE_RATIO", 0.35))
     stf_soft_keep = float(os.environ.get("STF_SOFT_KEEP", 0.15))
