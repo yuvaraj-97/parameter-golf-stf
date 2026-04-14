@@ -88,7 +88,7 @@ class Hyperparameters:
 
     # Selective Token Freezing (STF) controls.
     # Branch-specific default mode is set per branch; override with STF_MODE env var if needed.
-    stf_mode = os.environ.get("STF_MODE", "minimal")
+    stf_mode = os.environ.get("STF_MODE", "quantization")
     stf_warmup_layers = int(os.environ.get("STF_WARMUP_LAYERS", 3))
     stf_depth_cap = int(os.environ.get("STF_DEPTH_CAP", 0))
     stf_threshold = float(os.environ.get("STF_THRESHOLD", 0.045))
@@ -99,7 +99,7 @@ class Hyperparameters:
     stf_budget_kp = float(os.environ.get("STF_BUDGET_KP", 2.5))
     stf_reactivate_every = int(os.environ.get("STF_REACTIVATE_EVERY", 3))
     stf_recur_mix = float(os.environ.get("STF_RECUR_MIX", 0.35))
-    stf_quant_scale = float(os.environ.get("STF_QUANT_SCALE", 64.0))
+    stf_quant_scale = float(os.environ.get("STF_QUANT_SCALE", 32.0))
 
 # -----------------------------
 # MUON OPTIMIZER 
