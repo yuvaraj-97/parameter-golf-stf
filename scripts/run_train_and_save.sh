@@ -50,6 +50,9 @@ export MAX_WALLCLOCK_SECONDS="${MAX_WALLCLOCK_SECONDS:-0}"
 
 NPROC_PER_NODE="${NPROC_PER_NODE:-$GPU_COUNT}"
 
+mkdir -p logs/telemetry
+rm -f "logs/${RUN_ID}.txt" "logs/telemetry/${RUN_ID}.csv" final_model.pt final_model.int8.ptz
+
 echo "branch=$BRANCH"
 echo "run_id=$RUN_ID"
 echo "nproc_per_node=$NPROC_PER_NODE"
