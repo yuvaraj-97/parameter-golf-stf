@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STF Branch Tree</title>
+  <style>
+    :root{--bg:#f6efe5;--panel:#fffaf2;--ink:#211d19;--muted:#6c6458;--line:#d7c7ad;--a:#b04a2f;--b:#2c6a6a;--shadow:0 18px 40px rgba(64,48,24,.08)}
+    *{box-sizing:border-box} body{margin:0;font-family:Georgia,"Times New Roman",serif;color:var(--ink);background:linear-gradient(180deg,#f9f3e9 0%,var(--bg) 100%)}
+    .page{max-width:1320px;margin:0 auto;padding:24px 18px 40px}.hero,.panel,.detail{background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}
+    .hero,.panel,.detail{padding:22px}.hero{margin-bottom:18px}.eyebrow{margin:0 0 8px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--a)}
+    h1,h2,h3{margin:0;line-height:1.1} h1{font-size:clamp(2rem,4vw,3.8rem);max-width:11ch}
+    p{line-height:1.58;color:var(--muted)} .hero-grid,.layout,.tree-grid,.explorer{display:grid;gap:18px}
+    .hero-grid{grid-template-columns:1.4fr 1fr;margin-top:18px}.layout{grid-template-columns:minmax(0,1.3fr) minmax(320px,.9fr)}.tree-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .note,.root,.cluster,.mixbox,.outbox,.axis{border:1px solid var(--line);border-radius:18px;background:#fffdf8}.note,.root,.cluster,.mixbox,.outbox,.axis{padding:16px}
+    .root{background:linear-gradient(135deg,rgba(176,74,47,.08),rgba(255,250,242,1))}
+    .cluster p,.note p,.root p,.detail p{margin:8px 0 0}.branch-list,.mixlist,.axislist{display:grid;gap:10px}
+    .btn,.toggle{appearance:none;width:100%;text-align:left;border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px;cursor:pointer;transition:.14s ease}
+    .btn:hover,.btn.active,.toggle:hover,.toggle.active{border-color:var(--a);background:#fff5ec;transform:translateY(-1px)}
+    .tag{display:inline-block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--b);margin-bottom:6px}
+    .detail{position:sticky;top:14px}.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{padding:7px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:.86rem}
+    .sub{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)} .mixbox strong,.outbox strong{display:block;margin-bottom:6px}
+    .explorer{grid-template-columns:minmax(0,1.05fr) minmax(320px,.95fr);margin-top:18px}.axis p{margin:6px 0 12px}.axislist{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+    .toggle strong{display:block;margin-bottom:4px}.toggle span{display:block;color:var(--muted);font-size:.84rem;line-height:1.4}.compound-name{font-size:1.45rem;margin:8px 0 10px}
+    .footer{margin-top:18px}
+    @media (max-width:1080px){.hero-grid,.layout,.tree-grid,.explorer{grid-template-columns:1fr}.detail{position:static}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <p class="eyebrow">Selective Token Freezing</p>
+      <h1>STF tree, sideways moves, and compound explorer</h1>
+      <p>The key mental model: the current STF branches are mostly sibling experiments, not a cumulative ladder. They share one STF skeleton, then each branch mainly changes one axis: the decision rule, the frozen-token path, or the control policy over depth.</p>
+      <div class="hero-grid">
+        <div class="note"><strong>Going down</strong><p>You accept STF as the root idea, then ask a narrower question: how should freezing be decided, what should a frozen token carry, and what global controls keep it stable?</p></div>
+        <div class="note"><strong>Going sideways</strong><p>You swap one answer for another at the same conceptual level. `stf-soft-freeze`, `stf-recurrence`, and `stf-quantization` are sideways alternatives, not parent-child steps.</p></div>
+      </div>
+    </section>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="root">
+          <h2>Root</h2>
+          <p><strong>`baseline-repro`</strong> is the control branch. No STF. Every STF branch should be judged against it at the same budget slice.</p>
+        </div>
+        <div class="root" style="margin-top:16px;background:linear-gradient(135deg,rgba(44,106,106,.10),rgba(255,250,242,1))">
+          <h2>Shared STF skeleton</h2>
+          <p>All STF branches currently share: EMA of `||h_new - h_old||` as the freeze signal, layer warmup before freezing starts, and a minimum active-ratio guardrail to avoid collapse.</p>
+        </div>
+
+        <div class="tree-grid" style="margin-top:16px">
+          <div class="cluster">
+            <h3>Decision variants</h3>
+            <p>How does the model decide active vs frozen?</p>
+            <div class="branch-list">
+              <button class="btn active" data-branch="stf-minimal"><span class="tag">Decision</span><strong>`stf-minimal`</strong><span>Plain thresholded hard freeze.</span></button>
+              <button class="btn" data-branch="stf-learned-gate"><span class="tag">Decision</span><strong>`stf-learned-gate`</strong><span>Learned sigmoid gate per layer.</span></button>
+            </div>
+          </div>
+          <div class="cluster">
+            <h3>Frozen-path variants</h3>
+            <p>What does a frozen token carry forward?</p>
+            <div class="branch-list">
+              <button class="btn" data-branch="stf-soft-freeze"><span class="tag">Frozen Path</span><strong>`stf-soft-freeze`</strong><span>Keep part of the new state.</span></button>
+              <button class="btn" data-branch="stf-recurrence"><span class="tag">Frozen Path</span><strong>`stf-recurrence`</strong><span>Use a recurrent-style blend.</span></button>
+              <button class="btn" data-branch="stf-quantization"><span class="tag">Frozen Path</span><strong>`stf-quantization`</strong><span>Carry a quantized frozen state.</span></button>
+            </div>
+          </div>
+          <div class="cluster">
+            <h3>Control variants</h3>
+            <p>How is freezing globally stabilized?</p>
+            <div class="branch-list">
+              <button class="btn" data-branch="stf-reactivation"><span class="tag">Control</span><strong>`stf-reactivation`</strong><span>Periodically reopen tokens.</span></button>
+              <button class="btn" data-branch="stf-budget-regularization"><span class="tag">Control</span><strong>`stf-budget-regularization`</strong><span>Target an active-token budget.</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="detail">
+        <span class="tag" id="detailTag">Decision Variant</span>
+        <h2 id="detailTitle">`stf-minimal`</h2>
+        <p id="detailSummary"></p>
+        <div class="sub">
+          <h3>How it differs</h3>
+          <p id="detailDiff"></p>
+        </div>
+        <div class="sub">
+          <h3>Shared across STF branches</h3>
+          <div class="chips" id="detailShared"></div>
+        </div>
+        <div class="sub">
+          <h3>Key defaults</h3>
+          <div class="chips" id="detailParams"></div>
+        </div>
+        <div class="sub">
+          <h3>Sideways moves</h3>
+          <div class="chips" id="detailSideways"></div>
+        </div>
+        <div class="sub">
+          <h3>Natural compounds</h3>
+          <div class="mixlist" id="detailCompounds"></div>
+        </div>
+      </aside>
+    </div>
+
+    <section class="panel" style="margin-top:18px">
+      <h2>Compound explorer</h2>
+      <p>This treats STF as three axes you could eventually separate in code: decision, frozen path, and control. Toggle one option from each axis to describe the compound branch you actually mean.</p>
+      <div class="explorer">
+        <div>
+          <div class="axis">
+            <h3>Decision axis</h3>
+            <p>How is activity decided?</p>
+            <div class="axislist" id="decisionToggles"></div>
+          </div>
+          <div class="axis" style="margin-top:14px">
+            <h3>Frozen-path axis</h3>
+            <p>What does a frozen token carry?</p>
+            <div class="axislist" id="frozenToggles"></div>
+          </div>
+          <div class="axis" style="margin-top:14px">
+            <h3>Control axis</h3>
+            <p>What global policy shapes depth behavior?</p>
+            <div class="axislist" id="controlToggles"></div>
+          </div>
+        </div>
+
+        <div class="outbox">
+          <h3>Current compound</h3>
+          <div class="compound-name" id="compoundName"></div>
+          <p id="compoundSummary"></p>
+          <div class="chips" id="compoundPresetMatches"></div>
+          <div class="sub">
+            <strong>What this means</strong>
+            <p id="compoundBehavior"></p>
+          </div>
+          <div class="sub">
+            <strong>Why you might run it</strong>
+            <p id="compoundWhy"></p>
+          </div>
+          <div class="sub">
+            <strong>Main risk</strong>
+            <p id="compoundRisk"></p>
+          </div>
+          <div class="sub">
+            <strong>Implementation status</strong>
+            <p id="compoundStatus"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p class="footer">Suggested reading order: `baseline-repro` -> `stf-minimal` -> then choose one branch per conceptual question. If you later want real compounds, the next code refactor is to split `STF_MODE` into separate orthogonal flags.</p>
+  </div>
+
+  <script>
+    const shared = ["signal = EMA of ||h_new - h_old||", "warmup_layers = 3", "min_active_ratio = 0.35", "ema_decay = 0.85", "depth_cap = 0"];
+    const branchData = {
+      "stf-minimal": {tag:"Decision Variant",title:"`stf-minimal`",summary:"The clean STF baseline. A token stays active if its smoothed update magnitude clears the threshold; otherwise the previous state is carried forward.",diff:"This is the least opinionated STF branch and the best first answer to: does selective freezing help at all?",params:["mode = minimal","threshold = 0.045","hard freeze path","target_active_ratio = 0.45"],sideways:["`stf-learned-gate`","`stf-soft-freeze`","`stf-reactivation`"],compounds:[["minimal + budget_regularization","Keep the clean hard-freeze path but regulate active ratio dynamically."],["minimal + reactivation","Use hard freeze, but periodically reopen tokens so late layers can recover."]]},
+      "stf-learned-gate": {tag:"Decision Variant",title:"`stf-learned-gate`",summary:"Turns the hard threshold into a learned sigmoid gate per layer, so the model blends old and new state continuously.",diff:"This asks whether the freeze decision should be learned rather than hand-thresholded.",params:["mode = learned_gate","threshold = 0.020","per-layer gate scale/bias","continuous blend"],sideways:["`stf-minimal`","`stf-budget-regularization`","`stf-soft-freeze`"],compounds:[["learned_gate + budget_regularization","Local learned decisions with a global compute budget."],["learned_gate + recurrence","Learn the gate, then use recurrence when the token leans frozen."]]},
+      "stf-soft-freeze": {tag:"Frozen-Path Variant",title:"`stf-soft-freeze`",summary:"Still uses the standard decision rule, but frozen tokens keep a softened fraction of the new state instead of snapping fully back.",diff:"This tests whether hard freezing is too brittle and whether a gentler frozen path preserves more useful information.",params:["mode = soft_freeze","soft_keep = 0.35","threshold = 0.045","soft fallback"],sideways:["`stf-minimal`","`stf-recurrence`","`stf-quantization`"],compounds:[["soft_freeze + reactivation","Forgiving frozen path plus periodic reopen."],["soft_freeze + budget_regularization","Stable active budget without the brittleness of full hard skip."]]},
+      "stf-reactivation": {tag:"Control Variant",title:"`stf-reactivation`",summary:"Periodically forces tokens active again every few layers, even if the freeze score remains low.",diff:"This branch addresses the failure mode where an early freeze decision becomes effectively irreversible.",params:["mode = reactivation","reactivate_every = 2","threshold = 0.045","periodic reopen"],sideways:["`stf-minimal`","`stf-budget-regularization`","`stf-soft-freeze`"],compounds:[["reactivation + quantization","Cheap inactive path plus scheduled refresh."],["reactivation + learned_gate","Learn locally, but still force occasional full refresh."]]},
+      "stf-budget-regularization": {tag:"Control Variant",title:"`stf-budget-regularization`",summary:"Adapts the threshold so the realized active-token ratio stays near a target budget instead of drifting freely.",diff:"This turns STF from a local decision rule into a locally-scored but globally budgeted system.",params:["mode = budget_regularization","target_active_ratio = 0.45","budget_kp = 3.0","adaptive threshold"],sideways:["`stf-minimal`","`stf-reactivation`","`stf-learned-gate`"],compounds:[["budget_regularization + learned_gate","Probably the cleanest next serious compound."],["budget_regularization + recurrence","Stable active budget with smoother frozen-token memory."]]},
+      "stf-recurrence": {tag:"Frozen-Path Variant",title:"`stf-recurrence`",summary:"Frozen tokens follow a stronger recurrent-style old/new blend instead of hard hold or simple soft keep.",diff:"This asks whether a frozen token should still evolve a little each layer while reducing fresh computation.",params:["mode = recurrence","recur_mix = 0.55","threshold = 0.045","recurrent fallback"],sideways:["`stf-soft-freeze`","`stf-quantization`","`stf-minimal`"],compounds:[["recurrence + budget_regularization","Stable active budget with a smoother memory-like path."],["recurrence + learned_gate","Let the model learn when recurrence is needed."]]},
+      "stf-quantization": {tag:"Frozen-Path Variant",title:"`stf-quantization`",summary:"Frozen tokens carry a quantized version of the prior state instead of a full-precision prior state.",diff:"This is the most explicitly compute- and memory-aware branch: it asks whether inactive tokens can be represented more cheaply.",params:["mode = quantization","quant_scale = 32.0","threshold = 0.045","quantized fallback"],sideways:["`stf-soft-freeze`","`stf-recurrence`","`stf-budget-regularization`"],compounds:[["quantization + reactivation","Compressed frozen path plus scheduled refresh."],["quantization + budget_regularization","Good if the long-term goal is compute-budgeted STF."]]}
+    };
+    const axes = {
+      decision:[["hard","Hard threshold","Direct EMA threshold on update magnitude."],["learned","Learned gate","Sigmoid gating per layer instead of binary cutoff."]],
+      frozen:[["hard","Hard freeze","Carry the previous state with no extra motion."],["soft","Soft blend","Keep part of the new state even when frozen."],["recur","Recurrent blend","Use a memory-like old/new blend."],["quant","Quantized fallback","Carry a cheaper compressed state."]],
+      control:[["plain","Plain schedule","Warmup plus min-active guardrail only."],["reactivate","Reactivation","Periodically force tokens open again."],["budget","Budget target","Adapt threshold to maintain active-token budget."]]
+    };
+    const presetLookup = {"hard|hard|plain":"`stf-minimal`","learned|hard|plain":"`stf-learned-gate`","hard|soft|plain":"`stf-soft-freeze`","hard|hard|reactivate":"`stf-reactivation`","hard|hard|budget":"`stf-budget-regularization`","hard|recur|plain":"`stf-recurrence`","hard|quant|plain":"`stf-quantization`"};
+    const state = {decision:"hard",frozen:"hard",control:"plain"};
+
+    const detailTag = document.getElementById("detailTag");
+    const detailTitle = document.getElementById("detailTitle");
+    const detailSummary = document.getElementById("detailSummary");
+    const detailDiff = document.getElementById("detailDiff");
+    const detailShared = document.getElementById("detailShared");
+    const detailParams = document.getElementById("detailParams");
+    const detailSideways = document.getElementById("detailSideways");
+    const detailCompounds = document.getElementById("detailCompounds");
+
+    function chips(target, values) {
+      target.innerHTML = "";
+      values.forEach((v) => {
+        const el = document.createElement("span");
+        el.className = "chip";
+        el.textContent = v;
+        target.appendChild(el);
+      });
+    }
+
+    function selectBranch(name) {
+      const data = branchData[name];
+      document.querySelectorAll(".btn").forEach((btn) => btn.classList.toggle("active", btn.dataset.branch === name));
+      detailTag.textContent = data.tag;
+      detailTitle.textContent = data.title;
+      detailSummary.textContent = data.summary;
+      detailDiff.textContent = data.diff;
+      chips(detailShared, shared);
+      chips(detailParams, data.params);
+      chips(detailSideways, data.sideways);
+      detailCompounds.innerHTML = "";
+      data.compounds.forEach(([title, body]) => {
+        const box = document.createElement("div");
+        box.className = "mixbox";
+        box.innerHTML = `<strong>${title}</strong><p>${body}</p>`;
+        detailCompounds.appendChild(box);
+      });
+    }
+
+    function addToggles(axisName, targetId) {
+      const target = document.getElementById(targetId);
+      axes[axisName].forEach(([id, title, summary]) => {
+        const btn = document.createElement("button");
+        btn.className = "toggle";
+        btn.type = "button";
+        btn.dataset.axis = axisName;
+        btn.dataset.value = id;
+        btn.innerHTML = `<strong>${title}</strong><span>${summary}</span>`;
+        btn.addEventListener("click", () => { state[axisName] = id; renderExplorer(); });
+        target.appendChild(btn);
+      });
+    }
+
+    function label(axis, value) {
+      return axes[axis].find((item) => item[0] === value)[1];
+    }
+
+    function renderExplorer() {
+      document.querySelectorAll(".toggle").forEach((btn) => btn.classList.toggle("active", state[btn.dataset.axis] === btn.dataset.value));
+      const decision = label("decision", state.decision);
+      const frozen = label("frozen", state.frozen);
+      const control = label("control", state.control);
+      const key = `${state.decision}|${state.frozen}|${state.control}`;
+      const direct = presetLookup[key];
+
+      document.getElementById("compoundName").textContent = `${decision} + ${frozen} + ${control}`;
+      document.getElementById("compoundSummary").textContent = `This compound says: decide activity using ${decision.toLowerCase()}, carry frozen tokens with ${frozen.toLowerCase()}, and regulate depth behavior with ${control.toLowerCase()}.`;
+
+      const presetBox = document.getElementById("compoundPresetMatches");
+      presetBox.innerHTML = "";
+      const exact = document.createElement("span");
+      exact.className = "chip";
+      exact.textContent = direct ? `Direct match: ${direct}` : "No exact current branch";
+      presetBox.appendChild(exact);
+      if (!direct) {
+        [["decision",`${state.decision}|hard|plain`],["frozen",`hard|${state.frozen}|plain`],["control",`hard|hard|${state.control}`]].forEach(([axis, presetKey]) => {
+          const preset = presetLookup[presetKey];
+          if (preset) {
+            const chip = document.createElement("span");
+            chip.className = "chip";
+            chip.textContent = `Closest ${axis} preset: ${preset}`;
+            presetBox.appendChild(chip);
+          }
+        });
+      }
+
+      document.getElementById("compoundBehavior").textContent = `Tokens are scored by the ${decision.toLowerCase()} rule. When they fall on the frozen side, they use the ${frozen.toLowerCase()} path. Across depth, the ${control.toLowerCase()} policy shapes whether freezing stays passive, gets reset, or is nudged toward a budget target.`;
+
+      let why = "This is useful when you want to isolate one design choice from each axis and test whether their interaction is additive or conflicting.";
+      if (state.decision === "learned" && state.control === "budget") why = "This is the strongest next serious compound: learned local flexibility plus explicit global compute control.";
+      if (state.frozen === "quant" && state.control === "reactivate") why = "This is attractive if your goal is cheap inactive-token handling without allowing tokens to stay stale forever.";
+      if (state.frozen === "recur") why = "This is worth exploring when hard freezing looks too discontinuous and you want frozen tokens to preserve a smoother evolving memory.";
+      document.getElementById("compoundWhy").textContent = why;
+
+      let risk = "Main risk: branch complexity grows faster than interpretability. If a compound loses clearly attributable wins versus the simpler siblings, it will be hard to trust.";
+      if (state.decision === "learned" && state.frozen !== "hard") risk = "Risk: too many soft mechanisms at once. Learned gating plus non-hard frozen paths can blur the ablation story.";
+      if (state.frozen === "quant") risk = "Risk: quantized fallback may save representational cost, but it can introduce accumulation error if frozen tokens stay inactive for long stretches.";
+      document.getElementById("compoundRisk").textContent = risk;
+
+      document.getElementById("compoundStatus").textContent = direct
+        ? `This exact combination already exists as ${direct}.`
+        : "This exact combination is conceptual today. Current code still exposes a single STF mode per run, so making this real would mean refactoring STF into orthogonal flags.";
+    }
+
+    document.querySelectorAll(".btn").forEach((btn) => btn.addEventListener("click", () => selectBranch(btn.dataset.branch)));
+    addToggles("decision", "decisionToggles");
+    addToggles("frozen", "frozenToggles");
+    addToggles("control", "controlToggles");
+    selectBranch("stf-minimal");
+    renderExplorer();
+  </script>
+</body>
+</html>
