@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import copy
 import glob
+import hashlib
 import io
 import math
 import os
@@ -883,6 +884,7 @@ def main() -> None:
     if master_process:
         os.makedirs("logs", exist_ok=True)
         logfile = f"logs/{args.run_id}.txt"
+        Path(logfile).write_text("", encoding="utf-8")
         print(logfile)
 
     def log0(msg: str, console: bool = True) -> None:
@@ -894,7 +896,9 @@ def main() -> None:
             with open(logfile, "a", encoding="utf-8") as f:
                 print(msg, file=f)
 
-    log0(code, console=False)
+    code_hash = hashlib.sha256(code.encode("utf-8")).hexdigest()[:16]
+    log0(f"code_snapshot sha256_16:{code_hash} bytes:{len(code.encode('utf-8'))}", console=False)
+    log0("train_gpt.py is archived separately by save.sh", console=False)
     log0("=" * 100, console=False)
     log0(f"Running Python {sys.version}", console=False)
     log0(f"Running PyTorch {torch.__version__}", console=False)
