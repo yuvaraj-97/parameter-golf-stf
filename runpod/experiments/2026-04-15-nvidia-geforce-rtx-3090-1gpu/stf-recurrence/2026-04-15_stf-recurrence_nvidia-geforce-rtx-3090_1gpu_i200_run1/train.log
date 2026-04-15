@@ -10551,3 +10551,39 @@ final_int8_zlib_roundtrip val_loss:3.5763 val_bpb:2.1181 eval_time:124281ms
 final_int8_zlib_roundtrip_exact val_loss:3.57626803 val_bpb:2.11806737
 warmup_step:4/20
 warmup_step:5/20
+warmup_step:6/20
+warmup_step:7/20
+warmup_step:8/20
+warmup_step:9/20
+warmup_step:10/20
+warmup_step:11/20
+warmup_step:12/20
+warmup_step:13/20
+warmup_step:14/20
+warmup_step:15/20
+warmup_step:16/20
+warmup_step:17/20
+warmup_step:18/20
+warmup_step:19/20
+warmup_step:20/20
+step:0/200 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.03ms
+step:1/200 train_loss:6.9369 train_time:1436ms step_avg:1435.66ms
+step:2/200 train_loss:6.3266 train_time:2923ms step_avg:1461.62ms
+step:3/200 train_loss:5.8906 train_time:4397ms step_avg:1465.63ms
+step:4/200 train_loss:5.7086 train_time:5854ms step_avg:1463.42ms
+step:5/200 train_loss:5.5974 train_time:7326ms step_avg:1465.19ms
+step:6/200 train_loss:5.5182 train_time:8778ms step_avg:1462.98ms
+step:7/200 train_loss:5.5369 train_time:10249ms step_avg:1464.14ms
+step:8/200 train_loss:5.4879 train_time:11700ms step_avg:1462.53ms
+step:9/200 train_loss:5.4737 train_time:13158ms step_avg:1462.00ms
+step:10/200 train_loss:5.4653 train_time:14619ms step_avg:1461.86ms
+step:200/200 train_loss:3.4769 train_time:292029ms step_avg:1460.15ms
+step:200/200 val_loss:3.4756 val_bpb:2.0584 train_time:292030ms step_avg:1460.15ms
+peak memory allocated: 7102 MiB reserved: 7906 MiB
+Serialized model: 67224983 bytes
+Code size: 54564 bytes
+Total submission size: 67279547 bytes
+Serialized model int8+zlib: 7164971 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 7219535 bytes
+final_int8_zlib_roundtrip val_loss:3.5794 val_bpb:2.1199 eval_time:114888ms
+final_int8_zlib_roundtrip_exact val_loss:3.57941371 val_bpb:2.11993042
