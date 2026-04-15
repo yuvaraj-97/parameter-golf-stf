@@ -748,7 +748,7 @@ class GPT(nn.Module):
         x0 = x
         skips: list[Tensor] = []
         ema_score: Tensor | None = None
-        budget_prev_active = self.stf_target_active_ratio
+        budget_prev_active = x.new_tensor(self.stf_target_active_ratio, dtype=torch.float32)
 
         def apply_stf(layer_idx: int, x_in: Tensor, x_out: Tensor) -> Tensor:
             nonlocal ema_score, budget_prev_active
@@ -775,10 +775,11 @@ class GPT(nn.Module):
                 gate = torch.sigmoid(gate_pre).to(dtype=x_out.dtype)
                 return gate * x_out + (1.0 - gate) * x_in
 
-            threshold = self.stf_threshold
+            threshold = ema_score.new_tensor(self.stf_threshold)
             if self.stf_mode == "budget_regularization":
-                threshold = self.stf_threshold * math.exp(
-                    self.stf_budget_kp * (self.stf_target_active_ratio - budget_prev_active)
+                target_active = ema_score.new_tensor(self.stf_target_active_ratio)
+                threshold = threshold * torch.exp(
+                    ema_score.new_tensor(self.stf_budget_kp) * (target_active - budget_prev_active.to(dtype=ema_score.dtype))
                 )
 
             active = ema_score >= threshold
@@ -794,7 +795,7 @@ class GPT(nn.Module):
                     active = ema_score >= cutoff
 
             active_float = active.to(dtype=x_out.dtype)
-            budget_prev_active = float(active_float.mean().detach().item())
+            budget_prev_active = active_float.mean().detach()
 
             if self.stf_mode == "soft_freeze":
                 frozen = self.stf_soft_keep * x_out + (1.0 - self.stf_soft_keep) * x_in
