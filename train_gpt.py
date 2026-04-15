@@ -100,6 +100,7 @@ class Hyperparameters:
     stf_reactivate_every = int(os.environ.get("STF_REACTIVATE_EVERY", 3))
     stf_recur_mix = float(os.environ.get("STF_RECUR_MIX", 0.55))
     stf_quant_scale = float(os.environ.get("STF_QUANT_SCALE", 64.0))
+    compile_model = bool(int(os.environ.get("COMPILE_MODEL", "0")))
 
 # -----------------------------
 # MUON OPTIMIZER 
@@ -962,8 +963,11 @@ def main() -> None:
         if isinstance(module, CastedLinear):
             module.float()
     restore_low_dim_params_to_fp32(base_model)
-    compiled_model = torch.compile(base_model, dynamic=False, fullgraph=True)
-    model: nn.Module = DDP(compiled_model, device_ids=[local_rank], broadcast_buffers=False) if distributed else compiled_model
+    if args.compile_model:
+        model_core: nn.Module = torch.compile(base_model, dynamic=False, fullgraph=True)
+    else:
+        model_core = base_model
+    model: nn.Module = DDP(model_core, device_ids=[local_rank], broadcast_buffers=False) if distributed else model_core
 
     # Optimizer split:
     # - token embedding (Adam) uses EMBED_LR
@@ -1029,6 +1033,7 @@ def main() -> None:
         f"iterations:{args.iterations} warmup_steps:{args.warmup_steps} "
         f"max_wallclock_seconds:{args.max_wallclock_seconds:.3f}"
     )
+    log0(f"compile_model:{args.compile_model}")
     log0(
         f"stf_mode:{args.stf_mode} stf_warmup_layers:{args.stf_warmup_layers} stf_depth_cap:{args.stf_depth_cap} "
         f"stf_threshold:{args.stf_threshold} stf_ema_decay:{args.stf_ema_decay} "
