@@ -54,7 +54,7 @@ class Hyperparameters:
     iterations = int(os.environ.get("ITERATIONS", 20000))
     warmdown_iters = int(os.environ.get("WARMDOWN_ITERS", 1200))
     warmup_steps = int(os.environ.get("WARMUP_STEPS", 20))
-    train_batch_tokens = int(os.environ.get("TRAIN_BATCH_TOKENS", 524_288))
+    train_batch_tokens = int(os.environ.get("TRAIN_BATCH_TOKENS", 262_144))
     train_seq_len = int(os.environ.get("TRAIN_SEQ_LEN", 1024))
     max_wallclock_seconds = float(os.environ.get("MAX_WALLCLOCK_SECONDS", 600.0))
     qk_gain_init = float(os.environ.get("QK_GAIN_INIT", 1.5))
@@ -760,7 +760,7 @@ class GPT(nn.Module):
             if self.stf_depth_cap > 0 and layer_idx >= self.stf_depth_cap:
                 return x_out
 
-            delta = torch.linalg.vector_norm((x_out - x_in).float(), dim=-1, ord=2, keepdim=True)
+            delta = torch.linalg.vector_norm((x_out.detach() - x_in.detach()).float(), dim=-1, ord=2, keepdim=True)
             if ema_score is None:
                 ema_score = delta
             else:
