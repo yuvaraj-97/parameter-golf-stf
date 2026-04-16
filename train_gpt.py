@@ -101,6 +101,7 @@ class Hyperparameters:
     stf_reactivate_every = int(os.environ.get("STF_REACTIVATE_EVERY", 3))
     stf_recur_mix = float(os.environ.get("STF_RECUR_MIX", 0.35))
     stf_quant_scale = float(os.environ.get("STF_QUANT_SCALE", 32.0))
+    stf_telemetry = bool(int(os.environ.get("STF_TELEMETRY", "1")))
     compile_model = bool(int(os.environ.get("COMPILE_MODEL", "0")))
 
 # -----------------------------
@@ -688,6 +689,7 @@ class GPT(nn.Module):
         stf_reactivate_every: int,
         stf_recur_mix: float,
         stf_quant_scale: float,
+        stf_telemetry: bool,
     ):
         super().__init__()
         if logit_softcap <= 0.0:
@@ -696,6 +698,7 @@ class GPT(nn.Module):
         self.tied_embed_init_std = tied_embed_init_std
         self.logit_softcap = logit_softcap
         self.stf_mode = stf_mode
+        self.num_layers = num_layers
         self.stf_warmup_layers = max(stf_warmup_layers, 0)
         self.stf_depth_cap = max(stf_depth_cap, 0)
         self.stf_threshold = max(stf_threshold, 0.0)
@@ -707,6 +710,7 @@ class GPT(nn.Module):
         self.stf_reactivate_every = max(stf_reactivate_every, 0)
         self.stf_recur_mix = min(max(stf_recur_mix, 0.0), 1.0)
         self.stf_quant_scale = max(stf_quant_scale, 1.0)
+        self.stf_telemetry = stf_telemetry and self.stf_mode != "off"
         self.tok_emb = nn.Embedding(vocab_size, model_dim)
         self.num_encoder_layers = num_layers // 2
         self.num_decoder_layers = num_layers - self.num_encoder_layers
@@ -735,6 +739,16 @@ class GPT(nn.Module):
         else:
             self.register_parameter("stf_gate_scale", None)
             self.register_parameter("stf_gate_bias", None)
+        stat_shape = (num_layers,)
+        self.register_buffer("_stf_calls", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
+        self.register_buffer("_stf_score_sum", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
+        self.register_buffer("_stf_score_max", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
+        self.register_buffer("_stf_active_pre_sum", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
+        self.register_buffer("_stf_active_sum", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
+        self.register_buffer("_stf_gate_calls", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
+        self.register_buffer("_stf_gate_sum", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
+        self.register_buffer("_stf_gate_min", torch.ones(stat_shape, dtype=torch.float32), persistent=False)
+        self.register_buffer("_stf_gate_max", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
         self._init_weights()
 
     def _init_weights(self) -> None:
@@ -743,6 +757,101 @@ class GPT(nn.Module):
         for module in self.modules():
             if isinstance(module, nn.Linear) and getattr(module, "_zero_init", False):
                 nn.init.zeros_(module.weight)
+
+    @torch.no_grad()
+    def reset_stf_stats(self) -> None:
+        device = self._stf_calls.device
+        shape = (self.num_layers,)
+        self._stf_calls = torch.zeros(shape, device=device, dtype=torch.float32)
+        self._stf_score_sum = torch.zeros(shape, device=device, dtype=torch.float32)
+        self._stf_score_max = torch.zeros(shape, device=device, dtype=torch.float32)
+        self._stf_active_pre_sum = torch.zeros(shape, device=device, dtype=torch.float32)
+        self._stf_active_sum = torch.zeros(shape, device=device, dtype=torch.float32)
+        self._stf_gate_calls = torch.zeros(shape, device=device, dtype=torch.float32)
+        self._stf_gate_sum = torch.zeros(shape, device=device, dtype=torch.float32)
+        self._stf_gate_min = torch.ones(shape, device=device, dtype=torch.float32)
+        self._stf_gate_max = torch.zeros(shape, device=device, dtype=torch.float32)
+
+    @torch.no_grad()
+    def _record_stf_stats(
+        self,
+        layer_idx: int,
+        score: Tensor,
+        *,
+        active_pre: Tensor | None = None,
+        active_final: Tensor | None = None,
+        gate: Tensor | None = None,
+    ) -> None:
+        if not self.stf_telemetry:
+            return
+        idx = int(layer_idx)
+        score_f = score.detach().float()
+        self._stf_calls[idx] += 1.0
+        self._stf_score_sum[idx] += score_f.mean()
+        self._stf_score_max[idx] = torch.maximum(self._stf_score_max[idx], score_f.max())
+        if active_pre is not None:
+            self._stf_active_pre_sum[idx] += active_pre.detach().float().mean()
+        if active_final is not None:
+            self._stf_active_sum[idx] += active_final.detach().float().mean()
+        if gate is not None:
+            gate_f = gate.detach().float()
+            self._stf_gate_calls[idx] += 1.0
+            self._stf_gate_sum[idx] += gate_f.mean()
+            self._stf_gate_min[idx] = torch.minimum(self._stf_gate_min[idx], gate_f.min())
+            self._stf_gate_max[idx] = torch.maximum(self._stf_gate_max[idx], gate_f.max())
+
+    @torch.no_grad()
+    def consume_stf_stats(self) -> str:
+        if not self.stf_telemetry:
+            return ""
+        calls = self._stf_calls.detach().clone()
+        mask = calls > 0
+        if not bool(mask.any().item()):
+            return ""
+
+        def avg(values: Tensor) -> Tensor:
+            return values[mask] / calls[mask].clamp_min(1.0)
+
+        active = avg(self._stf_active_sum)
+        active_pre = avg(self._stf_active_pre_sum)
+        score = avg(self._stf_score_sum)
+        parts = [
+            f"stf_stats calls:{int(calls[mask].sum().item())}",
+            f"layers:{int(mask.sum().item())}",
+            f"score_mean:{score.mean().item():.6f}",
+            f"score_max:{self._stf_score_max[mask].max().item():.6f}",
+        ]
+        if bool((self._stf_active_sum[mask] > 0).any().item()):
+            parts.extend(
+                [
+                    f"active_pre_mean:{active_pre.mean().item():.4f}",
+                    f"active_mean:{active.mean().item():.4f}",
+                    f"active_min:{active.min().item():.4f}",
+                    f"active_max:{active.max().item():.4f}",
+                    "active_by_layer:" + ",".join(f"{i}:{active[j].item():.3f}" for j, i in enumerate(torch.where(mask)[0].tolist())),
+                ]
+            )
+        gate_mask = self._stf_gate_calls > 0
+        if bool(gate_mask.any().item()):
+            gate = self._stf_gate_sum[gate_mask] / self._stf_gate_calls[gate_mask].clamp_min(1.0)
+            parts.extend(
+                [
+                    f"gate_mean:{gate.mean().item():.4f}",
+                    f"gate_min:{self._stf_gate_min[gate_mask].min().item():.4f}",
+                    f"gate_max:{self._stf_gate_max[gate_mask].max().item():.4f}",
+                    "gate_by_layer:" + ",".join(f"{i}:{gate[j].item():.3f}" for j, i in enumerate(torch.where(gate_mask)[0].tolist())),
+                ]
+            )
+        self._stf_calls.zero_()
+        self._stf_score_sum.zero_()
+        self._stf_score_max.zero_()
+        self._stf_active_pre_sum.zero_()
+        self._stf_active_sum.zero_()
+        self._stf_gate_calls.zero_()
+        self._stf_gate_sum.zero_()
+        self._stf_gate_min.fill_(1.0)
+        self._stf_gate_max.zero_()
+        return " ".join(parts)
 
     def forward(self, input_ids: Tensor, target_ids: Tensor) -> Tensor:
         x = self.tok_emb(input_ids)
@@ -775,6 +884,7 @@ class GPT(nn.Module):
                     + self.stf_gate_bias[layer_idx].to(dtype=ema_score.dtype)
                 )
                 gate = torch.sigmoid(gate_pre).to(dtype=x_out.dtype)
+                self._record_stf_stats(layer_idx, ema_score, gate=gate)
                 return gate * x_out + (1.0 - gate) * x_in
 
             threshold = ema_score.new_tensor(self.stf_threshold)
@@ -785,6 +895,7 @@ class GPT(nn.Module):
                 )
 
             active = ema_score >= threshold
+            active_pre_guard = active
             if self.stf_reactivate_every > 0 and self.stf_mode == "reactivation":
                 if (layer_idx - self.stf_warmup_layers + 1) % self.stf_reactivate_every == 0:
                     active = torch.ones_like(active, dtype=torch.bool)
@@ -798,6 +909,7 @@ class GPT(nn.Module):
 
             active_float = active.to(dtype=x_out.dtype)
             budget_prev_active = active_float.mean().detach()
+            self._record_stf_stats(layer_idx, ema_score, active_pre=active_pre_guard, active_final=active)
 
             if self.stf_mode == "soft_freeze":
                 frozen = self.stf_soft_keep * x_out + (1.0 - self.stf_soft_keep) * x_in
@@ -962,7 +1074,9 @@ def main() -> None:
         stf_reactivate_every=args.stf_reactivate_every,
         stf_recur_mix=args.stf_recur_mix,
         stf_quant_scale=args.stf_quant_scale,
+        stf_telemetry=args.stf_telemetry,
     ).to(device).bfloat16()
+    base_model.reset_stf_stats()
     for module in base_model.modules():
         if isinstance(module, CastedLinear):
             module.float()
@@ -1041,7 +1155,7 @@ def main() -> None:
     log0(
         f"stf_mode:{args.stf_mode} stf_warmup_layers:{args.stf_warmup_layers} stf_depth_cap:{args.stf_depth_cap} "
         f"stf_threshold:{args.stf_threshold} stf_ema_decay:{args.stf_ema_decay} "
-        f"stf_min_active_ratio:{args.stf_min_active_ratio}"
+        f"stf_min_active_ratio:{args.stf_min_active_ratio} stf_telemetry:{args.stf_telemetry}"
     )
     log0(f"seed:{args.seed}")
 
@@ -1180,6 +1294,9 @@ def main() -> None:
                 f"step:{step}/{args.iterations} train_loss:{train_loss.item():.4f} "
                 f"train_time:{approx_training_time_ms:.0f}ms step_avg:{approx_training_time_ms / step:.2f}ms"
             )
+            stf_stats = base_model.consume_stf_stats()
+            if stf_stats:
+                log0(f"step:{step}/{args.iterations} {stf_stats}")
 
         # Needed to sync whether we've reached the wallclock cap.
         reached_cap = max_wallclock_ms is not None and approx_training_time_ms >= max_wallclock_ms
