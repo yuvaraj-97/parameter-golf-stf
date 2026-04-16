@@ -20,6 +20,18 @@ python3 data/cached_challenge_fineweb.py --variant sp1024
 This populates `./data/datasets/fineweb10B_sp1024/` and `./data/tokenizers/`.
 By default it downloads the full validation split and 8B training tokens (80 train shards).
 
+For private or gated Hugging Face repos, create a read token at `https://huggingface.co/settings/tokens` and store it in the repository-local `.env` file:
+
+```dotenv
+HF_TOKEN=hf_...
+```
+
+The download scripts load `.env` automatically. Shell environment variables still take precedence when already set.
+
+```bash
+python3 data/cached_challenge_fineweb.py --variant sp1024 --train-shards 10
+```
+
 To fetch more training shards, pass `--train-shards`:
 
 ```bash
