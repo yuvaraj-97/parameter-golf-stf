@@ -3,15 +3,40 @@ import json
 import os
 import shutil
 from pathlib import Path
+from typing import Optional
 
 from huggingface_hub import hf_hub_download
 
 
-REPO_ID = os.environ.get("MATCHED_FINEWEB_REPO_ID", "willdepueoai/parameter-golf")
-REMOTE_ROOT_PREFIX = os.environ.get("MATCHED_FINEWEB_REMOTE_ROOT_PREFIX", "datasets")
 ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = ROOT.parent
 DATASETS_DIR = ROOT / "datasets"
 TOKENIZERS_DIR = ROOT / "tokenizers"
+
+
+def load_dotenv(path: Path = PROJECT_ROOT / ".env") -> None:
+    if not path.is_file():
+        return
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip("'\"")
+        if key and value:
+            os.environ.setdefault(key, value)
+
+
+load_dotenv()
+
+REPO_ID = os.environ.get("MATCHED_FINEWEB_REPO_ID", "willdepueoai/parameter-golf")
+REMOTE_ROOT_PREFIX = os.environ.get("MATCHED_FINEWEB_REMOTE_ROOT_PREFIX", "datasets")
+
+
+def hf_token_from_env() -> Optional[str]:
+    return os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
+
 
 def dataset_dir_for_variant(name: str) -> str:
     if name == "byte260":
@@ -32,7 +57,7 @@ def local_path_for_remote(relative_path: str) -> Path:
     return ROOT / remote_path
 
 
-def get(relative_path: str) -> None:
+def get(relative_path: str, *, token: Optional[str] = None) -> None:
     destination = local_path_for_remote(relative_path)
     if destination.exists():
         return
@@ -46,6 +71,7 @@ def get(relative_path: str) -> None:
             filename=remote_path.name,
             subfolder=remote_path.parent.as_posix() if remote_path.parent != Path(".") else None,
             repo_type="dataset",
+            token=token,
         )
     )
     # HF cache entries may be snapshot symlinks. Resolve to the underlying blob so we
@@ -62,14 +88,14 @@ def manifest_path() -> Path:
     return local_path_for_remote(f"{REMOTE_ROOT_PREFIX}/manifest.json")
 
 
-def load_manifest(*, skip_manifest_download: bool) -> dict:
+def load_manifest(*, skip_manifest_download: bool, token: Optional[str] = None) -> dict:
     path = manifest_path()
     if not path.is_file():
         if skip_manifest_download:
             raise FileNotFoundError(
                 f"manifest.json is required for manifest-driven shard counts but is not present locally at {path}"
             )
-        get(f"{REMOTE_ROOT_PREFIX}/manifest.json")
+        get(f"{REMOTE_ROOT_PREFIX}/manifest.json", token=token)
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -114,17 +140,23 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Also download docs_selected.jsonl and its sidecar for tokenizer retraining or dataset re-export.",
     )
+    parser.add_argument(
+        "--token",
+        default=None,
+        help="Hugging Face access token. Defaults to HF_TOKEN or HUGGING_FACE_HUB_TOKEN when set.",
+    )
     return parser
 
 
 def main() -> None:
     args = build_parser().parse_args()
+    token = args.token or hf_token_from_env()
     dataset_dir = dataset_dir_for_variant(args.variant)
     train_shards = args.train_shards_positional if args.train_shards_positional is not None else args.train_shards
     if train_shards < 0:
         raise ValueError("train_shards must be non-negative")
 
-    manifest = load_manifest(skip_manifest_download=args.skip_manifest)
+    manifest = load_manifest(skip_manifest_download=args.skip_manifest, token=token)
     dataset_entry = next((x for x in manifest.get("datasets", []) if x.get("name") == dataset_dir), None)
     if dataset_entry is None:
         raise ValueError(f"dataset {dataset_dir} not found in {REMOTE_ROOT_PREFIX}/manifest.json")
@@ -140,17 +172,17 @@ def main() -> None:
         raise ValueError(f"tokenizer {tokenizer_name} not found in {REMOTE_ROOT_PREFIX}/manifest.json")
 
     if args.with_docs:
-        get(f"{REMOTE_ROOT_PREFIX}/docs_selected.jsonl")
-        get(f"{REMOTE_ROOT_PREFIX}/docs_selected.source_manifest.json")
+        get(f"{REMOTE_ROOT_PREFIX}/docs_selected.jsonl", token=token)
+        get(f"{REMOTE_ROOT_PREFIX}/docs_selected.source_manifest.json", token=token)
 
     dataset_prefix = f"{REMOTE_ROOT_PREFIX}/datasets/{dataset_dir}"
     for i in range(val_shards):
-        get(f"{dataset_prefix}/fineweb_val_{i:06d}.bin")
+        get(f"{dataset_prefix}/fineweb_val_{i:06d}.bin", token=token)
     for i in range(train_shards):
-        get(f"{dataset_prefix}/fineweb_train_{i:06d}.bin")
+        get(f"{dataset_prefix}/fineweb_train_{i:06d}.bin", token=token)
 
     for artifact_path in artifact_paths_for_tokenizer(tokenizer_entry):
-        get(f"{REMOTE_ROOT_PREFIX}/{artifact_path}")
+        get(f"{REMOTE_ROOT_PREFIX}/{artifact_path}", token=token)
 
 
 if __name__ == "__main__":
