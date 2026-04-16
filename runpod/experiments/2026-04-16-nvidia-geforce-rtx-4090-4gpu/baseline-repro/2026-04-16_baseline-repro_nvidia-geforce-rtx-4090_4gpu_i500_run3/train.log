@@ -1,0 +1,101 @@
+code_snapshot sha256_16:94366fcaf0249b1e bytes:47968
+train_gpt.py is archived separately by save.sh
+====================================================================================================
+Running Python 3.12.3 (main, Nov  6 2025, 13:44:16) [GCC 13.3.0]
+Running PyTorch 2.9.1+cu128
+Thu Apr 16 17:14:52 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 570.211.01             Driver Version: 570.211.01     CUDA Version: 12.8     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4090        On  |   00000000:01:00.0 Off |                  Off |
+|  0%   36C    P2             48W /  400W |     596MiB /  24564MiB |      7%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA GeForce RTX 4090        On  |   00000000:81:00.0 Off |                  Off |
+|  0%   37C    P2             42W /  400W |     596MiB /  24564MiB |      7%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   2  NVIDIA GeForce RTX 4090        On  |   00000000:82:00.0 Off |                  Off |
+|  0%   36C    P2             41W /  400W |     596MiB /  24564MiB |      8%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   3  NVIDIA GeForce RTX 4090        On  |   00000000:C1:00.0 Off |                  Off |
+|  0%   35C    P2             45W /  400W |     596MiB /  24564MiB |      7%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A           48727      C   /usr/local/bin/python                   586MiB |
+|    1   N/A  N/A           48728      C   /usr/local/bin/python                   586MiB |
+|    2   N/A  N/A           48729      C   /usr/local/bin/python                   586MiB |
+|    3   N/A  N/A           48730      C   /usr/local/bin/python                   586MiB |
++-----------------------------------------------------------------------------------------+
+
+====================================================================================================
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:20 max_wallclock_seconds:0.000
+seed:1337
+warmup_step:1/20
+warmup_step:2/20
+warmup_step:3/20
+warmup_step:4/20
+warmup_step:5/20
+warmup_step:6/20
+warmup_step:7/20
+warmup_step:8/20
+warmup_step:9/20
+warmup_step:10/20
+warmup_step:11/20
+warmup_step:12/20
+warmup_step:13/20
+warmup_step:14/20
+warmup_step:15/20
+warmup_step:16/20
+warmup_step:17/20
+warmup_step:18/20
+warmup_step:19/20
+warmup_step:20/20
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9366 train_time:222ms step_avg:222.16ms
+step:2/500 train_loss:8.9616 train_time:466ms step_avg:233.01ms
+step:3/500 train_loss:6.3132 train_time:729ms step_avg:243.01ms
+step:4/500 train_loss:6.0187 train_time:992ms step_avg:248.10ms
+step:5/500 train_loss:6.3032 train_time:1255ms step_avg:251.07ms
+step:6/500 train_loss:6.3660 train_time:1518ms step_avg:253.08ms
+step:7/500 train_loss:6.1120 train_time:1782ms step_avg:254.50ms
+step:8/500 train_loss:6.0377 train_time:2044ms step_avg:255.55ms
+step:9/500 train_loss:5.8935 train_time:2308ms step_avg:256.46ms
+step:10/500 train_loss:5.7330 train_time:2571ms step_avg:257.11ms
+step:100/500 train_loss:3.3134 train_time:26210ms step_avg:262.10ms
+step:100/500 val_loss:3.2926 val_bpb:1.9500 train_time:26268ms step_avg:262.68ms
+step:200/500 train_loss:2.7192 train_time:52521ms step_avg:262.60ms
+step:200/500 val_loss:2.7651 val_bpb:1.6376 train_time:52579ms step_avg:262.90ms
+step:300/500 train_loss:2.5235 train_time:78837ms step_avg:262.79ms
+step:300/500 val_loss:2.5964 val_bpb:1.5377 train_time:78895ms step_avg:262.98ms
+step:400/500 train_loss:2.3005 train_time:105153ms step_avg:262.88ms
+step:400/500 val_loss:2.5081 val_bpb:1.4855 train_time:105212ms step_avg:263.03ms
+step:500/500 train_loss:2.3998 train_time:131464ms step_avg:262.93ms
+step:500/500 val_loss:2.4586 val_bpb:1.4561 train_time:131522ms step_avg:263.04ms
+peak memory allocated: 10145 MiB reserved: 10494 MiB
+Serialized model: 67224983 bytes
+Code size: 47968 bytes
+Total submission size: 67272951 bytes
+Serialized model int8+zlib: 9924409 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 9972377 bytes
+final_int8_zlib_roundtrip val_loss:2.4771 val_bpb:1.4671 eval_time:7766ms
+final_int8_zlib_roundtrip_exact val_loss:2.47710172 val_bpb:1.46707917
