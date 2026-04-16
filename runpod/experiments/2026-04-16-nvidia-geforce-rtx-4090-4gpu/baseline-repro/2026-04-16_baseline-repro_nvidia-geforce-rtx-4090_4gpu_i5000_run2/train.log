@@ -1,0 +1,141 @@
+code_snapshot sha256_16:94366fcaf0249b1e bytes:47968
+train_gpt.py is archived separately by save.sh
+====================================================================================================
+Running Python 3.12.3 (main, Nov  6 2025, 13:44:16) [GCC 13.3.0]
+Running PyTorch 2.9.1+cu128
+Thu Apr 16 13:38:59 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.126.09             Driver Version: 580.126.09     CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4090        On  |   00000000:25:00.0 Off |                  Off |
+| 30%   27C    P2             69W /  450W |     585MiB /  24564MiB |     11%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA GeForce RTX 4090        On  |   00000000:41:00.0 Off |                  Off |
+| 30%   25C    P2             60W /  450W |     585MiB /  24564MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   2  NVIDIA GeForce RTX 4090        On  |   00000000:61:00.0 Off |                  Off |
+| 30%   25C    P2             56W /  450W |     585MiB /  24564MiB |      5%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   3  NVIDIA GeForce RTX 4090        On  |   00000000:81:00.0 Off |                  Off |
+| 30%   25C    P2             64W /  450W |     585MiB /  24564MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A           28493      C   /usr/local/bin/python                   576MiB |
+|    1   N/A  N/A           28494      C   /usr/local/bin/python                   576MiB |
+|    2   N/A  N/A           28495      C   /usr/local/bin/python                   576MiB |
+|    3   N/A  N/A           28496      C   /usr/local/bin/python                   576MiB |
++-----------------------------------------------------------------------------------------+
+
+====================================================================================================
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:5000 warmup_steps:20 max_wallclock_seconds:0.000
+seed:1337
+warmup_step:1/20
+warmup_step:2/20
+warmup_step:3/20
+warmup_step:4/20
+warmup_step:5/20
+warmup_step:6/20
+warmup_step:7/20
+warmup_step:8/20
+warmup_step:9/20
+warmup_step:10/20
+warmup_step:11/20
+warmup_step:12/20
+warmup_step:13/20
+warmup_step:14/20
+warmup_step:15/20
+warmup_step:16/20
+warmup_step:17/20
+warmup_step:18/20
+warmup_step:19/20
+warmup_step:20/20
+step:0/5000 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.03ms
+step:1/5000 train_loss:6.9366 train_time:224ms step_avg:223.96ms
+step:2/5000 train_loss:16.7173 train_time:603ms step_avg:301.47ms
+step:3/5000 train_loss:8.7542 train_time:1006ms step_avg:335.18ms
+step:4/5000 train_loss:6.6195 train_time:1399ms step_avg:349.71ms
+step:5/5000 train_loss:6.6436 train_time:1803ms step_avg:360.56ms
+step:6/5000 train_loss:6.9472 train_time:2194ms step_avg:365.59ms
+step:7/5000 train_loss:6.3662 train_time:2596ms step_avg:370.93ms
+step:8/5000 train_loss:6.1757 train_time:2979ms step_avg:372.41ms
+step:9/5000 train_loss:6.0966 train_time:3375ms step_avg:374.97ms
+step:10/5000 train_loss:5.9790 train_time:3770ms step_avg:377.02ms
+step:200/5000 train_loss:2.7891 train_time:78394ms step_avg:391.97ms
+step:200/5000 val_loss:2.8500 val_bpb:1.6879 train_time:78587ms step_avg:392.93ms
+step:400/5000 train_loss:2.3472 train_time:156836ms step_avg:392.09ms
+step:400/5000 val_loss:2.5653 val_bpb:1.5193 train_time:157024ms step_avg:392.56ms
+step:600/5000 train_loss:2.5292 train_time:235542ms step_avg:392.57ms
+step:600/5000 val_loss:2.4498 val_bpb:1.4509 train_time:235728ms step_avg:392.88ms
+step:800/5000 train_loss:2.3152 train_time:314235ms step_avg:392.79ms
+step:800/5000 val_loss:2.3808 val_bpb:1.4101 train_time:314429ms step_avg:393.04ms
+step:1000/5000 train_loss:2.3787 train_time:392170ms step_avg:392.17ms
+step:1000/5000 val_loss:2.3360 val_bpb:1.3835 train_time:392357ms step_avg:392.36ms
+step:1200/5000 train_loss:2.3604 train_time:470332ms step_avg:391.94ms
+step:1200/5000 val_loss:2.3025 val_bpb:1.3637 train_time:470530ms step_avg:392.11ms
+step:1400/5000 train_loss:2.3705 train_time:548479ms step_avg:391.77ms
+step:1400/5000 val_loss:2.2795 val_bpb:1.3501 train_time:548674ms step_avg:391.91ms
+step:1600/5000 train_loss:2.1560 train_time:626022ms step_avg:391.26ms
+step:1600/5000 val_loss:2.2651 val_bpb:1.3415 train_time:626208ms step_avg:391.38ms
+step:1800/5000 train_loss:2.2645 train_time:703765ms step_avg:390.98ms
+step:1800/5000 val_loss:2.2489 val_bpb:1.3319 train_time:703941ms step_avg:391.08ms
+step:2000/5000 train_loss:2.2304 train_time:782701ms step_avg:391.35ms
+step:2000/5000 val_loss:2.2345 val_bpb:1.3234 train_time:782893ms step_avg:391.45ms
+step:2200/5000 train_loss:2.1900 train_time:860662ms step_avg:391.21ms
+step:2200/5000 val_loss:2.2252 val_bpb:1.3179 train_time:860851ms step_avg:391.30ms
+step:2400/5000 train_loss:2.2090 train_time:938645ms step_avg:391.10ms
+step:2400/5000 val_loss:2.2151 val_bpb:1.3119 train_time:938834ms step_avg:391.18ms
+step:2600/5000 train_loss:2.2949 train_time:1016061ms step_avg:390.79ms
+step:2600/5000 val_loss:2.2190 val_bpb:1.3142 train_time:1016246ms step_avg:390.86ms
+step:2800/5000 train_loss:2.2263 train_time:1094170ms step_avg:390.77ms
+step:2800/5000 val_loss:2.2005 val_bpb:1.3033 train_time:1094366ms step_avg:390.85ms
+step:3000/5000 train_loss:2.2019 train_time:1172594ms step_avg:390.86ms
+step:3000/5000 val_loss:2.1932 val_bpb:1.2989 train_time:1172787ms step_avg:390.93ms
+step:3200/5000 train_loss:2.2206 train_time:1250175ms step_avg:390.68ms
+step:3200/5000 val_loss:2.1887 val_bpb:1.2963 train_time:1250368ms step_avg:390.74ms
+step:3400/5000 train_loss:2.1946 train_time:1328153ms step_avg:390.63ms
+step:3400/5000 val_loss:2.1850 val_bpb:1.2941 train_time:1328341ms step_avg:390.69ms
+step:3600/5000 train_loss:2.1366 train_time:1406275ms step_avg:390.63ms
+step:3600/5000 val_loss:2.1774 val_bpb:1.2896 train_time:1406462ms step_avg:390.68ms
+step:3800/5000 train_loss:2.2531 train_time:1484248ms step_avg:390.59ms
+step:3800/5000 val_loss:2.1737 val_bpb:1.2874 train_time:1484435ms step_avg:390.64ms
+step:4000/5000 train_loss:2.1642 train_time:1561400ms step_avg:390.35ms
+step:4000/5000 val_loss:2.1613 val_bpb:1.2801 train_time:1561599ms step_avg:390.40ms
+step:4200/5000 train_loss:2.1786 train_time:1637253ms step_avg:389.82ms
+step:4200/5000 val_loss:2.1485 val_bpb:1.2724 train_time:1637442ms step_avg:389.87ms
+step:4400/5000 train_loss:2.1345 train_time:1715148ms step_avg:389.81ms
+step:4400/5000 val_loss:2.1386 val_bpb:1.2666 train_time:1715333ms step_avg:389.85ms
+step:4600/5000 train_loss:1.9799 train_time:1793192ms step_avg:389.82ms
+step:4600/5000 val_loss:2.1260 val_bpb:1.2592 train_time:1793378ms step_avg:389.86ms
+step:4800/5000 train_loss:2.1236 train_time:1869757ms step_avg:389.53ms
+step:4800/5000 val_loss:2.1147 val_bpb:1.2524 train_time:1869882ms step_avg:389.56ms
+step:5000/5000 train_loss:2.0277 train_time:1946752ms step_avg:389.35ms
+step:5000/5000 val_loss:2.1064 val_bpb:1.2475 train_time:1946938ms step_avg:389.39ms
+peak memory allocated: 10145 MiB reserved: 10498 MiB
+Serialized model: 67224983 bytes
+Code size: 47968 bytes
+Total submission size: 67272951 bytes
+Serialized model int8+zlib: 15797140 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 15845108 bytes
+final_int8_zlib_roundtrip val_loss:2.1137 val_bpb:1.2519 eval_time:7922ms
+final_int8_zlib_roundtrip_exact val_loss:2.11374082 val_bpb:1.25187638
