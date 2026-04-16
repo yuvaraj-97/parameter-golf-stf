@@ -28,11 +28,34 @@ SHARD_SIZE = 10**8
 APPEND_EOS = False
 DATAFILE_MAGIC = 20240520
 DATAFILE_VERSION = 1
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def load_dotenv(path: Path = PROJECT_ROOT / ".env") -> None:
+    if not path.is_file():
+        return
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip("'\"")
+        if key and value:
+            os.environ.setdefault(key, value)
+
+
+load_dotenv()
+
 DEFAULT_REPO_ID = os.environ.get("MATCHED_FINEWEB_REPO_ID", "willdepueoai/parameter-golf")
 DEFAULT_REMOTE_ROOT = os.environ.get("MATCHED_FINEWEB_REMOTE_ROOT_PREFIX", "datasets")
 DEFAULT_CONFIG = Path(__file__).with_name("tokenizer_specs.json")
 TOKENIZER_THREADS = max(1, int(os.environ.get("MATCHED_FINEWEB_TOKENIZER_THREADS", str(os.cpu_count() or 8))))
 SP_BATCH_SIZE = max(1, int(os.environ.get("MATCHED_FINEWEB_SP_BATCH_SIZE", "1024")))
+
+
+def hf_token_from_env() -> str | None:
+    return os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
 
 
 @dataclass(frozen=True)
@@ -84,7 +107,14 @@ def maybe_load_docs_sidecar_meta(docs_jsonl: Path) -> dict[str, Any] | None:
     return payload
 
 
-def copy_from_hf_cache(*, repo_id: str, remote_root: str, filename: str, destination: Path) -> bool:
+def copy_from_hf_cache(
+    *,
+    repo_id: str,
+    remote_root: str,
+    filename: str,
+    destination: Path,
+    token: str | None = None,
+) -> bool:
     remote_path = Path(remote_root) / filename if remote_root else Path(filename)
     try:
         cached_path = Path(
@@ -93,6 +123,7 @@ def copy_from_hf_cache(*, repo_id: str, remote_root: str, filename: str, destina
                 filename=remote_path.name,
                 subfolder=remote_path.parent.as_posix() if remote_path.parent != Path(".") else None,
                 repo_type="dataset",
+                token=token,
             )
         )
     except EntryNotFoundError:
@@ -482,6 +513,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_REMOTE_ROOT,
         help="Optional subdirectory inside the dataset repo that contains docs_selected.jsonl",
     )
+    parser.add_argument(
+        "--token",
+        default=None,
+        help="Hugging Face access token. Defaults to HF_TOKEN or HUGGING_FACE_HUB_TOKEN when set.",
+    )
     parser.add_argument("--output-root", required=True, help="Directory where docs, tokenizers, shards, and manifest are written")
     parser.add_argument(
         "--tokenizer-config",
@@ -514,6 +550,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
+    token = args.token or hf_token_from_env()
     if args.chunk_tokens <= 0:
         raise ValueError(f"--chunk_tokens must be positive, got {args.chunk_tokens}")
 
@@ -531,6 +568,7 @@ def main() -> None:
         remote_root=args.remote_root,
         filename=DOCS_FILENAME,
         destination=docs_jsonl,
+        token=token,
     ):
         remote = f"{args.remote_root}/{DOCS_FILENAME}" if args.remote_root else DOCS_FILENAME
         raise FileNotFoundError(f"{remote} not found in Hugging Face dataset repo {args.repo_id}")
@@ -539,6 +577,7 @@ def main() -> None:
         remote_root=args.remote_root,
         filename=SIDECAR_FILENAME,
         destination=sidecar,
+        token=token,
     ):
         sidecar.unlink(missing_ok=True)
 
