@@ -1,0 +1,118 @@
+code_snapshot sha256_16:6a6f3699abdaa050 bytes:60850
+train_gpt.py is archived separately by save.sh
+====================================================================================================
+Running Python 3.12.3 (main, Nov  6 2025, 13:44:16) [GCC 13.3.0]
+Running PyTorch 2.9.1+cu128
+Thu Apr 16 17:41:42 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 570.211.01             Driver Version: 570.211.01     CUDA Version: 12.8     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4090        On  |   00000000:01:00.0 Off |                  Off |
+| 32%   44C    P2             68W /  400W |     596MiB /  24564MiB |      7%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA GeForce RTX 4090        On  |   00000000:81:00.0 Off |                  Off |
+| 32%   45C    P2             60W /  400W |     596MiB /  24564MiB |      7%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   2  NVIDIA GeForce RTX 4090        On  |   00000000:82:00.0 Off |                  Off |
+| 31%   44C    P2             51W /  400W |     596MiB /  24564MiB |      7%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   3  NVIDIA GeForce RTX 4090        On  |   00000000:C1:00.0 Off |                  Off |
+| 32%   44C    P2             59W /  400W |     596MiB /  24564MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A           65857      C   /usr/local/bin/python                   586MiB |
+|    1   N/A  N/A           65858      C   /usr/local/bin/python                   586MiB |
+|    2   N/A  N/A           65859      C   /usr/local/bin/python                   586MiB |
+|    3   N/A  N/A           65860      C   /usr/local/bin/python                   586MiB |
++-----------------------------------------------------------------------------------------+
+
+====================================================================================================
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:20 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:soft_freeze stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.045 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_telemetry:True
+seed:1337
+warmup_step:1/20
+warmup_step:2/20
+warmup_step:3/20
+warmup_step:4/20
+warmup_step:5/20
+warmup_step:6/20
+warmup_step:7/20
+warmup_step:8/20
+warmup_step:9/20
+warmup_step:10/20
+warmup_step:11/20
+warmup_step:12/20
+warmup_step:13/20
+warmup_step:14/20
+warmup_step:15/20
+warmup_step:16/20
+warmup_step:17/20
+warmup_step:18/20
+warmup_step:19/20
+warmup_step:20/20
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:461ms step_avg:460.80ms
+step:1/500 stf_stats calls:1674 layers:6 score_mean:7.404072 score_max:335.561188 active_pre_mean:0.1362 active_mean:0.9115 active_min:0.9115 active_max:0.9115 active_by_layer:3:0.911,4:0.911,5:0.911,6:0.911,7:0.911,8:0.911
+step:2/500 train_loss:9.0443 train_time:946ms step_avg:472.83ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:1.031824 score_max:1.471632 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:3/500 train_loss:6.3893 train_time:1437ms step_avg:478.98ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:2.242846 score_max:3.355373 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:4/500 train_loss:6.0429 train_time:1930ms step_avg:482.60ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:3.361052 score_max:4.978195 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:5/500 train_loss:6.3440 train_time:2423ms step_avg:484.61ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:4.477687 score_max:6.928419 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:6/500 train_loss:6.4356 train_time:2914ms step_avg:485.62ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:5.446728 score_max:8.793402 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:7/500 train_loss:6.1935 train_time:3406ms step_avg:486.63ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:6.531009 score_max:10.778579 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:8/500 train_loss:6.1078 train_time:3898ms step_avg:487.29ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:7.754516 score_max:13.169903 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:9/500 train_loss:5.9363 train_time:4391ms step_avg:487.91ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:9.133270 score_max:15.881037 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:10/500 train_loss:5.7741 train_time:4883ms step_avg:488.29ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:10.650575 score_max:19.305767 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:100/500 train_loss:3.4079 train_time:49073ms step_avg:490.73ms
+step:100/500 stf_stats calls:1080 layers:6 score_mean:20.090765 score_max:96.104393 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:100/500 val_loss:3.4001 val_bpb:2.0137 train_time:49123ms step_avg:491.23ms
+step:200/500 train_loss:2.8109 train_time:98205ms step_avg:491.03ms
+step:200/500 stf_stats calls:2622 layers:6 score_mean:26.129314 score_max:75.676010 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:200/500 val_loss:2.8602 val_bpb:1.6940 train_time:98257ms step_avg:491.28ms
+step:300/500 train_loss:2.5997 train_time:147338ms step_avg:491.13ms
+step:300/500 stf_stats calls:2622 layers:6 score_mean:34.995068 score_max:79.058533 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:300/500 val_loss:2.6776 val_bpb:1.5858 train_time:147388ms step_avg:491.29ms
+step:400/500 train_loss:2.3785 train_time:196465ms step_avg:491.16ms
+step:400/500 stf_stats calls:2622 layers:6 score_mean:39.308289 score_max:84.206192 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:400/500 val_loss:2.5851 val_bpb:1.5311 train_time:196516ms step_avg:491.29ms
+step:500/500 train_loss:2.4771 train_time:245589ms step_avg:491.18ms
+step:500/500 stf_stats calls:2622 layers:6 score_mean:40.526802 score_max:80.919533 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:500/500 val_loss:2.5361 val_bpb:1.5020 train_time:245639ms step_avg:491.28ms
+peak memory allocated: 14620 MiB reserved: 15030 MiB
+Serialized model: 67224983 bytes
+Code size: 60850 bytes
+Total submission size: 67285833 bytes
+Serialized model int8+zlib: 9981784 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 10042634 bytes
+final_int8_zlib_roundtrip val_loss:2.5562 val_bpb:1.5139 eval_time:19103ms
+final_int8_zlib_roundtrip_exact val_loss:2.55622813 val_bpb:1.51394228
