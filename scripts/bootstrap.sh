@@ -50,7 +50,7 @@ echo "[bootstrap] cloning repo"
 
 rm -rf /workspace/project
 
-git clone --filter=blob:none --no-checkout [git@github.com](mailto:git@github.com):yuvaraj-97/parameter-golf-stf.git /workspace/project
+git clone --filter=blob:none --no-checkout git@github.com:yuvaraj-97/parameter-golf-stf.git /workspace/project
 
 git -C /workspace/project sparse-checkout init --no-cone
 
