@@ -47,6 +47,14 @@ GPU_NAME="unknown-gpu"
 GPU_SLUG="unknown-gpu"
 ALERT_SENT="0"
 CURRENT_CONSOLE_LOG=""
+read -r -a BRANCH_LIST <<< "$STF_BRANCHES"
+read -r -a FORMULA_LIST <<< "$STF_SCORE_FNS"
+BRANCH_TOTAL="${#BRANCH_LIST[@]}"
+FORMULA_TOTAL="${#FORMULA_LIST[@]}"
+VARIANT_TOTAL="$((BRANCH_TOTAL * FORMULA_TOTAL))"
+CURRENT_BRANCH_INDEX="0"
+CURRENT_FORMULA_INDEX="0"
+CURRENT_VARIANT_INDEX="0"
 
 timestamp() {
   date -u +%Y-%m-%dT%H:%M:%SZ
@@ -63,10 +71,37 @@ notify() {
     --data-urlencode "text=${text}" >/dev/null || true
 }
 
+progress_bar() {
+  local current="$1"
+  local total="$2"
+  local width="${3:-10}"
+  local filled
+  local empty
+  local out=""
+  local i
+
+  if [ "$total" -le 0 ]; then
+    total=1
+  fi
+  filled=$((current * width / total))
+  if [ "$current" -gt 0 ] && [ "$filled" -eq 0 ]; then
+    filled=1
+  fi
+  if [ "$filled" -gt "$width" ]; then
+    filled="$width"
+  fi
+  empty=$((width - filled))
+
+  for i in $(seq 1 "$filled"); do out="${out}🟩"; done
+  for i in $(seq 1 "$empty"); do out="${out}⬜"; done
+  printf '%s' "$out"
+}
+
 run_context() {
   cat <<EOF
-Branch: ${CURRENT_BRANCH:-not set}
-Formula: ${CURRENT_SCORE_FN:-not set}
+Progress: $(progress_bar "$CURRENT_VARIANT_INDEX" "$VARIANT_TOTAL") ${CURRENT_VARIANT_INDEX}/${VARIANT_TOTAL}
+Branch: ${CURRENT_BRANCH:-not set} (${CURRENT_BRANCH_INDEX}/${BRANCH_TOTAL})
+Formula: ${CURRENT_SCORE_FN:-not set} (${CURRENT_FORMULA_INDEX}/${FORMULA_TOTAL})
 Run: ${CURRENT_RUN_ID:-not assigned}
 GPU: ${GPU_COUNT}x ${GPU_NAME}
 Iterations: ${ITERATIONS}
@@ -229,13 +264,16 @@ mkdir -p logs logs/telemetry vast/experiments
 
 notify "SERIES STARTED
 
-Branches: ${STF_BRANCHES}
-Formulas: ${STF_SCORE_FNS}
+Branches (${BRANCH_TOTAL}): ${STF_BRANCHES}
+Formulas (${FORMULA_TOTAL}): ${STF_SCORE_FNS}
+Total variants: ${VARIANT_TOTAL}
+Progress: $(progress_bar 0 "$VARIANT_TOTAL") 0/${VARIANT_TOTAL}
 Iterations: ${ITERATIONS}
 GPU: ${GPU_COUNT}x ${GPU_NAME}
 Pod: $(hostname)"
 
-for branch in $STF_BRANCHES; do
+for branch in "${BRANCH_LIST[@]}"; do
+  CURRENT_BRANCH_INDEX="$((CURRENT_BRANCH_INDEX + 1))"
   CURRENT_BRANCH="$branch"
   if [ "$FETCH_BEFORE_RUN" = "1" ]; then
     git fetch origin "$branch"
@@ -249,7 +287,10 @@ for branch in $STF_BRANCHES; do
     fail_with_alerts 1 "branch ${branch} does not appear to support STF_SCORE_FN yet"
   fi
 
-  for score_fn in $STF_SCORE_FNS; do
+  CURRENT_FORMULA_INDEX="0"
+  for score_fn in "${FORMULA_LIST[@]}"; do
+    CURRENT_FORMULA_INDEX="$((CURRENT_FORMULA_INDEX + 1))"
+    CURRENT_VARIANT_INDEX="$((CURRENT_VARIANT_INDEX + 1))"
     CURRENT_SCORE_FN="$score_fn"
     safe_branch="$(printf '%s' "$branch" | tr '/' '-')"
     CURRENT_RUN_ID="$(date +%F)_${safe_branch}_${score_fn}_${GPU_SLUG}_${GPU_COUNT}gpu_i${ITERATIONS}_run${RUN_NUMBER}"
@@ -295,13 +336,15 @@ Final: ${final_line:-not found}"
     notify "MOVING TO NEXT
 
 Completed: ${branch} / ${score_fn}
+Progress: $(progress_bar "$CURRENT_VARIANT_INDEX" "$VARIANT_TOTAL") ${CURRENT_VARIANT_INDEX}/${VARIANT_TOTAL}
 Next variant will start shortly."
   done
 done
 
 notify "SERIES DONE
 
-Branches: ${STF_BRANCHES}
-Formulas: ${STF_SCORE_FNS}
+Branches (${BRANCH_TOTAL}): ${STF_BRANCHES}
+Formulas (${FORMULA_TOTAL}): ${STF_SCORE_FNS}
+Progress: $(progress_bar "$VARIANT_TOTAL" "$VARIANT_TOTAL") ${VARIANT_TOTAL}/${VARIANT_TOTAL}
 Iterations: ${ITERATIONS}
 GPU: ${GPU_COUNT}x ${GPU_NAME}"
