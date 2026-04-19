@@ -1,0 +1,1751 @@
+[2026-04-19T08:31:23Z] SERIES STARTED
+
+Branches (4): stf-minimal stf-learned-gate stf-soft-freeze stf-reactivation
+Formulas (4): l2 relative_l2 cosine direction
+Total variants: 16
+Progress: ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0/16
+Iterations: 500
+GPU: 4x NVIDIA GeForce RTX 4090
+Pod: 6a02f740d8f8
+From https://github.com/yuvaraj-97/parameter-golf-stf
+ * branch            stf-minimal -> FETCH_HEAD
+Switched to branch 'stf-minimal'
+Your branch is up to date with 'origin/stf-minimal'.
+Already up to date.
+[2026-04-19T08:31:23Z] VARIANT STARTED
+
+Progress: 🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜ 1/16
+Branch: stf-minimal (1/4)
+Formula: l2 (1/4)
+Run: 2026-04-19_stf-minimal_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T08:31:24Z
+branch=stf-minimal
+run_id=2026-04-19_stf-minimal_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=l2
+nproc_per_node=4
+W0419 08:31:25.229000 2682 torch/distributed/run.py:803] 
+W0419 08:31:25.229000 2682 torch/distributed/run.py:803] *****************************************
+W0419 08:31:25.229000 2682 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 08:31:25.229000 2682 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-minimal_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:minimal stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.045 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:l2 stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1248ms step_avg:1247.69ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:0.000000 score_max:0.000000 active_pre_mean:0.0000 active_mean:1.0000 active_min:1.0000 active_max:1.0000 active_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:2/500 train_loss:9.0818 train_time:1715ms step_avg:857.40ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:1.021186 score_max:1.445112 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:3/500 train_loss:6.4343 train_time:2185ms step_avg:728.26ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:2.165791 score_max:3.289763 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:4/500 train_loss:6.0615 train_time:2653ms step_avg:663.15ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:3.180467 score_max:4.756081 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:5/500 train_loss:6.3727 train_time:3121ms step_avg:624.19ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:4.086380 score_max:6.379097 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:6/500 train_loss:6.5064 train_time:3593ms step_avg:598.92ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:4.905878 score_max:8.125903 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:7/500 train_loss:6.2627 train_time:4061ms step_avg:580.09ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:5.805238 score_max:9.918031 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:8/500 train_loss:6.1674 train_time:4528ms step_avg:565.94ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:6.892306 score_max:12.043664 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:9/500 train_loss:5.9928 train_time:4994ms step_avg:554.92ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:8.071196 score_max:14.304125 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:10/500 train_loss:5.8180 train_time:5461ms step_avg:546.13ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:9.330828 score_max:17.164507 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 train_loss:4.3759 train_time:24097ms step_avg:481.93ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:16.206890 score_max:52.810791 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 val_loss:4.3210 val_bpb:2.5591 train_time:24165ms step_avg:483.30ms
+step:100/500 train_loss:3.7571 train_time:47410ms step_avg:474.10ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:15.362066 score_max:60.733974 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:100/500 val_loss:3.7447 val_bpb:2.2178 train_time:47478ms step_avg:474.78ms
+step:150/500 train_loss:3.4684 train_time:70727ms step_avg:471.52ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:13.453991 score_max:51.709953 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:150/500 val_loss:3.4278 val_bpb:2.0301 train_time:70795ms step_avg:471.97ms
+step:200/500 train_loss:3.1300 train_time:94057ms step_avg:470.28ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:13.005028 score_max:50.485962 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:200/500 val_loss:3.1710 val_bpb:1.8780 train_time:94125ms step_avg:470.62ms
+step:250/500 train_loss:3.0207 train_time:117388ms step_avg:469.55ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:12.534297 score_max:42.356483 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:250/500 val_loss:2.9810 val_bpb:1.7655 train_time:117456ms step_avg:469.82ms
+step:300/500 train_loss:2.7931 train_time:140715ms step_avg:469.05ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:12.296844 score_max:46.057083 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:300/500 val_loss:2.8727 val_bpb:1.7014 train_time:140783ms step_avg:469.28ms
+step:350/500 train_loss:2.8305 train_time:164044ms step_avg:468.70ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:11.868603 score_max:48.437622 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:350/500 val_loss:2.8026 val_bpb:1.6598 train_time:164112ms step_avg:468.89ms
+step:400/500 train_loss:2.5532 train_time:187398ms step_avg:468.50ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:11.797836 score_max:49.290024 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:400/500 val_loss:2.7556 val_bpb:1.6320 train_time:187466ms step_avg:468.67ms
+step:450/500 train_loss:2.7068 train_time:210734ms step_avg:468.30ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:11.771152 score_max:48.486633 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:450/500 val_loss:2.7155 val_bpb:1.6083 train_time:210801ms step_avg:468.45ms
+step:500/500 train_loss:2.6388 train_time:234074ms step_avg:468.15ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:11.508629 score_max:46.999683 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:500/500 val_loss:2.6960 val_bpb:1.5967 train_time:234141ms step_avg:468.28ms
+peak memory allocated: 14620 MiB reserved: 14934 MiB
+Serialized model: 67224983 bytes
+Code size: 62175 bytes
+Total submission size: 67287158 bytes
+Serialized model int8+zlib: 8908071 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 8970246 bytes
+final_int8_zlib_roundtrip val_loss:2.7275 val_bpb:1.6154 eval_time:18796ms
+final_int8_zlib_roundtrip_exact val_loss:2.72748772 val_bpb:1.61537186
+[2026-04-19T08:39:15Z] VARIANT ENDED
+
+Progress: 🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜ 1/16
+Branch: stf-minimal (1/4)
+Formula: l2 (1/4)
+Run: 2026-04-19_stf-minimal_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-minimal/2026-04-19_stf-minimal_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.72748772 val_bpb:1.61537186
+[2026-04-19T08:39:15Z] MOVING TO NEXT
+
+Completed: stf-minimal / l2
+Progress: 🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜ 1/16
+Next variant will start shortly.
+[2026-04-19T08:39:16Z] VARIANT STARTED
+
+Progress: 🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜ 2/16
+Branch: stf-minimal (1/4)
+Formula: relative_l2 (2/4)
+Run: 2026-04-19_stf-minimal_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T08:39:16Z
+branch=stf-minimal
+run_id=2026-04-19_stf-minimal_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=relative_l2
+nproc_per_node=4
+W0419 08:39:17.512000 3172 torch/distributed/run.py:803] 
+W0419 08:39:17.512000 3172 torch/distributed/run.py:803] *****************************************
+W0419 08:39:17.512000 3172 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 08:39:17.512000 3172 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-minimal_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:minimal stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.045 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:relative_l2 stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1254ms step_avg:1253.83ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:0.000000 score_max:0.000000 active_pre_mean:0.0000 active_mean:1.0000 active_min:1.0000 active_max:1.0000 active_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:2/500 train_loss:9.0830 train_time:1731ms step_avg:865.29ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:0.029419 score_max:0.035002 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:3/500 train_loss:6.4305 train_time:2203ms step_avg:734.46ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:0.056468 score_max:0.068655 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:4/500 train_loss:6.0614 train_time:2674ms step_avg:668.42ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:0.075946 score_max:0.090535 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:5/500 train_loss:6.3796 train_time:3143ms step_avg:628.65ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:0.093943 score_max:0.113226 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:6/500 train_loss:6.5069 train_time:3620ms step_avg:603.26ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:0.109592 score_max:0.133027 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:7/500 train_loss:6.2663 train_time:4089ms step_avg:584.19ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:0.125114 score_max:0.155739 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:8/500 train_loss:6.1662 train_time:4559ms step_avg:569.93ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:0.141351 score_max:0.177142 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:9/500 train_loss:5.9863 train_time:5030ms step_avg:558.85ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:0.156300 score_max:0.195238 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:10/500 train_loss:5.8257 train_time:5500ms step_avg:549.97ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:0.168580 score_max:0.214039 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 train_loss:4.3692 train_time:24263ms step_avg:485.27ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:0.220999 score_max:0.437224 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 val_loss:4.3158 val_bpb:2.5561 train_time:24331ms step_avg:486.63ms
+step:100/500 train_loss:3.7540 train_time:47711ms step_avg:477.11ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:0.205962 score_max:1.100649 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:100/500 val_loss:3.7531 val_bpb:2.2228 train_time:47779ms step_avg:477.79ms
+step:150/500 train_loss:3.4736 train_time:71163ms step_avg:474.42ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:0.236125 score_max:1.389785 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:150/500 val_loss:3.4357 val_bpb:2.0348 train_time:71231ms step_avg:474.87ms
+step:200/500 train_loss:3.1637 train_time:94618ms step_avg:473.09ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:0.272598 score_max:2.136755 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:200/500 val_loss:3.2002 val_bpb:1.8954 train_time:94686ms step_avg:473.43ms
+step:250/500 train_loss:3.0270 train_time:118071ms step_avg:472.28ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:0.312584 score_max:2.227214 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:250/500 val_loss:2.9854 val_bpb:1.7681 train_time:118140ms step_avg:472.56ms
+step:300/500 train_loss:2.7963 train_time:141527ms step_avg:471.76ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:0.329400 score_max:2.570568 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:300/500 val_loss:2.8729 val_bpb:1.7015 train_time:141596ms step_avg:471.99ms
+step:350/500 train_loss:2.8326 train_time:164980ms step_avg:471.37ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:0.340847 score_max:2.207901 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:350/500 val_loss:2.8002 val_bpb:1.6585 train_time:165048ms step_avg:471.57ms
+step:400/500 train_loss:2.5479 train_time:188453ms step_avg:471.13ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:0.352365 score_max:2.141604 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:400/500 val_loss:2.7530 val_bpb:1.6305 train_time:188522ms step_avg:471.30ms
+step:450/500 train_loss:2.7025 train_time:211908ms step_avg:470.91ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:0.364314 score_max:1.984697 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:450/500 val_loss:2.7127 val_bpb:1.6066 train_time:211976ms step_avg:471.06ms
+step:500/500 train_loss:2.6379 train_time:235384ms step_avg:470.77ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:0.369385 score_max:1.990381 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:500/500 val_loss:2.6932 val_bpb:1.5950 train_time:235452ms step_avg:470.90ms
+peak memory allocated: 15391 MiB reserved: 15736 MiB
+Serialized model: 67224983 bytes
+Code size: 62175 bytes
+Total submission size: 67287158 bytes
+Serialized model int8+zlib: 8889347 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 8951522 bytes
+final_int8_zlib_roundtrip val_loss:2.7225 val_bpb:1.6124 eval_time:19046ms
+final_int8_zlib_roundtrip_exact val_loss:2.72253906 val_bpb:1.61244098
+[2026-04-19T08:47:12Z] VARIANT ENDED
+
+Progress: 🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜ 2/16
+Branch: stf-minimal (1/4)
+Formula: relative_l2 (2/4)
+Run: 2026-04-19_stf-minimal_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-minimal/2026-04-19_stf-minimal_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.72253906 val_bpb:1.61244098
+[2026-04-19T08:47:12Z] MOVING TO NEXT
+
+Completed: stf-minimal / relative_l2
+Progress: 🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜ 2/16
+Next variant will start shortly.
+[2026-04-19T08:47:13Z] VARIANT STARTED
+
+Progress: 🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜ 3/16
+Branch: stf-minimal (1/4)
+Formula: cosine (3/4)
+Run: 2026-04-19_stf-minimal_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T08:47:13Z
+branch=stf-minimal
+run_id=2026-04-19_stf-minimal_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=cosine
+nproc_per_node=4
+W0419 08:47:14.540000 3662 torch/distributed/run.py:803] 
+W0419 08:47:14.540000 3662 torch/distributed/run.py:803] *****************************************
+W0419 08:47:14.540000 3662 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 08:47:14.540000 3662 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-minimal_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:minimal stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.045 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:cosine stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1272ms step_avg:1271.61ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:-0.000000 score_max:0.000000 active_pre_mean:0.0000 active_mean:0.5309 active_min:0.3640 active_max:0.8016 active_by_layer:3:0.802,4:0.802,5:0.427,6:0.427,7:0.364,8:0.364
+step:2/500 train_loss:9.1066 train_time:1778ms step_avg:888.96ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:0.000217 score_max:0.000305 active_pre_mean:0.0000 active_mean:0.3501 active_min:0.3500 active_max:0.3502 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:3/500 train_loss:6.3905 train_time:2264ms step_avg:754.54ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:0.000433 score_max:0.000809 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3501 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:4/500 train_loss:6.0452 train_time:2749ms step_avg:687.34ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:0.000584 score_max:0.001743 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:5/500 train_loss:6.3887 train_time:3235ms step_avg:646.91ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:0.000910 score_max:0.003064 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:6/500 train_loss:6.5374 train_time:3721ms step_avg:620.16ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:0.001349 score_max:0.004633 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:7/500 train_loss:6.2694 train_time:4205ms step_avg:600.76ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:0.001613 score_max:0.007853 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:8/500 train_loss:6.1746 train_time:4689ms step_avg:586.13ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:0.001815 score_max:0.011281 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:9/500 train_loss:5.9785 train_time:5173ms step_avg:574.79ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:0.001950 score_max:0.013483 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:10/500 train_loss:5.8197 train_time:5657ms step_avg:565.71ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:0.002009 score_max:0.016640 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 train_loss:4.3772 train_time:24983ms step_avg:499.66ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:0.006094 score_max:0.045840 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 val_loss:4.3229 val_bpb:2.5603 train_time:25051ms step_avg:501.02ms
+step:100/500 train_loss:3.7599 train_time:49145ms step_avg:491.45ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:0.005667 score_max:0.133431 active_pre_mean:0.0001 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:100/500 val_loss:3.7575 val_bpb:2.2254 train_time:49213ms step_avg:492.13ms
+step:150/500 train_loss:3.4712 train_time:73330ms step_avg:488.87ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:0.008389 score_max:0.205581 active_pre_mean:0.0059 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:150/500 val_loss:3.4328 val_bpb:2.0331 train_time:73398ms step_avg:489.32ms
+step:200/500 train_loss:3.1250 train_time:97492ms step_avg:487.46ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:0.013596 score_max:0.238433 active_pre_mean:0.0308 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:200/500 val_loss:3.1606 val_bpb:1.8719 train_time:97559ms step_avg:487.80ms
+step:250/500 train_loss:3.0073 train_time:121641ms step_avg:486.57ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:0.019455 score_max:0.233989 active_pre_mean:0.0787 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:250/500 val_loss:2.9667 val_bpb:1.7571 train_time:121709ms step_avg:486.84ms
+step:300/500 train_loss:2.7826 train_time:145796ms step_avg:485.99ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:0.023642 score_max:0.265148 active_pre_mean:0.1263 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:300/500 val_loss:2.8627 val_bpb:1.6954 train_time:145864ms step_avg:486.21ms
+step:350/500 train_loss:2.8252 train_time:169945ms step_avg:485.56ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:0.027573 score_max:0.288143 active_pre_mean:0.1690 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:350/500 val_loss:2.7920 val_bpb:1.6536 train_time:170013ms step_avg:485.75ms
+step:400/500 train_loss:2.5418 train_time:194113ms step_avg:485.28ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:0.030812 score_max:0.296233 active_pre_mean:0.1997 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:400/500 val_loss:2.7454 val_bpb:1.6260 train_time:194181ms step_avg:485.45ms
+step:450/500 train_loss:2.6934 train_time:218264ms step_avg:485.03ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:0.033732 score_max:0.305598 active_pre_mean:0.2256 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:450/500 val_loss:2.7058 val_bpb:1.6025 train_time:218332ms step_avg:485.18ms
+step:500/500 train_loss:2.6325 train_time:242415ms step_avg:484.83ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:0.035071 score_max:0.302765 active_pre_mean:0.2377 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:500/500 val_loss:2.6865 val_bpb:1.5911 train_time:242483ms step_avg:484.97ms
+peak memory allocated: 16929 MiB reserved: 17274 MiB
+Serialized model: 67224983 bytes
+Code size: 62175 bytes
+Total submission size: 67287158 bytes
+Serialized model int8+zlib: 8876157 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 8938332 bytes
+final_int8_zlib_roundtrip val_loss:2.7167 val_bpb:1.6090 eval_time:20683ms
+final_int8_zlib_roundtrip_exact val_loss:2.71674860 val_bpb:1.60901155
+[2026-04-19T08:55:36Z] VARIANT ENDED
+
+Progress: 🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜ 3/16
+Branch: stf-minimal (1/4)
+Formula: cosine (3/4)
+Run: 2026-04-19_stf-minimal_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-minimal/2026-04-19_stf-minimal_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.71674860 val_bpb:1.60901155
+[2026-04-19T08:55:36Z] MOVING TO NEXT
+
+Completed: stf-minimal / cosine
+Progress: 🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜ 3/16
+Next variant will start shortly.
+[2026-04-19T08:55:36Z] VARIANT STARTED
+
+Progress: 🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜ 4/16
+Branch: stf-minimal (1/4)
+Formula: direction (4/4)
+Run: 2026-04-19_stf-minimal_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T08:55:37Z
+branch=stf-minimal
+run_id=2026-04-19_stf-minimal_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=direction
+nproc_per_node=4
+W0419 08:55:38.257000 4152 torch/distributed/run.py:803] 
+W0419 08:55:38.257000 4152 torch/distributed/run.py:803] *****************************************
+W0419 08:55:38.257000 4152 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 08:55:38.257000 4152 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-minimal_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:minimal stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.045 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:direction stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1258ms step_avg:1257.95ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:0.000000 score_max:0.000000 active_pre_mean:0.0000 active_mean:1.0000 active_min:1.0000 active_max:1.0000 active_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:2/500 train_loss:9.0824 train_time:1777ms step_avg:888.45ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:0.172767 score_max:0.355361 active_pre_mean:0.9968 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:3/500 train_loss:6.4357 train_time:2262ms step_avg:754.12ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:0.653044 score_max:0.862009 active_pre_mean:0.9998 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:4/500 train_loss:6.0607 train_time:2747ms step_avg:686.79ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:0.800813 score_max:0.922166 active_pre_mean:0.9998 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:5/500 train_loss:6.3666 train_time:3233ms step_avg:646.59ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:0.797082 score_max:0.908641 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:6/500 train_loss:6.4977 train_time:3719ms step_avg:619.83ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:0.774211 score_max:0.900650 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:7/500 train_loss:6.2586 train_time:4208ms step_avg:601.17ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:0.778320 score_max:0.914121 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:8/500 train_loss:6.1757 train_time:4688ms step_avg:585.98ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:0.791803 score_max:0.921089 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:9/500 train_loss:5.9920 train_time:5172ms step_avg:574.66ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:0.809092 score_max:0.920672 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:10/500 train_loss:5.8251 train_time:5656ms step_avg:565.64ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:0.822610 score_max:0.920341 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 train_loss:4.3917 train_time:24977ms step_avg:499.55ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:0.798472 score_max:0.944980 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 val_loss:4.3366 val_bpb:2.5683 train_time:25045ms step_avg:500.91ms
+step:100/500 train_loss:3.7848 train_time:49129ms step_avg:491.29ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:0.656365 score_max:0.933614 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:100/500 val_loss:3.7819 val_bpb:2.2398 train_time:49197ms step_avg:491.97ms
+step:150/500 train_loss:3.5037 train_time:73284ms step_avg:488.56ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:0.525097 score_max:0.887251 active_pre_mean:0.9996 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:150/500 val_loss:3.4591 val_bpb:2.0487 train_time:73352ms step_avg:489.02ms
+step:200/500 train_loss:3.1525 train_time:97443ms step_avg:487.21ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:0.524385 score_max:0.845398 active_pre_mean:0.9999 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:200/500 val_loss:3.1902 val_bpb:1.8894 train_time:97511ms step_avg:487.55ms
+step:250/500 train_loss:3.0498 train_time:121598ms step_avg:486.39ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:0.529928 score_max:0.823842 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:250/500 val_loss:3.0081 val_bpb:1.7816 train_time:121666ms step_avg:486.66ms
+step:300/500 train_loss:2.8218 train_time:145760ms step_avg:485.87ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:0.506564 score_max:0.835290 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:300/500 val_loss:2.9025 val_bpb:1.7190 train_time:145828ms step_avg:486.09ms
+step:350/500 train_loss:2.8626 train_time:169916ms step_avg:485.47ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:0.466238 score_max:0.820078 active_pre_mean:0.9999 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:350/500 val_loss:2.8304 val_bpb:1.6763 train_time:169984ms step_avg:485.67ms
+step:400/500 train_loss:2.5778 train_time:194087ms step_avg:485.22ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:0.419970 score_max:0.791046 active_pre_mean:0.9994 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:400/500 val_loss:2.7842 val_bpb:1.6490 train_time:194155ms step_avg:485.39ms
+step:450/500 train_loss:2.7361 train_time:218244ms step_avg:484.99ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:0.371430 score_max:0.764290 active_pre_mean:0.9977 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:450/500 val_loss:2.7424 val_bpb:1.6242 train_time:218312ms step_avg:485.14ms
+step:500/500 train_loss:2.6635 train_time:242400ms step_avg:484.80ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:0.354163 score_max:0.750254 active_pre_mean:0.9964 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:500/500 val_loss:2.7223 val_bpb:1.6123 train_time:242468ms step_avg:484.94ms
+peak memory allocated: 16930 MiB reserved: 17274 MiB
+Serialized model: 67224983 bytes
+Code size: 62175 bytes
+Total submission size: 67287158 bytes
+Serialized model int8+zlib: 8844011 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 8906186 bytes
+final_int8_zlib_roundtrip val_loss:2.7590 val_bpb:1.6340 eval_time:20692ms
+final_int8_zlib_roundtrip_exact val_loss:2.75902088 val_bpb:1.63404757
+[2026-04-19T09:04:00Z] VARIANT ENDED
+
+Progress: 🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜ 4/16
+Branch: stf-minimal (1/4)
+Formula: direction (4/4)
+Run: 2026-04-19_stf-minimal_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-minimal/2026-04-19_stf-minimal_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.75902088 val_bpb:1.63404757
+[2026-04-19T09:04:00Z] MOVING TO NEXT
+
+Completed: stf-minimal / direction
+Progress: 🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜ 4/16
+Next variant will start shortly.
+From https://github.com/yuvaraj-97/parameter-golf-stf
+ * branch            stf-learned-gate -> FETCH_HEAD
+Switched to a new branch 'stf-learned-gate'
+branch 'stf-learned-gate' set up to track 'origin/stf-learned-gate'.
+Already up to date.
+[2026-04-19T09:04:01Z] VARIANT STARTED
+
+Progress: 🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜ 5/16
+Branch: stf-learned-gate (2/4)
+Formula: l2 (1/4)
+Run: 2026-04-19_stf-learned-gate_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T09:04:01Z
+branch=stf-learned-gate
+run_id=2026-04-19_stf-learned-gate_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=l2
+nproc_per_node=4
+W0419 09:04:02.722000 4657 torch/distributed/run.py:803] 
+W0419 09:04:02.722000 4657 torch/distributed/run.py:803] *****************************************
+W0419 09:04:02.722000 4657 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 09:04:02.722000 4657 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-learned-gate_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059930
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:learned_gate stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.02 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:l2 stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1350ms step_avg:1349.52ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:0.000000 score_max:0.000000 gate_mean:0.4609 gate_min:0.4609 gate_max:0.4609 gate_by_layer:3:0.461,4:0.461,5:0.461,6:0.461,7:0.461,8:0.461
+step:2/500 train_loss:8.9878 train_time:1851ms step_avg:925.58ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:1.020490 score_max:1.442751 gate_mean:0.9990 gate_min:0.9961 gate_max:1.0000 gate_by_layer:3:0.996,4:0.998,5:1.000,6:1.000,7:1.000,8:1.000
+step:3/500 train_loss:6.3301 train_time:2350ms step_avg:783.21ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:2.246622 score_max:3.326644 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:4/500 train_loss:6.0239 train_time:2849ms step_avg:712.22ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:3.387390 score_max:4.940070 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:5/500 train_loss:6.3199 train_time:3348ms step_avg:669.54ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:4.603998 score_max:7.007514 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:6/500 train_loss:6.3921 train_time:3845ms step_avg:640.88ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:5.603398 score_max:8.795027 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:7/500 train_loss:6.1419 train_time:4342ms step_avg:620.29ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:6.745845 score_max:10.675777 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:8/500 train_loss:6.0694 train_time:4839ms step_avg:604.84ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:7.969640 score_max:12.988277 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:9/500 train_loss:5.9291 train_time:5336ms step_avg:592.85ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:9.373461 score_max:15.728961 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:10/500 train_loss:5.7742 train_time:5832ms step_avg:583.22ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:10.897474 score_max:19.071205 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:50/500 train_loss:4.3322 train_time:25654ms step_avg:513.08ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:21.927200 score_max:89.075401 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:50/500 val_loss:4.2804 val_bpb:2.5351 train_time:25722ms step_avg:514.44ms
+step:100/500 train_loss:3.6972 train_time:50448ms step_avg:504.48ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:20.952110 score_max:99.286667 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:100/500 val_loss:3.6935 val_bpb:2.1875 train_time:50516ms step_avg:505.16ms
+step:150/500 train_loss:3.4044 train_time:75236ms step_avg:501.57ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:20.601063 score_max:75.332298 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:150/500 val_loss:3.3589 val_bpb:1.9893 train_time:75304ms step_avg:502.02ms
+step:200/500 train_loss:3.0217 train_time:100023ms step_avg:500.12ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:20.409782 score_max:80.391182 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:200/500 val_loss:3.0661 val_bpb:1.8159 train_time:100091ms step_avg:500.45ms
+step:250/500 train_loss:2.9348 train_time:124818ms step_avg:499.27ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:19.405220 score_max:72.232567 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:250/500 val_loss:2.8942 val_bpb:1.7141 train_time:124886ms step_avg:499.54ms
+step:300/500 train_loss:2.7154 train_time:149602ms step_avg:498.67ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:19.021997 score_max:73.690491 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:300/500 val_loss:2.7930 val_bpb:1.6542 train_time:149670ms step_avg:498.90ms
+step:350/500 train_loss:2.7461 train_time:174388ms step_avg:498.25ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:18.420561 score_max:70.151764 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:350/500 val_loss:2.7134 val_bpb:1.6070 train_time:174456ms step_avg:498.45ms
+step:400/500 train_loss:2.4584 train_time:199191ms step_avg:497.98ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:18.164982 score_max:59.831787 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:400/500 val_loss:2.6635 val_bpb:1.5775 train_time:199258ms step_avg:498.15ms
+step:450/500 train_loss:2.6069 train_time:223976ms step_avg:497.72ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:17.610250 score_max:56.449669 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:450/500 val_loss:2.6179 val_bpb:1.5505 train_time:224044ms step_avg:497.87ms
+step:500/500 train_loss:2.5369 train_time:248758ms step_avg:497.52ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:17.255547 score_max:54.047466 gate_mean:1.0000 gate_min:1.0000 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:500/500 val_loss:2.5965 val_bpb:1.5378 train_time:248826ms step_avg:497.65ms
+peak memory allocated: 15007 MiB reserved: 15608 MiB
+Serialized model: 67225625 bytes
+Code size: 62180 bytes
+Total submission size: 67287805 bytes
+Serialized model int8+zlib: 8828075 bytes (payload:17178948 raw_torch:17224661 payload_ratio:3.91x)
+Total submission size int8+zlib: 8890255 bytes
+final_int8_zlib_roundtrip val_loss:2.6229 val_bpb:1.5534 eval_time:18525ms
+final_int8_zlib_roundtrip_exact val_loss:2.62291176 val_bpb:1.55343609
+[2026-04-19T09:12:05Z] VARIANT ENDED
+
+Progress: 🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜ 5/16
+Branch: stf-learned-gate (2/4)
+Formula: l2 (1/4)
+Run: 2026-04-19_stf-learned-gate_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-learned-gate/2026-04-19_stf-learned-gate_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.62291176 val_bpb:1.55343609
+[2026-04-19T09:12:05Z] MOVING TO NEXT
+
+Completed: stf-learned-gate / l2
+Progress: 🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜ 5/16
+Next variant will start shortly.
+[2026-04-19T09:12:05Z] VARIANT STARTED
+
+Progress: 🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜ 6/16
+Branch: stf-learned-gate (2/4)
+Formula: relative_l2 (2/4)
+Run: 2026-04-19_stf-learned-gate_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T09:12:06Z
+branch=stf-learned-gate
+run_id=2026-04-19_stf-learned-gate_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=relative_l2
+nproc_per_node=4
+W0419 09:12:07.251000 5147 torch/distributed/run.py:803] 
+W0419 09:12:07.251000 5147 torch/distributed/run.py:803] *****************************************
+W0419 09:12:07.251000 5147 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 09:12:07.251000 5147 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-learned-gate_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059930
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:learned_gate stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.02 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:relative_l2 stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1345ms step_avg:1344.53ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:0.000000 score_max:0.000000 gate_mean:0.4609 gate_min:0.4609 gate_max:0.4609 gate_by_layer:3:0.461,4:0.461,5:0.461,6:0.461,7:0.461,8:0.461
+step:2/500 train_loss:9.0685 train_time:1868ms step_avg:934.22ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:0.029377 score_max:0.034883 gate_mean:0.5187 gate_min:0.5117 gate_max:0.5312 gate_by_layer:3:0.526,4:0.523,5:0.520,6:0.516,7:0.515,8:0.512
+step:3/500 train_loss:6.3868 train_time:2385ms step_avg:794.90ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:0.057597 score_max:0.069323 gate_mean:0.5746 gate_min:0.5547 gate_max:0.5977 gate_by_layer:3:0.589,4:0.584,5:0.577,6:0.571,7:0.565,8:0.561
+step:4/500 train_loss:6.0438 train_time:2901ms step_avg:725.16ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:0.083340 score_max:0.100526 gate_mean:0.6239 gate_min:0.5859 gate_max:0.6562 gate_by_layer:3:0.646,4:0.638,5:0.629,6:0.619,7:0.610,8:0.602
+step:5/500 train_loss:6.3579 train_time:3416ms step_avg:683.13ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:0.105267 score_max:0.133935 gate_mean:0.6640 gate_min:0.6211 gate_max:0.7148 gate_by_layer:3:0.692,4:0.681,5:0.670,6:0.658,7:0.647,8:0.637
+step:6/500 train_loss:6.4573 train_time:3931ms step_avg:655.22ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:0.127521 score_max:0.161730 gate_mean:0.7022 gate_min:0.6406 gate_max:0.7578 gate_by_layer:3:0.734,4:0.722,5:0.708,6:0.695,7:0.682,8:0.671
+step:7/500 train_loss:6.1975 train_time:4446ms step_avg:635.12ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:0.150281 score_max:0.187908 gate_mean:0.7385 gate_min:0.6641 gate_max:0.7930 gate_by_layer:3:0.774,4:0.760,5:0.745,6:0.731,7:0.717,8:0.704
+step:8/500 train_loss:6.1072 train_time:4960ms step_avg:620.05ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:0.174218 score_max:0.226993 gate_mean:0.7734 gate_min:0.6914 gate_max:0.8398 gate_by_layer:3:0.811,4:0.797,5:0.781,6:0.765,7:0.750,8:0.737
+step:9/500 train_loss:5.9421 train_time:5474ms step_avg:608.27ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:0.198116 score_max:0.265063 gate_mean:0.8047 gate_min:0.7109 gate_max:0.8750 gate_by_layer:3:0.844,4:0.829,5:0.813,6:0.796,7:0.781,8:0.766
+step:10/500 train_loss:5.7827 train_time:5989ms step_avg:598.89ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:0.220886 score_max:0.295330 gate_mean:0.8313 gate_min:0.7266 gate_max:0.9023 gate_by_layer:3:0.869,4:0.855,5:0.839,6:0.823,7:0.808,8:0.793
+step:50/500 train_loss:4.3406 train_time:26515ms step_avg:530.30ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:0.371284 score_max:0.652264 gate_mean:0.9369 gate_min:0.7539 gate_max:0.9922 gate_by_layer:3:0.961,4:0.952,5:0.942,6:0.932,7:0.922,8:0.912
+step:50/500 val_loss:4.2859 val_bpb:2.5384 train_time:26583ms step_avg:531.66ms
+step:100/500 train_loss:3.7007 train_time:52177ms step_avg:521.77ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:0.381580 score_max:1.227239 gate_mean:0.9419 gate_min:0.8320 gate_max:1.0000 gate_by_layer:3:0.965,4:0.956,5:0.946,6:0.937,7:0.928,8:0.920
+step:100/500 val_loss:3.6952 val_bpb:2.1885 train_time:52244ms step_avg:522.44ms
+step:150/500 train_loss:3.3967 train_time:77843ms step_avg:518.95ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:0.485099 score_max:1.961126 gate_mean:0.9683 gate_min:0.8477 gate_max:1.0000 gate_by_layer:3:0.985,4:0.980,5:0.973,6:0.965,7:0.957,8:0.950
+step:150/500 val_loss:3.3527 val_bpb:1.9856 train_time:77911ms step_avg:519.40ms
+step:200/500 train_loss:3.0217 train_time:103514ms step_avg:517.57ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:0.565320 score_max:2.394816 gate_mean:0.9805 gate_min:0.8789 gate_max:1.0000 gate_by_layer:3:0.992,4:0.989,5:0.984,6:0.978,7:0.972,8:0.967
+step:200/500 val_loss:3.0652 val_bpb:1.8154 train_time:103581ms step_avg:517.91ms
+step:250/500 train_loss:2.9309 train_time:129179ms step_avg:516.71ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:0.604371 score_max:2.527447 gate_mean:0.9849 gate_min:0.8906 gate_max:1.0000 gate_by_layer:3:0.994,4:0.992,5:0.988,6:0.983,7:0.978,8:0.973
+step:250/500 val_loss:2.8938 val_bpb:1.7139 train_time:129246ms step_avg:516.98ms
+step:300/500 train_loss:2.7099 train_time:154845ms step_avg:516.15ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:0.640550 score_max:2.739017 gate_mean:0.9881 gate_min:0.9102 gate_max:1.0000 gate_by_layer:3:0.996,4:0.994,5:0.991,6:0.987,7:0.982,8:0.978
+step:300/500 val_loss:2.7874 val_bpb:1.6508 train_time:154912ms step_avg:516.37ms
+step:350/500 train_loss:2.7484 train_time:180510ms step_avg:515.74ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:0.659659 score_max:2.563210 gate_mean:0.9896 gate_min:0.9062 gate_max:1.0000 gate_by_layer:3:0.996,4:0.995,5:0.992,6:0.989,7:0.984,8:0.981
+step:350/500 val_loss:2.7137 val_bpb:1.6072 train_time:180578ms step_avg:515.94ms
+step:400/500 train_loss:2.4589 train_time:206878ms step_avg:517.19ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:0.669499 score_max:2.668734 gate_mean:0.9904 gate_min:0.9102 gate_max:1.0000 gate_by_layer:3:0.997,4:0.995,5:0.993,6:0.990,7:0.986,8:0.982
+step:400/500 val_loss:2.6632 val_bpb:1.5773 train_time:206947ms step_avg:517.37ms
+step:450/500 train_loss:2.6074 train_time:233192ms step_avg:518.20ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:0.679185 score_max:2.725824 gate_mean:0.9911 gate_min:0.9141 gate_max:1.0000 gate_by_layer:3:0.997,4:0.996,5:0.993,6:0.990,7:0.987,8:0.984
+step:450/500 val_loss:2.6203 val_bpb:1.5519 train_time:233261ms step_avg:518.36ms
+step:500/500 train_loss:2.5428 train_time:259499ms step_avg:519.00ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:0.684893 score_max:2.745279 gate_mean:0.9914 gate_min:0.9141 gate_max:1.0000 gate_by_layer:3:0.997,4:0.996,5:0.994,6:0.991,7:0.987,8:0.984
+step:500/500 val_loss:2.5990 val_bpb:1.5393 train_time:259568ms step_avg:519.14ms
+peak memory allocated: 15778 MiB reserved: 16444 MiB
+Serialized model: 67225625 bytes
+Code size: 62180 bytes
+Total submission size: 67287805 bytes
+Serialized model int8+zlib: 8827843 bytes (payload:17178948 raw_torch:17224661 payload_ratio:3.91x)
+Total submission size int8+zlib: 8890023 bytes
+final_int8_zlib_roundtrip val_loss:2.6266 val_bpb:1.5556 eval_time:19421ms
+final_int8_zlib_roundtrip_exact val_loss:2.62660489 val_bpb:1.55562337
+[2026-04-19T09:20:26Z] VARIANT ENDED
+
+Progress: 🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜ 6/16
+Branch: stf-learned-gate (2/4)
+Formula: relative_l2 (2/4)
+Run: 2026-04-19_stf-learned-gate_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-learned-gate/2026-04-19_stf-learned-gate_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.62660489 val_bpb:1.55562337
+[2026-04-19T09:20:26Z] MOVING TO NEXT
+
+Completed: stf-learned-gate / relative_l2
+Progress: 🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜ 6/16
+Next variant will start shortly.
+[2026-04-19T09:20:26Z] VARIANT STARTED
+
+Progress: 🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜ 7/16
+Branch: stf-learned-gate (2/4)
+Formula: cosine (3/4)
+Run: 2026-04-19_stf-learned-gate_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T09:20:26Z
+branch=stf-learned-gate
+run_id=2026-04-19_stf-learned-gate_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=cosine
+nproc_per_node=4
+W0419 09:20:28.055000 5637 torch/distributed/run.py:803] 
+W0419 09:20:28.055000 5637 torch/distributed/run.py:803] *****************************************
+W0419 09:20:28.055000 5637 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 09:20:28.055000 5637 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-learned-gate_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059930
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:learned_gate stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.02 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:cosine stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1403ms step_avg:1402.90ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:-0.000000 score_max:0.000000 gate_mean:0.4609 gate_min:0.4609 gate_max:0.4609 gate_by_layer:3:0.461,4:0.461,5:0.461,6:0.461,7:0.461,8:0.461
+step:2/500 train_loss:9.0754 train_time:2024ms step_avg:1011.82ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:0.000213 score_max:0.000290 gate_mean:0.4609 gate_min:0.4609 gate_max:0.4609 gate_by_layer:3:0.461,4:0.461,5:0.461,6:0.461,7:0.461,8:0.461
+step:3/500 train_loss:6.3987 train_time:2616ms step_avg:871.93ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:0.000407 score_max:0.000881 gate_mean:0.4609 gate_min:0.4609 gate_max:0.4609 gate_by_layer:3:0.461,4:0.461,5:0.461,6:0.461,7:0.461,8:0.461
+step:4/500 train_loss:6.0503 train_time:3208ms step_avg:802.05ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:0.000478 score_max:0.001720 gate_mean:0.4610 gate_min:0.4609 gate_max:0.4629 gate_by_layer:3:0.461,4:0.461,5:0.461,6:0.461,7:0.461,8:0.461
+step:5/500 train_loss:6.3700 train_time:3803ms step_avg:760.55ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:0.000729 score_max:0.002692 gate_mean:0.4613 gate_min:0.4609 gate_max:0.4648 gate_by_layer:3:0.462,4:0.461,5:0.461,6:0.461,7:0.461,8:0.461
+step:6/500 train_loss:6.4887 train_time:4392ms step_avg:732.05ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:0.001078 score_max:0.003877 gate_mean:0.4622 gate_min:0.4609 gate_max:0.4688 gate_by_layer:3:0.463,4:0.463,5:0.463,6:0.462,7:0.462,8:0.461
+step:7/500 train_loss:6.2384 train_time:4982ms step_avg:711.77ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:0.001350 score_max:0.006116 gate_mean:0.4629 gate_min:0.4609 gate_max:0.4727 gate_by_layer:3:0.463,4:0.463,5:0.463,6:0.463,7:0.462,8:0.462
+step:8/500 train_loss:6.1479 train_time:5573ms step_avg:696.62ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:0.001598 score_max:0.008163 gate_mean:0.4633 gate_min:0.4609 gate_max:0.4766 gate_by_layer:3:0.464,4:0.464,5:0.463,6:0.463,7:0.463,8:0.463
+step:9/500 train_loss:5.9818 train_time:6162ms step_avg:684.68ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:0.001770 score_max:0.010462 gate_mean:0.4636 gate_min:0.4609 gate_max:0.4805 gate_by_layer:3:0.465,4:0.464,5:0.464,6:0.463,7:0.463,8:0.463
+step:10/500 train_loss:5.8132 train_time:6753ms step_avg:675.31ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:0.001868 score_max:0.012930 gate_mean:0.4638 gate_min:0.4609 gate_max:0.4863 gate_by_layer:3:0.465,4:0.464,5:0.464,6:0.464,7:0.463,8:0.463
+step:50/500 train_loss:4.3599 train_time:30329ms step_avg:606.57ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:0.004037 score_max:0.021179 gate_mean:0.4681 gate_min:0.4609 gate_max:0.5039 gate_by_layer:3:0.470,4:0.469,5:0.468,6:0.468,7:0.467,8:0.466
+step:50/500 val_loss:4.3075 val_bpb:2.5511 train_time:30397ms step_avg:607.94ms
+step:100/500 train_loss:3.7347 train_time:59808ms step_avg:598.08ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:0.007900 score_max:0.190051 gate_mean:0.4758 gate_min:0.4648 gate_max:0.7969 gate_by_layer:3:0.480,4:0.478,5:0.476,6:0.475,7:0.473,8:0.472
+step:100/500 val_loss:3.7318 val_bpb:2.2102 train_time:59876ms step_avg:598.76ms
+step:150/500 train_loss:3.4296 train_time:89293ms step_avg:595.29ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:0.028060 score_max:0.282827 gate_mean:0.5160 gate_min:0.4707 gate_max:0.8906 gate_by_layer:3:0.535,4:0.526,5:0.518,6:0.511,7:0.505,8:0.500
+step:150/500 val_loss:3.3881 val_bpb:2.0066 train_time:89363ms step_avg:595.75ms
+step:200/500 train_loss:3.0508 train_time:118778ms step_avg:593.89ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:0.051219 score_max:0.307183 gate_mean:0.5614 gate_min:0.4766 gate_max:0.9102 gate_by_layer:3:0.595,4:0.581,5:0.566,6:0.553,7:0.542,8:0.532
+step:200/500 val_loss:3.0919 val_bpb:1.8312 train_time:118847ms step_avg:594.23ms
+step:250/500 train_loss:2.9615 train_time:148267ms step_avg:593.07ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:0.067252 score_max:0.327927 gate_mean:0.5920 gate_min:0.4844 gate_max:0.9219 gate_by_layer:3:0.634,4:0.617,5:0.598,6:0.582,7:0.567,8:0.554
+step:250/500 val_loss:2.9181 val_bpb:1.7283 train_time:148336ms step_avg:593.34ms
+step:300/500 train_loss:2.7352 train_time:177750ms step_avg:592.50ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:0.081614 score_max:0.341419 gate_mean:0.6187 gate_min:0.4863 gate_max:0.9297 gate_by_layer:3:0.666,4:0.648,5:0.627,6:0.607,7:0.590,8:0.575
+step:300/500 val_loss:2.8136 val_bpb:1.6664 train_time:177819ms step_avg:592.73ms
+step:350/500 train_loss:2.7739 train_time:207234ms step_avg:592.10ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:0.093194 score_max:0.358566 gate_mean:0.6397 gate_min:0.4961 gate_max:0.9375 gate_by_layer:3:0.691,4:0.672,5:0.649,6:0.628,7:0.608,8:0.591
+step:350/500 val_loss:2.7396 val_bpb:1.6225 train_time:207303ms step_avg:592.29ms
+step:400/500 train_loss:2.4838 train_time:236730ms step_avg:591.82ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:0.104088 score_max:0.364155 gate_mean:0.6589 gate_min:0.4961 gate_max:0.9414 gate_by_layer:3:0.714,4:0.693,5:0.669,6:0.646,7:0.625,8:0.606
+step:400/500 val_loss:2.6868 val_bpb:1.5913 train_time:236798ms step_avg:592.00ms
+step:450/500 train_loss:2.6342 train_time:266213ms step_avg:591.59ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:0.112986 score_max:0.379926 gate_mean:0.6741 gate_min:0.5039 gate_max:0.9453 gate_by_layer:3:0.731,4:0.711,5:0.686,6:0.661,7:0.638,8:0.618
+step:450/500 val_loss:2.6436 val_bpb:1.5657 train_time:266282ms step_avg:591.74ms
+step:500/500 train_loss:2.5623 train_time:295704ms step_avg:591.41ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:0.119632 score_max:0.393560 gate_mean:0.6852 gate_min:0.5000 gate_max:0.9531 gate_by_layer:3:0.744,4:0.723,5:0.697,6:0.672,7:0.648,8:0.627
+step:500/500 val_loss:2.6222 val_bpb:1.5530 train_time:295773ms step_avg:591.55ms
+peak memory allocated: 17316 MiB reserved: 17980 MiB
+Serialized model: 67225625 bytes
+Code size: 62180 bytes
+Total submission size: 67287805 bytes
+Serialized model int8+zlib: 8805582 bytes (payload:17178948 raw_torch:17224661 payload_ratio:3.91x)
+Total submission size int8+zlib: 8867762 bytes
+final_int8_zlib_roundtrip val_loss:2.6497 val_bpb:1.5693 eval_time:21026ms
+final_int8_zlib_roundtrip_exact val_loss:2.64965428 val_bpb:1.56927451
+[2026-04-19T09:29:48Z] VARIANT ENDED
+
+Progress: 🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜ 7/16
+Branch: stf-learned-gate (2/4)
+Formula: cosine (3/4)
+Run: 2026-04-19_stf-learned-gate_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-learned-gate/2026-04-19_stf-learned-gate_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.64965428 val_bpb:1.56927451
+[2026-04-19T09:29:48Z] MOVING TO NEXT
+
+Completed: stf-learned-gate / cosine
+Progress: 🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜ 7/16
+Next variant will start shortly.
+[2026-04-19T09:29:48Z] VARIANT STARTED
+
+Progress: 🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜ 8/16
+Branch: stf-learned-gate (2/4)
+Formula: direction (4/4)
+Run: 2026-04-19_stf-learned-gate_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T09:29:48Z
+branch=stf-learned-gate
+run_id=2026-04-19_stf-learned-gate_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=direction
+nproc_per_node=4
+W0419 09:29:49.924000 6127 torch/distributed/run.py:803] 
+W0419 09:29:49.924000 6127 torch/distributed/run.py:803] *****************************************
+W0419 09:29:49.924000 6127 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 09:29:49.924000 6127 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-learned-gate_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059930
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:learned_gate stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.02 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:direction stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1423ms step_avg:1423.01ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:0.000000 score_max:0.000000 gate_mean:0.4609 gate_min:0.4609 gate_max:0.4609 gate_by_layer:3:0.461,4:0.461,5:0.461,6:0.461,7:0.461,8:0.461
+step:2/500 train_loss:9.0236 train_time:2031ms step_avg:1015.32ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:0.183177 score_max:0.354603 gate_mean:0.7793 gate_min:0.4609 gate_max:0.9375 gate_by_layer:3:0.755,4:0.765,5:0.781,6:0.791,7:0.790,8:0.794
+step:3/500 train_loss:6.3372 train_time:2632ms step_avg:877.42ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:0.883638 score_max:0.968596 gate_mean:0.9996 gate_min:0.9766 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:0.999,8:0.999
+step:4/500 train_loss:6.0270 train_time:3233ms step_avg:808.14ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:0.954385 score_max:0.989145 gate_mean:1.0000 gate_min:0.9883 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:5/500 train_loss:6.3288 train_time:3836ms step_avg:767.12ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:0.957850 score_max:0.989624 gate_mean:1.0000 gate_min:0.9922 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:6/500 train_loss:6.4109 train_time:4434ms step_avg:738.94ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:0.955074 score_max:0.987775 gate_mean:1.0000 gate_min:0.9961 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:7/500 train_loss:6.1619 train_time:5033ms step_avg:719.00ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:0.957473 score_max:0.987649 gate_mean:1.0000 gate_min:0.9961 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:8/500 train_loss:6.0949 train_time:5631ms step_avg:703.93ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:0.958361 score_max:0.986795 gate_mean:1.0000 gate_min:0.9883 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:9/500 train_loss:5.9630 train_time:6230ms step_avg:692.27ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:0.960093 score_max:0.986597 gate_mean:1.0000 gate_min:0.9883 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:10/500 train_loss:5.7901 train_time:6829ms step_avg:682.91ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:0.961009 score_max:0.984162 gate_mean:1.0000 gate_min:0.9922 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:50/500 train_loss:4.3609 train_time:30737ms step_avg:614.75ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:0.902130 score_max:0.983406 gate_mean:0.9998 gate_min:0.9844 gate_max:1.0000 gate_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:50/500 val_loss:4.3038 val_bpb:2.5490 train_time:30806ms step_avg:616.11ms
+step:100/500 train_loss:3.7269 train_time:60639ms step_avg:606.39ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:0.818562 score_max:0.958188 gate_mean:0.9985 gate_min:0.5508 gate_max:1.0000 gate_by_layer:3:0.998,4:0.998,5:0.998,6:0.999,7:0.999,8:0.999
+step:100/500 val_loss:3.7187 val_bpb:2.2024 train_time:60708ms step_avg:607.08ms
+step:150/500 train_loss:3.4225 train_time:90541ms step_avg:603.61ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:0.621634 score_max:0.910857 gate_mean:0.9882 gate_min:0.4688 gate_max:1.0000 gate_by_layer:3:0.980,4:0.985,5:0.988,6:0.990,7:0.992,8:0.994
+step:150/500 val_loss:3.3804 val_bpb:2.0021 train_time:90609ms step_avg:604.06ms
+step:200/500 train_loss:3.0498 train_time:120442ms step_avg:602.21ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:0.523686 score_max:0.878330 gate_mean:0.9762 gate_min:0.4648 gate_max:1.0000 gate_by_layer:3:0.964,4:0.970,5:0.975,6:0.979,7:0.983,8:0.986
+step:200/500 val_loss:3.0904 val_bpb:1.8303 train_time:120510ms step_avg:602.55ms
+step:250/500 train_loss:2.9491 train_time:150328ms step_avg:601.31ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:0.471377 score_max:0.818392 gate_mean:0.9665 gate_min:0.5000 gate_max:1.0000 gate_by_layer:3:0.955,4:0.959,5:0.965,6:0.969,7:0.973,8:0.978
+step:250/500 val_loss:2.9097 val_bpb:1.7233 train_time:150397ms step_avg:601.59ms
+step:300/500 train_loss:2.7257 train_time:180225ms step_avg:600.75ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:0.434155 score_max:0.811725 gate_mean:0.9567 gate_min:0.4746 gate_max:1.0000 gate_by_layer:3:0.947,4:0.949,5:0.954,6:0.958,7:0.962,8:0.969
+step:300/500 val_loss:2.8005 val_bpb:1.6586 train_time:180294ms step_avg:600.98ms
+step:350/500 train_loss:2.7584 train_time:210119ms step_avg:600.34ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:0.404377 score_max:0.791738 gate_mean:0.9469 gate_min:0.4961 gate_max:0.9961 gate_by_layer:3:0.941,4:0.941,5:0.944,6:0.946,7:0.951,8:0.960
+step:350/500 val_loss:2.7249 val_bpb:1.6138 train_time:210187ms step_avg:600.53ms
+step:400/500 train_loss:2.4695 train_time:240018ms step_avg:600.04ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:0.378155 score_max:0.764622 gate_mean:0.9367 gate_min:0.4648 gate_max:0.9961 gate_by_layer:3:0.937,4:0.933,5:0.933,6:0.933,7:0.937,8:0.947
+step:400/500 val_loss:2.6730 val_bpb:1.5831 train_time:240086ms step_avg:600.22ms
+step:450/500 train_loss:2.6155 train_time:269907ms step_avg:599.79ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:0.358628 score_max:0.738390 gate_mean:0.9274 gate_min:0.4648 gate_max:0.9961 gate_by_layer:3:0.934,4:0.927,5:0.924,6:0.921,7:0.923,8:0.935
+step:450/500 val_loss:2.6284 val_bpb:1.5567 train_time:269976ms step_avg:599.95ms
+step:500/500 train_loss:2.5490 train_time:299802ms step_avg:599.60ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:0.350593 score_max:0.729477 gate_mean:0.9235 gate_min:0.4863 gate_max:0.9961 gate_by_layer:3:0.935,4:0.925,5:0.919,6:0.915,7:0.917,8:0.930
+step:500/500 val_loss:2.6067 val_bpb:1.5438 train_time:299870ms step_avg:599.74ms
+peak memory allocated: 17317 MiB reserved: 17982 MiB
+Serialized model: 67225625 bytes
+Code size: 62180 bytes
+Total submission size: 67287805 bytes
+Serialized model int8+zlib: 8815184 bytes (payload:17178948 raw_torch:17224661 payload_ratio:3.91x)
+Total submission size int8+zlib: 8877364 bytes
+final_int8_zlib_roundtrip val_loss:2.6347 val_bpb:1.5604 eval_time:21006ms
+final_int8_zlib_roundtrip_exact val_loss:2.63468715 val_bpb:1.56041013
+[2026-04-19T09:39:13Z] VARIANT ENDED
+
+Progress: 🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜ 8/16
+Branch: stf-learned-gate (2/4)
+Formula: direction (4/4)
+Run: 2026-04-19_stf-learned-gate_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-learned-gate/2026-04-19_stf-learned-gate_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.63468715 val_bpb:1.56041013
+[2026-04-19T09:39:13Z] MOVING TO NEXT
+
+Completed: stf-learned-gate / direction
+Progress: 🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜ 8/16
+Next variant will start shortly.
+From https://github.com/yuvaraj-97/parameter-golf-stf
+ * branch            stf-soft-freeze -> FETCH_HEAD
+Switched to a new branch 'stf-soft-freeze'
+branch 'stf-soft-freeze' set up to track 'origin/stf-soft-freeze'.
+Already up to date.
+[2026-04-19T09:39:14Z] VARIANT STARTED
+
+Progress: 🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜ 9/16
+Branch: stf-soft-freeze (3/4)
+Formula: l2 (1/4)
+Run: 2026-04-19_stf-soft-freeze_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T09:39:14Z
+branch=stf-soft-freeze
+run_id=2026-04-19_stf-soft-freeze_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=l2
+nproc_per_node=4
+W0419 09:39:16.064000 6632 torch/distributed/run.py:803] 
+W0419 09:39:16.064000 6632 torch/distributed/run.py:803] *****************************************
+W0419 09:39:16.064000 6632 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 09:39:16.064000 6632 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-soft-freeze_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:soft_freeze stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.045 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:l2 stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1251ms step_avg:1251.25ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:0.000000 score_max:0.000000 active_pre_mean:0.0000 active_mean:1.0000 active_min:1.0000 active_max:1.0000 active_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:2/500 train_loss:9.0508 train_time:1776ms step_avg:887.77ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:1.021742 score_max:1.445112 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:3/500 train_loss:6.3967 train_time:2267ms step_avg:755.82ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:2.196741 score_max:3.304429 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:4/500 train_loss:6.0461 train_time:2763ms step_avg:690.63ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:3.311890 score_max:4.935689 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:5/500 train_loss:6.3529 train_time:3256ms step_avg:651.23ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:4.415828 score_max:6.848402 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:6/500 train_loss:6.4546 train_time:3752ms step_avg:625.34ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:5.387730 score_max:8.682853 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:7/500 train_loss:6.2109 train_time:4245ms step_avg:606.37ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:6.477968 score_max:10.718956 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:8/500 train_loss:6.1357 train_time:4736ms step_avg:591.95ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:7.728340 score_max:13.151737 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:9/500 train_loss:5.9706 train_time:5230ms step_avg:581.17ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:9.138192 score_max:16.008768 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:10/500 train_loss:5.8112 train_time:5722ms step_avg:572.25ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:10.688126 score_max:19.513308 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 train_loss:4.3676 train_time:25412ms step_avg:508.24ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:20.107161 score_max:69.763008 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 val_loss:4.3089 val_bpb:2.5520 train_time:25482ms step_avg:509.64ms
+step:100/500 train_loss:3.7558 train_time:50036ms step_avg:500.36ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:19.645985 score_max:80.862785 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:100/500 val_loss:3.7447 val_bpb:2.2178 train_time:50106ms step_avg:501.06ms
+step:150/500 train_loss:3.4580 train_time:74654ms step_avg:497.69ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:18.863865 score_max:67.860001 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:150/500 val_loss:3.4214 val_bpb:2.0263 train_time:74725ms step_avg:498.16ms
+step:200/500 train_loss:3.1141 train_time:99275ms step_avg:496.38ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:20.141787 score_max:73.610458 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:200/500 val_loss:3.1510 val_bpb:1.8662 train_time:99344ms step_avg:496.72ms
+step:250/500 train_loss:2.9896 train_time:123900ms step_avg:495.60ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:21.574009 score_max:69.518059 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:250/500 val_loss:2.9478 val_bpb:1.7459 train_time:123970ms step_avg:495.88ms
+step:300/500 train_loss:2.7578 train_time:148526ms step_avg:495.09ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:23.337057 score_max:71.933823 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:300/500 val_loss:2.8349 val_bpb:1.6790 train_time:148595ms step_avg:495.32ms
+step:350/500 train_loss:2.7906 train_time:173150ms step_avg:494.71ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:24.559881 score_max:72.151886 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:350/500 val_loss:2.7576 val_bpb:1.6332 train_time:173220ms step_avg:494.91ms
+step:400/500 train_loss:2.5023 train_time:197801ms step_avg:494.50ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:25.245932 score_max:63.340370 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:400/500 val_loss:2.7054 val_bpb:1.6023 train_time:197871ms step_avg:494.68ms
+step:450/500 train_loss:2.6530 train_time:222420ms step_avg:494.27ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:25.357040 score_max:63.237656 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:450/500 val_loss:2.6616 val_bpb:1.5763 train_time:222489ms step_avg:494.42ms
+step:500/500 train_loss:2.5848 train_time:247043ms step_avg:494.09ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:25.203606 score_max:60.910057 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:500/500 val_loss:2.6401 val_bpb:1.5636 train_time:247113ms step_avg:494.23ms
+peak memory allocated: 14620 MiB reserved: 14966 MiB
+Serialized model: 67224983 bytes
+Code size: 62179 bytes
+Total submission size: 67287162 bytes
+Serialized model int8+zlib: 8845821 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 8908000 bytes
+final_int8_zlib_roundtrip val_loss:2.6691 val_bpb:1.5808 eval_time:20139ms
+final_int8_zlib_roundtrip_exact val_loss:2.66912828 val_bpb:1.58080811
+[2026-04-19T09:47:36Z] VARIANT ENDED
+
+Progress: 🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜ 9/16
+Branch: stf-soft-freeze (3/4)
+Formula: l2 (1/4)
+Run: 2026-04-19_stf-soft-freeze_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-soft-freeze/2026-04-19_stf-soft-freeze_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.66912828 val_bpb:1.58080811
+[2026-04-19T09:47:36Z] MOVING TO NEXT
+
+Completed: stf-soft-freeze / l2
+Progress: 🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜ 9/16
+Next variant will start shortly.
+[2026-04-19T09:47:37Z] VARIANT STARTED
+
+Progress: 🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜ 10/16
+Branch: stf-soft-freeze (3/4)
+Formula: relative_l2 (2/4)
+Run: 2026-04-19_stf-soft-freeze_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T09:47:37Z
+branch=stf-soft-freeze
+run_id=2026-04-19_stf-soft-freeze_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=relative_l2
+nproc_per_node=4
+W0419 09:47:38.430000 7122 torch/distributed/run.py:803] 
+W0419 09:47:38.430000 7122 torch/distributed/run.py:803] *****************************************
+W0419 09:47:38.430000 7122 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 09:47:38.430000 7122 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-soft-freeze_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:soft_freeze stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.045 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:relative_l2 stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1260ms step_avg:1260.05ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:0.000000 score_max:0.000000 active_pre_mean:0.0000 active_mean:1.0000 active_min:1.0000 active_max:1.0000 active_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:2/500 train_loss:9.0510 train_time:1768ms step_avg:883.89ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:0.029415 score_max:0.035002 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:3/500 train_loss:6.3952 train_time:2263ms step_avg:754.44ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:0.056874 score_max:0.068660 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:4/500 train_loss:6.0468 train_time:2759ms step_avg:689.82ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:0.078148 score_max:0.093252 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:5/500 train_loss:6.3558 train_time:3258ms step_avg:651.53ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:0.098907 score_max:0.118794 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:6/500 train_loss:6.4578 train_time:3752ms step_avg:625.29ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:0.116804 score_max:0.140870 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:7/500 train_loss:6.2205 train_time:4248ms step_avg:606.86ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:0.134960 score_max:0.164985 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:8/500 train_loss:6.1364 train_time:4742ms step_avg:592.73ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:0.153742 score_max:0.194303 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:9/500 train_loss:5.9692 train_time:5238ms step_avg:581.96ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:0.171503 score_max:0.221122 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:10/500 train_loss:5.8133 train_time:5732ms step_avg:573.16ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:0.189176 score_max:0.241154 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 train_loss:4.3702 train_time:25495ms step_avg:509.90ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:0.282806 score_max:0.510590 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 val_loss:4.3116 val_bpb:2.5536 train_time:25566ms step_avg:511.32ms
+step:100/500 train_loss:3.7331 train_time:50213ms step_avg:502.13ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:0.275939 score_max:1.272746 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:100/500 val_loss:3.7310 val_bpb:2.2097 train_time:50283ms step_avg:502.83ms
+step:150/500 train_loss:3.4550 train_time:74932ms step_avg:499.55ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:0.331291 score_max:1.591740 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:150/500 val_loss:3.4164 val_bpb:2.0234 train_time:75002ms step_avg:500.01ms
+step:200/500 train_loss:3.1069 train_time:99645ms step_avg:498.23ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:0.436988 score_max:1.980639 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:200/500 val_loss:3.1426 val_bpb:1.8612 train_time:99715ms step_avg:498.58ms
+step:250/500 train_loss:2.9897 train_time:124371ms step_avg:497.48ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:0.547089 score_max:2.365230 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:250/500 val_loss:2.9499 val_bpb:1.7471 train_time:124440ms step_avg:497.76ms
+step:300/500 train_loss:2.7567 train_time:149093ms step_avg:496.98ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:0.663026 score_max:2.397385 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:300/500 val_loss:2.8365 val_bpb:1.6799 train_time:149163ms step_avg:497.21ms
+step:350/500 train_loss:2.7933 train_time:173806ms step_avg:496.59ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:0.744531 score_max:2.493653 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:350/500 val_loss:2.7608 val_bpb:1.6351 train_time:173876ms step_avg:496.79ms
+step:400/500 train_loss:2.5066 train_time:198531ms step_avg:496.33ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:0.816603 score_max:2.715986 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:400/500 val_loss:2.7119 val_bpb:1.6062 train_time:198600ms step_avg:496.50ms
+step:450/500 train_loss:2.6593 train_time:223240ms step_avg:496.09ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:0.870960 score_max:2.663417 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:450/500 val_loss:2.6688 val_bpb:1.5806 train_time:223310ms step_avg:496.24ms
+step:500/500 train_loss:2.5908 train_time:247962ms step_avg:495.92ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:0.903407 score_max:2.829384 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:500/500 val_loss:2.6480 val_bpb:1.5683 train_time:248031ms step_avg:496.06ms
+peak memory allocated: 15391 MiB reserved: 15736 MiB
+Serialized model: 67224983 bytes
+Code size: 62179 bytes
+Total submission size: 67287162 bytes
+Serialized model int8+zlib: 8870428 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 8932607 bytes
+final_int8_zlib_roundtrip val_loss:2.6764 val_bpb:1.5851 eval_time:20367ms
+final_int8_zlib_roundtrip_exact val_loss:2.67640053 val_bpb:1.58511515
+[2026-04-19T09:56:02Z] VARIANT ENDED
+
+Progress: 🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜ 10/16
+Branch: stf-soft-freeze (3/4)
+Formula: relative_l2 (2/4)
+Run: 2026-04-19_stf-soft-freeze_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-soft-freeze/2026-04-19_stf-soft-freeze_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.67640053 val_bpb:1.58511515
+[2026-04-19T09:56:02Z] MOVING TO NEXT
+
+Completed: stf-soft-freeze / relative_l2
+Progress: 🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜ 10/16
+Next variant will start shortly.
+[2026-04-19T09:56:02Z] VARIANT STARTED
+
+Progress: 🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜ 11/16
+Branch: stf-soft-freeze (3/4)
+Formula: cosine (3/4)
+Run: 2026-04-19_stf-soft-freeze_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T09:56:03Z
+branch=stf-soft-freeze
+run_id=2026-04-19_stf-soft-freeze_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=cosine
+nproc_per_node=4
+W0419 09:56:04.327000 7612 torch/distributed/run.py:803] 
+W0419 09:56:04.327000 7612 torch/distributed/run.py:803] *****************************************
+W0419 09:56:04.327000 7612 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 09:56:04.327000 7612 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-soft-freeze_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:soft_freeze stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.045 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:cosine stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1292ms step_avg:1291.93ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:-0.000000 score_max:0.000000 active_pre_mean:0.0000 active_mean:0.5345 active_min:0.3544 active_max:0.8016 active_by_layer:3:0.802,4:0.802,5:0.427,6:0.427,7:0.396,8:0.354
+step:2/500 train_loss:9.0669 train_time:1819ms step_avg:909.63ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:0.000215 score_max:0.000297 active_pre_mean:0.0000 active_mean:0.3503 active_min:0.3500 active_max:0.3517 active_by_layer:3:0.352,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:3/500 train_loss:6.3619 train_time:2329ms step_avg:776.46ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:0.000405 score_max:0.000820 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3501 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:4/500 train_loss:6.0401 train_time:2840ms step_avg:710.00ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:0.000515 score_max:0.001725 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:5/500 train_loss:6.3631 train_time:3349ms step_avg:669.88ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:0.000798 score_max:0.002862 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:6/500 train_loss:6.4800 train_time:3858ms step_avg:643.03ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:0.001191 score_max:0.004220 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:7/500 train_loss:6.2277 train_time:4367ms step_avg:623.89ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:0.001468 score_max:0.006976 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:8/500 train_loss:6.1430 train_time:4876ms step_avg:609.55ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:0.001715 score_max:0.010074 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:9/500 train_loss:5.9668 train_time:5385ms step_avg:598.28ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:0.001880 score_max:0.012128 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:10/500 train_loss:5.8178 train_time:5892ms step_avg:589.24ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:0.001969 score_max:0.015531 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 train_loss:4.3674 train_time:26209ms step_avg:524.17ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:0.004346 score_max:0.039510 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 val_loss:4.3114 val_bpb:2.5534 train_time:26278ms step_avg:525.56ms
+step:100/500 train_loss:3.7409 train_time:51612ms step_avg:516.12ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:0.005485 score_max:0.119226 active_pre_mean:0.0004 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:100/500 val_loss:3.7438 val_bpb:2.2173 train_time:51681ms step_avg:516.81ms
+step:150/500 train_loss:3.4560 train_time:77031ms step_avg:513.54ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:0.014116 score_max:0.184688 active_pre_mean:0.0192 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:150/500 val_loss:3.4150 val_bpb:2.0226 train_time:77101ms step_avg:514.01ms
+step:200/500 train_loss:3.1223 train_time:102446ms step_avg:512.23ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:0.025488 score_max:0.236515 active_pre_mean:0.0984 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:200/500 val_loss:3.1525 val_bpb:1.8671 train_time:102515ms step_avg:512.58ms
+step:250/500 train_loss:2.9939 train_time:127857ms step_avg:511.43ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:0.036197 score_max:0.269341 active_pre_mean:0.2291 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:250/500 val_loss:2.9507 val_bpb:1.7476 train_time:127926ms step_avg:511.71ms
+step:300/500 train_loss:2.7624 train_time:153259ms step_avg:510.86ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:0.044669 score_max:0.262939 active_pre_mean:0.3956 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:300/500 val_loss:2.8397 val_bpb:1.6818 train_time:153329ms step_avg:511.10ms
+step:350/500 train_loss:2.7978 train_time:178660ms step_avg:510.46ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:0.052248 score_max:0.274341 active_pre_mean:0.5750 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:350/500 val_loss:2.7625 val_bpb:1.6361 train_time:178728ms step_avg:510.65ms
+step:400/500 train_loss:2.5111 train_time:204069ms step_avg:510.17ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:0.058183 score_max:0.287088 active_pre_mean:0.7185 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:400/500 val_loss:2.7124 val_bpb:1.6065 train_time:204137ms step_avg:510.34ms
+step:450/500 train_loss:2.6572 train_time:229463ms step_avg:509.92ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:0.063071 score_max:0.301219 active_pre_mean:0.8262 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:450/500 val_loss:2.6691 val_bpb:1.5808 train_time:229531ms step_avg:510.07ms
+step:500/500 train_loss:2.5927 train_time:254863ms step_avg:509.73ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:0.065765 score_max:0.313859 active_pre_mean:0.8744 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:500/500 val_loss:2.6483 val_bpb:1.5685 train_time:254931ms step_avg:509.86ms
+peak memory allocated: 16929 MiB reserved: 17274 MiB
+Serialized model: 67224983 bytes
+Code size: 62179 bytes
+Total submission size: 67287162 bytes
+Serialized model int8+zlib: 8866884 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 8929063 bytes
+final_int8_zlib_roundtrip val_loss:2.6769 val_bpb:1.5854 eval_time:21969ms
+final_int8_zlib_roundtrip_exact val_loss:2.67691132 val_bpb:1.58541766
+[2026-04-19T10:04:54Z] VARIANT ENDED
+
+Progress: 🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜ 11/16
+Branch: stf-soft-freeze (3/4)
+Formula: cosine (3/4)
+Run: 2026-04-19_stf-soft-freeze_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-soft-freeze/2026-04-19_stf-soft-freeze_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.67691132 val_bpb:1.58541766
+[2026-04-19T10:04:55Z] MOVING TO NEXT
+
+Completed: stf-soft-freeze / cosine
+Progress: 🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜ 11/16
+Next variant will start shortly.
+[2026-04-19T10:04:55Z] VARIANT STARTED
+
+Progress: 🟩🟩🟩🟩🟩🟩🟩⬜⬜⬜ 12/16
+Branch: stf-soft-freeze (3/4)
+Formula: direction (4/4)
+Run: 2026-04-19_stf-soft-freeze_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T10:04:55Z
+branch=stf-soft-freeze
+run_id=2026-04-19_stf-soft-freeze_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=direction
+nproc_per_node=4
+W0419 10:04:56.676000 8102 torch/distributed/run.py:803] 
+W0419 10:04:56.676000 8102 torch/distributed/run.py:803] *****************************************
+W0419 10:04:56.676000 8102 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 10:04:56.676000 8102 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-soft-freeze_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:soft_freeze stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.045 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:direction stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1270ms step_avg:1269.97ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:0.000000 score_max:0.000000 active_pre_mean:0.0000 active_mean:1.0000 active_min:1.0000 active_max:1.0000 active_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:2/500 train_loss:9.0504 train_time:1806ms step_avg:902.90ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:0.177563 score_max:0.355361 active_pre_mean:0.9975 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:3/500 train_loss:6.3978 train_time:2315ms step_avg:771.72ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:0.673463 score_max:0.867318 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:4/500 train_loss:6.0473 train_time:2827ms step_avg:706.87ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:0.816021 score_max:0.931374 active_pre_mean:0.9997 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:5/500 train_loss:6.3493 train_time:3335ms step_avg:667.07ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:0.822569 score_max:0.925639 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:6/500 train_loss:6.4528 train_time:3846ms step_avg:640.92ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:0.804673 score_max:0.910194 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:7/500 train_loss:6.2074 train_time:4354ms step_avg:621.93ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:0.815263 score_max:0.917729 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:8/500 train_loss:6.1353 train_time:4863ms step_avg:607.85ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:0.828390 score_max:0.929485 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:9/500 train_loss:5.9665 train_time:5370ms step_avg:596.68ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:0.845814 score_max:0.937841 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:10/500 train_loss:5.8156 train_time:5878ms step_avg:587.83ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:0.863195 score_max:0.946933 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 train_loss:4.3601 train_time:26187ms step_avg:523.74ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:0.835752 score_max:0.960438 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 val_loss:4.3131 val_bpb:2.5545 train_time:26257ms step_avg:525.13ms
+step:100/500 train_loss:3.7394 train_time:51591ms step_avg:515.91ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:0.772730 score_max:0.966529 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:100/500 val_loss:3.7407 val_bpb:2.2154 train_time:51660ms step_avg:516.60ms
+step:150/500 train_loss:3.4563 train_time:76997ms step_avg:513.32ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:0.592734 score_max:0.915255 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:150/500 val_loss:3.4178 val_bpb:2.0242 train_time:77067ms step_avg:513.78ms
+step:200/500 train_loss:3.1081 train_time:102402ms step_avg:512.01ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:0.504301 score_max:0.875788 active_pre_mean:0.9998 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:200/500 val_loss:3.1448 val_bpb:1.8625 train_time:102471ms step_avg:512.36ms
+step:250/500 train_loss:2.9861 train_time:127802ms step_avg:511.21ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:0.459288 score_max:0.821261 active_pre_mean:0.9998 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:250/500 val_loss:2.9424 val_bpb:1.7426 train_time:127871ms step_avg:511.48ms
+step:300/500 train_loss:2.7483 train_time:153195ms step_avg:510.65ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:0.428694 score_max:0.787013 active_pre_mean:0.9996 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:300/500 val_loss:2.8290 val_bpb:1.6755 train_time:153264ms step_avg:510.88ms
+step:350/500 train_loss:2.7812 train_time:178592ms step_avg:510.26ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:0.406858 score_max:0.767299 active_pre_mean:0.9994 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:350/500 val_loss:2.7487 val_bpb:1.6279 train_time:178662ms step_avg:510.46ms
+step:400/500 train_loss:2.4940 train_time:204015ms step_avg:510.04ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:0.386028 score_max:0.745058 active_pre_mean:0.9993 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:400/500 val_loss:2.6966 val_bpb:1.5971 train_time:204084ms step_avg:510.21ms
+step:450/500 train_loss:2.6422 train_time:229432ms step_avg:509.85ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:0.361461 score_max:0.728366 active_pre_mean:0.9990 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:450/500 val_loss:2.6506 val_bpb:1.5699 train_time:229502ms step_avg:510.00ms
+step:500/500 train_loss:2.5732 train_time:254843ms step_avg:509.69ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:0.355952 score_max:0.713305 active_pre_mean:0.9988 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:500/500 val_loss:2.6289 val_bpb:1.5570 train_time:254913ms step_avg:509.83ms
+peak memory allocated: 16930 MiB reserved: 17274 MiB
+Serialized model: 67224983 bytes
+Code size: 62179 bytes
+Total submission size: 67287162 bytes
+Serialized model int8+zlib: 8839886 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 8902065 bytes
+final_int8_zlib_roundtrip val_loss:2.6575 val_bpb:1.5739 eval_time:21992ms
+final_int8_zlib_roundtrip_exact val_loss:2.65751933 val_bpb:1.57393264
+[2026-04-19T10:13:47Z] VARIANT ENDED
+
+Progress: 🟩🟩🟩🟩🟩🟩🟩⬜⬜⬜ 12/16
+Branch: stf-soft-freeze (3/4)
+Formula: direction (4/4)
+Run: 2026-04-19_stf-soft-freeze_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-soft-freeze/2026-04-19_stf-soft-freeze_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.65751933 val_bpb:1.57393264
+[2026-04-19T10:13:47Z] MOVING TO NEXT
+
+Completed: stf-soft-freeze / direction
+Progress: 🟩🟩🟩🟩🟩🟩🟩⬜⬜⬜ 12/16
+Next variant will start shortly.
+From https://github.com/yuvaraj-97/parameter-golf-stf
+ * branch            stf-reactivation -> FETCH_HEAD
+Switched to a new branch 'stf-reactivation'
+branch 'stf-reactivation' set up to track 'origin/stf-reactivation'.
+Already up to date.
+[2026-04-19T10:13:48Z] VARIANT STARTED
+
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩⬜⬜ 13/16
+Branch: stf-reactivation (4/4)
+Formula: l2 (1/4)
+Run: 2026-04-19_stf-reactivation_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T10:13:48Z
+branch=stf-reactivation
+run_id=2026-04-19_stf-reactivation_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=l2
+nproc_per_node=4
+W0419 10:13:49.915000 8607 torch/distributed/run.py:803] 
+W0419 10:13:49.915000 8607 torch/distributed/run.py:803] *****************************************
+W0419 10:13:49.915000 8607 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 10:13:49.915000 8607 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-reactivation_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:reactivation stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.045 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:l2 stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1286ms step_avg:1285.97ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:0.000000 score_max:0.000000 active_pre_mean:0.0000 active_mean:1.0000 active_min:1.0000 active_max:1.0000 active_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:2/500 train_loss:9.0818 train_time:1737ms step_avg:868.59ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:1.021186 score_max:1.445112 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:3/500 train_loss:6.4343 train_time:2218ms step_avg:739.21ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:2.165790 score_max:3.289763 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:4/500 train_loss:6.0615 train_time:2701ms step_avg:675.14ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:3.180468 score_max:4.755057 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:5/500 train_loss:6.3728 train_time:3181ms step_avg:636.27ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:4.086427 score_max:6.378043 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:6/500 train_loss:6.5063 train_time:3665ms step_avg:610.78ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:4.902381 score_max:8.120790 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:7/500 train_loss:6.2627 train_time:4145ms step_avg:592.08ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:5.802391 score_max:9.908181 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:8/500 train_loss:6.1672 train_time:4625ms step_avg:578.10ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:6.891121 score_max:12.039744 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:9/500 train_loss:5.9929 train_time:5104ms step_avg:567.14ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:8.070427 score_max:14.304713 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:10/500 train_loss:5.8182 train_time:5584ms step_avg:558.40ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:9.319373 score_max:17.156332 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 train_loss:4.3762 train_time:24740ms step_avg:494.80ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:16.203514 score_max:52.616440 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 val_loss:4.3216 val_bpb:2.5595 train_time:24810ms step_avg:496.20ms
+step:100/500 train_loss:3.7544 train_time:48728ms step_avg:487.28ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:15.372616 score_max:59.587128 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:100/500 val_loss:3.7446 val_bpb:2.2178 train_time:48797ms step_avg:487.97ms
+step:150/500 train_loss:3.4697 train_time:72699ms step_avg:484.66ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:13.483582 score_max:50.071678 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:150/500 val_loss:3.4294 val_bpb:2.0311 train_time:72769ms step_avg:485.13ms
+step:200/500 train_loss:3.1240 train_time:96675ms step_avg:483.37ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:12.939739 score_max:50.571739 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:200/500 val_loss:3.1660 val_bpb:1.8751 train_time:96745ms step_avg:483.72ms
+step:250/500 train_loss:3.0224 train_time:120657ms step_avg:482.63ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:12.501369 score_max:41.625813 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:250/500 val_loss:2.9802 val_bpb:1.7651 train_time:120728ms step_avg:482.91ms
+step:300/500 train_loss:2.7963 train_time:144628ms step_avg:482.09ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:12.158747 score_max:46.282303 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:300/500 val_loss:2.8729 val_bpb:1.7015 train_time:144699ms step_avg:482.33ms
+step:350/500 train_loss:2.8318 train_time:168600ms step_avg:481.71ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:12.012031 score_max:48.601921 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:350/500 val_loss:2.8024 val_bpb:1.6597 train_time:168669ms step_avg:481.91ms
+step:400/500 train_loss:2.5553 train_time:192588ms step_avg:481.47ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:11.881503 score_max:47.495483 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:400/500 val_loss:2.7568 val_bpb:1.6327 train_time:192658ms step_avg:481.65ms
+step:450/500 train_loss:2.7078 train_time:216552ms step_avg:481.23ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:11.793398 score_max:45.610168 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:450/500 val_loss:2.7165 val_bpb:1.6089 train_time:216621ms step_avg:481.38ms
+step:500/500 train_loss:2.6403 train_time:240531ms step_avg:481.06ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:11.543852 score_max:45.459015 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:500/500 val_loss:2.6970 val_bpb:1.5973 train_time:240600ms step_avg:481.20ms
+peak memory allocated: 14620 MiB reserved: 14934 MiB
+Serialized model: 67224983 bytes
+Code size: 62180 bytes
+Total submission size: 67287163 bytes
+Serialized model int8+zlib: 8907384 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 8969564 bytes
+final_int8_zlib_roundtrip val_loss:2.7285 val_bpb:1.6160 eval_time:19455ms
+final_int8_zlib_roundtrip_exact val_loss:2.72853351 val_bpb:1.61599124
+[2026-04-19T10:21:55Z] VARIANT ENDED
+
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩⬜⬜ 13/16
+Branch: stf-reactivation (4/4)
+Formula: l2 (1/4)
+Run: 2026-04-19_stf-reactivation_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-reactivation/2026-04-19_stf-reactivation_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.72853351 val_bpb:1.61599124
+[2026-04-19T10:21:55Z] MOVING TO NEXT
+
+Completed: stf-reactivation / l2
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩⬜⬜ 13/16
+Next variant will start shortly.
+[2026-04-19T10:21:56Z] VARIANT STARTED
+
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩⬜⬜ 14/16
+Branch: stf-reactivation (4/4)
+Formula: relative_l2 (2/4)
+Run: 2026-04-19_stf-reactivation_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T10:21:56Z
+branch=stf-reactivation
+run_id=2026-04-19_stf-reactivation_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=relative_l2
+nproc_per_node=4
+W0419 10:21:57.362000 9097 torch/distributed/run.py:803] 
+W0419 10:21:57.362000 9097 torch/distributed/run.py:803] *****************************************
+W0419 10:21:57.362000 9097 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 10:21:57.362000 9097 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-reactivation_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:reactivation stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.045 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:relative_l2 stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1275ms step_avg:1274.51ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:0.000000 score_max:0.000000 active_pre_mean:0.0000 active_mean:1.0000 active_min:1.0000 active_max:1.0000 active_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:2/500 train_loss:9.0830 train_time:1739ms step_avg:869.58ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:0.029419 score_max:0.035002 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:3/500 train_loss:6.4305 train_time:2221ms step_avg:740.30ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:0.056468 score_max:0.068655 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:4/500 train_loss:6.0613 train_time:2706ms step_avg:676.44ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:0.075945 score_max:0.090567 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:5/500 train_loss:6.3796 train_time:3188ms step_avg:637.51ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:0.093954 score_max:0.113263 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:6/500 train_loss:6.5067 train_time:3671ms step_avg:611.82ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:0.109569 score_max:0.133139 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:7/500 train_loss:6.2666 train_time:4153ms step_avg:593.32ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:0.125106 score_max:0.155609 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:8/500 train_loss:6.1659 train_time:4635ms step_avg:579.36ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:0.141307 score_max:0.177268 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:9/500 train_loss:5.9866 train_time:5117ms step_avg:568.56ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:0.156237 score_max:0.195086 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:10/500 train_loss:5.8256 train_time:5599ms step_avg:559.85ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:0.168305 score_max:0.213519 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 train_loss:4.3699 train_time:24832ms step_avg:496.64ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:0.221226 score_max:0.451398 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 val_loss:4.3151 val_bpb:2.5557 train_time:24901ms step_avg:498.03ms
+step:100/500 train_loss:3.7484 train_time:48900ms step_avg:489.00ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:0.207249 score_max:1.122267 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:100/500 val_loss:3.7546 val_bpb:2.2237 train_time:48969ms step_avg:489.69ms
+step:150/500 train_loss:3.4718 train_time:72987ms step_avg:486.58ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:0.235969 score_max:1.617883 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:150/500 val_loss:3.4384 val_bpb:2.0364 train_time:73051ms step_avg:487.01ms
+step:200/500 train_loss:3.1610 train_time:97064ms step_avg:485.32ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:0.274741 score_max:2.037677 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:200/500 val_loss:3.1971 val_bpb:1.8935 train_time:97133ms step_avg:485.67ms
+step:250/500 train_loss:3.0263 train_time:121134ms step_avg:484.54ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:0.311204 score_max:2.288564 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:250/500 val_loss:2.9866 val_bpb:1.7688 train_time:121203ms step_avg:484.81ms
+step:300/500 train_loss:2.7952 train_time:145203ms step_avg:484.01ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:0.325102 score_max:2.697067 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:300/500 val_loss:2.8725 val_bpb:1.7012 train_time:145271ms step_avg:484.24ms
+step:350/500 train_loss:2.8324 train_time:169273ms step_avg:483.64ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:0.334522 score_max:2.220181 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:350/500 val_loss:2.7986 val_bpb:1.6575 train_time:169343ms step_avg:483.84ms
+step:400/500 train_loss:2.5489 train_time:193353ms step_avg:483.38ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:0.346776 score_max:2.107533 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:400/500 val_loss:2.7517 val_bpb:1.6297 train_time:193424ms step_avg:483.56ms
+step:450/500 train_loss:2.7025 train_time:217433ms step_avg:483.18ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:0.361300 score_max:2.213401 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:450/500 val_loss:2.7121 val_bpb:1.6063 train_time:217503ms step_avg:483.34ms
+step:500/500 train_loss:2.6376 train_time:241497ms step_avg:482.99ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:0.365945 score_max:2.061501 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:500/500 val_loss:2.6928 val_bpb:1.5948 train_time:241567ms step_avg:483.13ms
+peak memory allocated: 15391 MiB reserved: 15736 MiB
+Serialized model: 67224983 bytes
+Code size: 62180 bytes
+Total submission size: 67287163 bytes
+Serialized model int8+zlib: 8889225 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 8951405 bytes
+final_int8_zlib_roundtrip val_loss:2.7232 val_bpb:1.6128 eval_time:19698ms
+final_int8_zlib_roundtrip_exact val_loss:2.72319779 val_bpb:1.61283112
+[2026-04-19T10:30:06Z] VARIANT ENDED
+
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩⬜⬜ 14/16
+Branch: stf-reactivation (4/4)
+Formula: relative_l2 (2/4)
+Run: 2026-04-19_stf-reactivation_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-reactivation/2026-04-19_stf-reactivation_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.72319779 val_bpb:1.61283112
+[2026-04-19T10:30:07Z] MOVING TO NEXT
+
+Completed: stf-reactivation / relative_l2
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩⬜⬜ 14/16
+Next variant will start shortly.
+[2026-04-19T10:30:07Z] VARIANT STARTED
+
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩🟩⬜ 15/16
+Branch: stf-reactivation (4/4)
+Formula: cosine (3/4)
+Run: 2026-04-19_stf-reactivation_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T10:30:07Z
+branch=stf-reactivation
+run_id=2026-04-19_stf-reactivation_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=cosine
+nproc_per_node=4
+W0419 10:30:08.728000 9587 torch/distributed/run.py:803] 
+W0419 10:30:08.728000 9587 torch/distributed/run.py:803] *****************************************
+W0419 10:30:08.728000 9587 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 10:30:08.728000 9587 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-reactivation_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:reactivation stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.045 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:cosine stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1259ms step_avg:1258.98ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:-0.000000 score_max:0.000000 active_pre_mean:0.0000 active_mean:0.5309 active_min:0.3640 active_max:0.8016 active_by_layer:3:0.802,4:0.802,5:0.427,6:0.427,7:0.364,8:0.364
+step:2/500 train_loss:9.1066 train_time:1797ms step_avg:898.57ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:0.000217 score_max:0.000305 active_pre_mean:0.0000 active_mean:0.3501 active_min:0.3500 active_max:0.3502 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:3/500 train_loss:6.3905 train_time:2293ms step_avg:764.22ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:0.000433 score_max:0.000809 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3501 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:4/500 train_loss:6.0452 train_time:2791ms step_avg:697.82ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:0.000584 score_max:0.001741 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:5/500 train_loss:6.3887 train_time:3288ms step_avg:657.57ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:0.000909 score_max:0.003060 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:6/500 train_loss:6.5375 train_time:3784ms step_avg:630.66ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:0.001349 score_max:0.004628 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:7/500 train_loss:6.2692 train_time:4279ms step_avg:611.24ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:0.001613 score_max:0.007855 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3501 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:8/500 train_loss:6.1746 train_time:4775ms step_avg:596.86ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:0.001816 score_max:0.011278 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:9/500 train_loss:5.9785 train_time:5270ms step_avg:585.57ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:0.001952 score_max:0.013464 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:10/500 train_loss:5.8196 train_time:5765ms step_avg:576.49ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:0.002010 score_max:0.016616 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 train_loss:4.3773 train_time:25563ms step_avg:511.26ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:0.006082 score_max:0.045552 active_pre_mean:0.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 val_loss:4.3236 val_bpb:2.5607 train_time:25633ms step_avg:512.66ms
+step:100/500 train_loss:3.7595 train_time:50313ms step_avg:503.13ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:0.005666 score_max:0.134587 active_pre_mean:0.0001 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:100/500 val_loss:3.7596 val_bpb:2.2267 train_time:50380ms step_avg:503.80ms
+step:150/500 train_loss:3.4668 train_time:75060ms step_avg:500.40ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:0.008286 score_max:0.222930 active_pre_mean:0.0054 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:150/500 val_loss:3.4325 val_bpb:2.0329 train_time:75130ms step_avg:500.87ms
+step:200/500 train_loss:3.1226 train_time:99810ms step_avg:499.05ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:0.013884 score_max:0.263998 active_pre_mean:0.0320 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:200/500 val_loss:3.1626 val_bpb:1.8730 train_time:99880ms step_avg:499.40ms
+step:250/500 train_loss:3.0058 train_time:124570ms step_avg:498.28ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:0.019370 score_max:0.264272 active_pre_mean:0.0775 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:250/500 val_loss:2.9653 val_bpb:1.7562 train_time:124639ms step_avg:498.55ms
+step:300/500 train_loss:2.7824 train_time:149317ms step_avg:497.72ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:0.024394 score_max:0.273772 active_pre_mean:0.1331 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:300/500 val_loss:2.8607 val_bpb:1.6943 train_time:149387ms step_avg:497.96ms
+step:350/500 train_loss:2.8243 train_time:174068ms step_avg:497.34ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:0.027830 score_max:0.274432 active_pre_mean:0.1691 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:350/500 val_loss:2.7917 val_bpb:1.6534 train_time:174137ms step_avg:497.54ms
+step:400/500 train_loss:2.5437 train_time:198825ms step_avg:497.06ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:0.031459 score_max:0.283367 active_pre_mean:0.2044 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:400/500 val_loss:2.7453 val_bpb:1.6259 train_time:198894ms step_avg:497.24ms
+step:450/500 train_loss:2.6926 train_time:223576ms step_avg:496.84ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:0.034031 score_max:0.301581 active_pre_mean:0.2267 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:450/500 val_loss:2.7050 val_bpb:1.6021 train_time:223645ms step_avg:496.99ms
+step:500/500 train_loss:2.6323 train_time:248326ms step_avg:496.65ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:0.035667 score_max:0.296687 active_pre_mean:0.2419 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:500/500 val_loss:2.6858 val_bpb:1.5907 train_time:248396ms step_avg:496.79ms
+peak memory allocated: 16929 MiB reserved: 17274 MiB
+Serialized model: 67224983 bytes
+Code size: 62180 bytes
+Total submission size: 67287163 bytes
+Serialized model int8+zlib: 8881109 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 8943289 bytes
+final_int8_zlib_roundtrip val_loss:2.7143 val_bpb:1.6075 eval_time:21289ms
+final_int8_zlib_roundtrip_exact val_loss:2.71426723 val_bpb:1.60754194
+[2026-04-19T10:38:44Z] VARIANT ENDED
+
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩🟩⬜ 15/16
+Branch: stf-reactivation (4/4)
+Formula: cosine (3/4)
+Run: 2026-04-19_stf-reactivation_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-reactivation/2026-04-19_stf-reactivation_cosine_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.71426723 val_bpb:1.60754194
+[2026-04-19T10:38:44Z] MOVING TO NEXT
+
+Completed: stf-reactivation / cosine
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩🟩⬜ 15/16
+Next variant will start shortly.
+[2026-04-19T10:38:44Z] VARIANT STARTED
+
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 16/16
+Branch: stf-reactivation (4/4)
+Formula: direction (4/4)
+Run: 2026-04-19_stf-reactivation_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+timestamp=2026-04-19T10:38:45Z
+branch=stf-reactivation
+run_id=2026-04-19_stf-reactivation_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=direction
+nproc_per_node=4
+W0419 10:38:46.216000 10077 torch/distributed/run.py:803] 
+W0419 10:38:46.216000 10077 torch/distributed/run.py:803] *****************************************
+W0419 10:38:46.216000 10077 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0419 10:38:46.216000 10077 torch/distributed/run.py:803] *****************************************
+logs/2026-04-19_stf-reactivation_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:reactivation stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.045 stf_ema_decay:0.85 stf_min_active_ratio:0.35 stf_score_fn:direction stf_telemetry:True
+seed:1337
+step:0/500 val_loss:6.9357 val_bpb:4.1077 train_time:0ms step_avg:0.02ms
+step:1/500 train_loss:6.9367 train_time:1272ms step_avg:1272.07ms
+step:1/500 stf_stats calls:1434 layers:6 score_mean:0.000000 score_max:0.000000 active_pre_mean:0.0000 active_mean:1.0000 active_min:1.0000 active_max:1.0000 active_by_layer:3:1.000,4:1.000,5:1.000,6:1.000,7:1.000,8:1.000
+step:2/500 train_loss:9.0824 train_time:1780ms step_avg:889.85ms
+step:2/500 stf_stats calls:12 layers:6 score_mean:0.172767 score_max:0.355361 active_pre_mean:0.9968 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:3/500 train_loss:6.4357 train_time:2276ms step_avg:758.71ms
+step:3/500 stf_stats calls:12 layers:6 score_mean:0.653044 score_max:0.862047 active_pre_mean:0.9998 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:4/500 train_loss:6.0608 train_time:2772ms step_avg:693.12ms
+step:4/500 stf_stats calls:12 layers:6 score_mean:0.800804 score_max:0.922185 active_pre_mean:0.9998 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:5/500 train_loss:6.3668 train_time:3269ms step_avg:653.87ms
+step:5/500 stf_stats calls:12 layers:6 score_mean:0.797072 score_max:0.908581 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:6/500 train_loss:6.4976 train_time:3765ms step_avg:627.57ms
+step:6/500 stf_stats calls:12 layers:6 score_mean:0.774223 score_max:0.900602 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:7/500 train_loss:6.2586 train_time:4261ms step_avg:608.67ms
+step:7/500 stf_stats calls:12 layers:6 score_mean:0.778344 score_max:0.914165 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:8/500 train_loss:6.1758 train_time:4756ms step_avg:594.55ms
+step:8/500 stf_stats calls:12 layers:6 score_mean:0.791791 score_max:0.921101 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:9/500 train_loss:5.9922 train_time:5251ms step_avg:583.47ms
+step:9/500 stf_stats calls:12 layers:6 score_mean:0.809042 score_max:0.920804 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:10/500 train_loss:5.8252 train_time:5747ms step_avg:574.67ms
+step:10/500 stf_stats calls:12 layers:6 score_mean:0.822544 score_max:0.920473 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 train_loss:4.3918 train_time:25534ms step_avg:510.69ms
+step:50/500 stf_stats calls:480 layers:6 score_mean:0.797768 score_max:0.944528 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:50/500 val_loss:4.3367 val_bpb:2.5684 train_time:25604ms step_avg:512.08ms
+step:100/500 train_loss:3.7847 train_time:50296ms step_avg:502.96ms
+step:100/500 stf_stats calls:2022 layers:6 score_mean:0.655868 score_max:0.934891 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:100/500 val_loss:3.7823 val_bpb:2.2401 train_time:50366ms step_avg:503.66ms
+step:150/500 train_loss:3.4992 train_time:75067ms step_avg:500.44ms
+step:150/500 stf_stats calls:2022 layers:6 score_mean:0.517553 score_max:0.882825 active_pre_mean:0.9993 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:150/500 val_loss:3.4620 val_bpb:2.0504 train_time:75136ms step_avg:500.90ms
+step:200/500 train_loss:3.1559 train_time:99809ms step_avg:499.04ms
+step:200/500 stf_stats calls:2022 layers:6 score_mean:0.524717 score_max:0.845097 active_pre_mean:0.9999 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:200/500 val_loss:3.1881 val_bpb:1.8881 train_time:99877ms step_avg:499.39ms
+step:250/500 train_loss:3.0493 train_time:124559ms step_avg:498.24ms
+step:250/500 stf_stats calls:2022 layers:6 score_mean:0.526250 score_max:0.818659 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:250/500 val_loss:3.0075 val_bpb:1.7812 train_time:124628ms step_avg:498.51ms
+step:300/500 train_loss:2.8235 train_time:149305ms step_avg:497.68ms
+step:300/500 stf_stats calls:2022 layers:6 score_mean:0.499739 score_max:0.830744 active_pre_mean:1.0000 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:300/500 val_loss:2.9026 val_bpb:1.7191 train_time:149374ms step_avg:497.91ms
+step:350/500 train_loss:2.8633 train_time:174051ms step_avg:497.29ms
+step:350/500 stf_stats calls:2022 layers:6 score_mean:0.463816 score_max:0.821517 active_pre_mean:0.9999 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:350/500 val_loss:2.8308 val_bpb:1.6766 train_time:174120ms step_avg:497.49ms
+step:400/500 train_loss:2.5781 train_time:198798ms step_avg:496.99ms
+step:400/500 stf_stats calls:2022 layers:6 score_mean:0.415368 score_max:0.801050 active_pre_mean:0.9994 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:400/500 val_loss:2.7841 val_bpb:1.6489 train_time:198868ms step_avg:497.17ms
+step:450/500 train_loss:2.7354 train_time:223546ms step_avg:496.77ms
+step:450/500 stf_stats calls:2022 layers:6 score_mean:0.376227 score_max:0.771346 active_pre_mean:0.9982 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:450/500 val_loss:2.7427 val_bpb:1.6244 train_time:223616ms step_avg:496.92ms
+step:500/500 train_loss:2.6631 train_time:248288ms step_avg:496.58ms
+step:500/500 stf_stats calls:2022 layers:6 score_mean:0.355846 score_max:0.752247 active_pre_mean:0.9968 active_mean:0.3500 active_min:0.3500 active_max:0.3500 active_by_layer:3:0.350,4:0.350,5:0.350,6:0.350,7:0.350,8:0.350
+step:500/500 val_loss:2.7227 val_bpb:1.6125 train_time:248356ms step_avg:496.71ms
+peak memory allocated: 16930 MiB reserved: 17274 MiB
+Serialized model: 67224983 bytes
+Code size: 62180 bytes
+Total submission size: 67287163 bytes
+Serialized model int8+zlib: 8845079 bytes (payload:17178912 raw_torch:17224025 payload_ratio:3.91x)
+Total submission size int8+zlib: 8907259 bytes
+final_int8_zlib_roundtrip val_loss:2.7592 val_bpb:1.6341 eval_time:21279ms
+final_int8_zlib_roundtrip_exact val_loss:2.75915054 val_bpb:1.63412436
+[2026-04-19T10:47:21Z] VARIANT ENDED
+
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 16/16
+Branch: stf-reactivation (4/4)
+Formula: direction (4/4)
+Run: 2026-04-19_stf-reactivation_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 6a02f740d8f8
+
+Archive: vast/experiments/2026-04-19-nvidia-geforce-rtx-4090-4gpu/stf-reactivation/2026-04-19_stf-reactivation_direction_nvidia-geforce-rtx-4090_4gpu_i500_run1
+Final: final_int8_zlib_roundtrip_exact val_loss:2.75915054 val_bpb:1.63412436
+[2026-04-19T10:47:21Z] MOVING TO NEXT
+
+Completed: stf-reactivation / direction
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 16/16
+Next variant will start shortly.
+[2026-04-19T10:47:22Z] SERIES DONE
+
+Branches (4): stf-minimal stf-learned-gate stf-soft-freeze stf-reactivation
+Formulas (4): l2 relative_l2 cosine direction
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 16/16
+Succeeded: 16
+Failed: 0
+Failed variants: none
+Iterations: 500
+GPU: 4x NVIDIA GeForce RTX 4090
