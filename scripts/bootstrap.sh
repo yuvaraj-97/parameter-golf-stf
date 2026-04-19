@@ -15,6 +15,7 @@ ENV_AUTOSYNC_INTERVAL="${ENV_AUTOSYNC_INTERVAL:-300}"
 RCLONE_TRANSFERS="${RCLONE_TRANSFERS:-8}"
 RCLONE_CHECKERS="${RCLONE_CHECKERS:-16}"
 GIT_PUSH_REMOTE="${GIT_PUSH_REMOTE:-git@github.com:yuvaraj-97/parameter-golf-stf.git}"
+GIT_SSH_KEY_FILE="${GIT_SSH_KEY_FILE:-/root/.ssh/runpod_parameter_golf}"
 
 require_env() {
   local name="$1"
@@ -53,32 +54,18 @@ restore_optional_dir() {
   fi
 }
 
-write_secret_file() {
-  local target="$1"
-  local raw_value="${2:-}"
-  local b64_value="${3:-}"
-
-  if [ -n "$b64_value" ]; then
-    printf '%s' "$b64_value" | base64 -d >"$target"
-  elif [ -n "$raw_value" ]; then
-    printf '%s\n' "$raw_value" >"$target"
-  else
-    return 1
-  fi
-}
-
 setup_git_credentials() {
   mkdir -p /root/.ssh
+  local ssh_key="${GIT_SSH_KEY_FILE}"
 
-  if write_secret_file /root/.ssh/id_ed25519 "${GITHUB_SSH_PRIVATE_KEY:-}" "${GITHUB_SSH_PRIVATE_KEY_B64:-}"; then
-    chmod 600 /root/.ssh/id_ed25519
+  if [ ! -f "$ssh_key" ] && [ -f /root/.ssh/id_ed25519 ]; then
+    ssh_key=/root/.ssh/id_ed25519
   fi
 
-  if write_secret_file /root/.ssh/id_ed25519.pub "${GITHUB_SSH_PUBLIC_KEY:-}" "${GITHUB_SSH_PUBLIC_KEY_B64:-}"; then
-    chmod 644 /root/.ssh/id_ed25519.pub
-  elif [ -f /root/.ssh/id_ed25519 ] && command -v ssh-keygen >/dev/null 2>&1; then
-    ssh-keygen -y -f /root/.ssh/id_ed25519 >/root/.ssh/id_ed25519.pub 2>/dev/null || true
-    chmod 644 /root/.ssh/id_ed25519.pub 2>/dev/null || true
+  if [ -f "$ssh_key" ] && command -v ssh-keygen >/dev/null 2>&1; then
+    chmod 600 "$ssh_key"
+    ssh-keygen -y -f "$ssh_key" >"${ssh_key}.pub" 2>/dev/null || true
+    chmod 644 "${ssh_key}.pub" 2>/dev/null || true
   fi
 
   if command -v ssh-keyscan >/dev/null 2>&1; then
@@ -90,7 +77,7 @@ setup_git_credentials() {
 Host github.com
   HostName github.com
   User git
-  IdentityFile /root/.ssh/id_ed25519
+  IdentityFile ${ssh_key}
   IdentitiesOnly yes
   StrictHostKeyChecking yes
   BatchMode yes
@@ -107,6 +94,12 @@ EOF
 
   if [ -d "${PROJECT_DIR}/.git" ] && [ -n "${GIT_PUSH_REMOTE}" ]; then
     git -C "${PROJECT_DIR}" remote set-url --push origin "${GIT_PUSH_REMOTE}" || true
+  fi
+
+  if [ -s "$ssh_key" ]; then
+    echo "[bootstrap] git SSH key ready for push: ${ssh_key}"
+  else
+    echo "[bootstrap] warning: no git SSH key found at ${ssh_key}; save.sh may not be able to push"
   fi
 }
 
