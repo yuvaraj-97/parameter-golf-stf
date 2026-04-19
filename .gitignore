@@ -1,5 +1,7 @@
 data/tokenizers
 .env
+.r2.env
+r2.env
 __pycache__/
 .DS_Store
 modded-nanogpt/

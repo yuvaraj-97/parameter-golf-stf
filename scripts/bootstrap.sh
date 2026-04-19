@@ -4,6 +4,8 @@ set -euo pipefail
 echo "[bootstrap] starting"
 
 PROJECT_DIR="${PROJECT_DIR:-/workspace/project}"
+R2_ENV_FILE="${R2_ENV_FILE:-/workspace/r2.env}"
+PROJECT_R2_ENV_FILE="${PROJECT_R2_ENV_FILE:-${PROJECT_DIR}/.r2.env}"
 R2_BUCKET="${R2_BUCKET:-parameter-golf-train}"
 RCLONE_REMOTE="${RCLONE_REMOTE:-r2}"
 BOOTSTRAP_PREFIX="${BOOTSTRAP_PREFIX:-bootstrap}"
@@ -17,13 +19,30 @@ RCLONE_CHECKERS="${RCLONE_CHECKERS:-16}"
 GIT_PUSH_REMOTE="${GIT_PUSH_REMOTE:-git@github.com:yuvaraj-97/parameter-golf-stf.git}"
 GIT_SSH_KEY_FILE="${GIT_SSH_KEY_FILE:-/root/.ssh/runpod_parameter_golf}"
 
+load_env_file() {
+  local path="$1"
+
+  if [ -f "$path" ]; then
+    echo "[bootstrap] loading env from ${path}"
+    set -a
+    # shellcheck disable=SC1090
+    . "$path"
+    set +a
+    return 0
+  fi
+
+  return 1
+}
+
 require_env() {
   local name="$1"
   if [ -z "${!name:-}" ]; then
-    echo "error: ${name} is not set in the RunPod template environment" >&2
+    echo "error: ${name} is not set in the environment or env file" >&2
     exit 1
   fi
 }
+
+load_env_file "${R2_ENV_FILE}" || load_env_file "${PROJECT_R2_ENV_FILE}" || true
 
 require_env R2_ACCOUNT_ID
 require_env R2_ACCESS_KEY_ID
