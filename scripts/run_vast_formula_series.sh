@@ -110,6 +110,22 @@ require_integer() {
   fi
 }
 
+preflight_training_inputs() {
+  local shard_count
+
+  if [ ! -f "$TOKENIZER_PATH" ]; then
+    fail_with_alerts 1 "missing tokenizer at ${TOKENIZER_PATH}"
+  fi
+  if [ ! -d "$DATA_PATH" ]; then
+    fail_with_alerts 1 "missing dataset directory at ${DATA_PATH}"
+  fi
+
+  shard_count="$(find "$DATA_PATH" -maxdepth 1 -type f -name 'fineweb_train_*.bin' | wc -l | tr -d ' ')"
+  if [ "$shard_count" = "0" ]; then
+    fail_with_alerts 1 "no fineweb_train_*.bin shards found in ${DATA_PATH}"
+  fi
+}
+
 gpu_info() {
   if command -v nvidia-smi >/dev/null 2>&1; then
     GPU_COUNT="$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l | tr -d ' ')"
@@ -172,6 +188,7 @@ EOF
 require_integer "ITERATIONS" "$ITERATIONS"
 require_integer "RUN_NUMBER" "$RUN_NUMBER"
 gpu_info
+preflight_training_inputs
 
 mkdir -p logs logs/telemetry vast/experiments
 

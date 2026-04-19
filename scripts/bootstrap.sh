@@ -10,6 +10,9 @@ RCLONE_REMOTE="${RCLONE_REMOTE:-r2}"
 BOOTSTRAP_PREFIX="${BOOTSTRAP_PREFIX:-bootstrap}"
 DATASET_NAME="${DATASET_NAME:-fineweb10B_sp1024}"
 DATASET_DIR="${DATASET_DIR:-${PROJECT_DIR}/data/datasets/${DATASET_NAME}}"
+TOKENIZERS_DIR="${TOKENIZERS_DIR:-${PROJECT_DIR}/data/tokenizers}"
+TOKENIZER_FILE="${TOKENIZER_FILE:-fineweb_1024_bpe.model}"
+TOKENIZER_PATH="${TOKENIZER_PATH:-${TOKENIZERS_DIR}/${TOKENIZER_FILE}}"
 EXPECTED_DATASET_SHARDS="${EXPECTED_DATASET_SHARDS:-81}"
 ENV_FILE="${ENV_FILE:-${PROJECT_DIR}/.env}"
 PROJECT_ENV_KEYS="${PROJECT_ENV_KEYS:-TELEGRAM_BOT_TOKEN TELEGRAM_USER_ID}"
@@ -205,6 +208,27 @@ if [ "${EXPECTED_DATASET_SHARDS}" != "0" ] && [ "${dataset_shards}" -lt "${EXPEC
   echo "error: dataset restore is incomplete" >&2
   exit 1
 fi
+
+echo "[bootstrap] restoring tokenizers to ${TOKENIZERS_DIR}"
+
+mkdir -p "${TOKENIZERS_DIR}"
+if r2_dir_exists "tokenizers"; then
+  rclone sync "$(r2_path "tokenizers")" "${TOKENIZERS_DIR}" \
+    --progress \
+    --stats 10s \
+    --transfers "${RCLONE_TRANSFERS}" \
+    --checkers "${RCLONE_CHECKERS}"
+else
+  echo "[bootstrap] skipping missing ${R2_BUCKET}/tokenizers"
+fi
+
+if [ ! -f "${TOKENIZER_PATH}" ]; then
+  echo "error: tokenizer restore is incomplete; missing ${TOKENIZER_PATH}" >&2
+  echo "hint: run python3 data/cached_challenge_fineweb.py --variant sp1024 --train-shards 1 or upload tokenizers/ to R2" >&2
+  exit 1
+fi
+
+echo "[bootstrap] tokenizer present: ${TOKENIZER_PATH}"
 
 # -----------------------------
 # ENV AUTOSYNC
