@@ -103,6 +103,7 @@ class Hyperparameters:
     stf_quant_scale = float(os.environ.get("STF_QUANT_SCALE", 64.0))
     stf_score_fn = os.environ.get("STF_SCORE_FN", "l2")
     stf_telemetry = bool(int(os.environ.get("STF_TELEMETRY", "1")))
+    stf_compute_mode = os.environ.get("STF_COMPUTE_MODE", "full_block_then_freeze")
     compile_model = bool(int(os.environ.get("COMPILE_MODEL", "0")))
 
 # -----------------------------
@@ -663,12 +664,33 @@ class Block(nn.Module):
         self.resid_mix = nn.Parameter(torch.stack((torch.ones(dim), torch.zeros(dim))).float())
 
     def forward(self, x: Tensor, x0: Tensor) -> Tensor:
+        x = self.forward_attn(x, x0)
+        return self.forward_mlp(x)
+
+    def forward_attn(self, x: Tensor, x0: Tensor) -> Tensor:
         mix = self.resid_mix.to(dtype=x.dtype)
         x = mix[0][None, None, :] * x + mix[1][None, None, :] * x0
         attn_out = self.attn(self.attn_norm(x))
         x = x + self.attn_scale.to(dtype=x.dtype)[None, None, :] * attn_out
-        x = x + self.mlp_scale.to(dtype=x.dtype)[None, None, :] * self.mlp(self.mlp_norm(x))
         return x
+
+    def forward_mlp(self, x: Tensor, active: Tensor | None = None) -> Tensor:
+        scale = self.mlp_scale.to(dtype=x.dtype)
+        if active is None:
+            return x + scale[None, None, :] * self.mlp(self.mlp_norm(x))
+
+        active_flat = active.squeeze(-1).reshape(-1)
+        if bool(active_flat.all().item()):
+            return x + scale[None, None, :] * self.mlp(self.mlp_norm(x))
+        if not bool(active_flat.any().item()):
+            return x
+
+        x_flat = x.reshape(-1, x.size(-1))
+        active_rows = x_flat[active_flat]
+        mlp_rows = self.mlp(self.mlp_norm(active_rows))
+        out_flat = torch.zeros_like(x_flat)
+        out_flat[active_flat] = mlp_rows
+        return x + scale[None, None, :] * out_flat.reshape_as(x)
 
 
 class GPT(nn.Module):
@@ -699,6 +721,7 @@ class GPT(nn.Module):
         stf_quant_scale: float,
         stf_score_fn: str,
         stf_telemetry: bool,
+        stf_compute_mode: str,
     ):
         super().__init__()
         if logit_softcap <= 0.0:
@@ -707,6 +730,9 @@ class GPT(nn.Module):
         self.tied_embed_init_std = tied_embed_init_std
         self.logit_softcap = logit_softcap
         self.stf_mode = stf_mode
+        if stf_compute_mode not in {"full_block_then_freeze", "mlp_active_rows"}:
+            raise ValueError(f"unsupported STF_COMPUTE_MODE={stf_compute_mode!r}")
+        self.stf_compute_mode = stf_compute_mode
         self.num_layers = num_layers
         self.stf_warmup_layers = max(stf_warmup_layers, 0)
         self.stf_depth_cap = max(stf_depth_cap, 0)
@@ -799,6 +825,7 @@ class GPT(nn.Module):
         active_pre: Tensor | None = None,
         active_final: Tensor | None = None,
         gate: Tensor | None = None,
+        computed_tokens: Tensor | float | None = None,
     ) -> None:
         if not self.stf_telemetry:
             return
@@ -812,14 +839,24 @@ class GPT(nn.Module):
         if active_final is not None:
             active_final_f = active_final.detach().float()
             self._stf_active_sum[idx] += active_final_f.mean()
-            self._record_stf_compute(idx, total_tokens=active_final_f.numel(), effective_active_tokens=active_final_f.sum())
+            self._record_stf_compute(
+                idx,
+                total_tokens=active_final_f.numel(),
+                effective_active_tokens=active_final_f.sum(),
+                computed_tokens=active_final_f.numel() if computed_tokens is None else computed_tokens,
+            )
         if gate is not None:
             gate_f = gate.detach().float()
             self._stf_gate_calls[idx] += 1.0
             self._stf_gate_sum[idx] += gate_f.mean()
             self._stf_gate_min[idx] = torch.minimum(self._stf_gate_min[idx], gate_f.min())
             self._stf_gate_max[idx] = torch.maximum(self._stf_gate_max[idx], gate_f.max())
-            self._record_stf_compute(idx, total_tokens=gate_f.numel(), effective_active_tokens=gate_f.sum())
+            self._record_stf_compute(
+                idx,
+                total_tokens=gate_f.numel(),
+                effective_active_tokens=gate_f.sum(),
+                computed_tokens=gate_f.numel() if computed_tokens is None else computed_tokens,
+            )
 
     @torch.no_grad()
     def _record_stf_compute(
@@ -828,14 +865,15 @@ class GPT(nn.Module):
         *,
         total_tokens: int,
         effective_active_tokens: Tensor | float,
+        computed_tokens: Tensor | float | int | None = None,
     ) -> None:
         if not self.stf_telemetry or total_tokens <= 0:
             return
         idx = int(layer_idx)
         self._stf_total_token_sum[idx] += float(total_tokens)
-        # Current STF computes the whole transformer block first, then freezes/blends.
-        # If we later add true token skipping, this is the field that should fall below 1.0.
-        self._stf_computed_token_sum[idx] += float(total_tokens)
+        if computed_tokens is None:
+            computed_tokens = total_tokens
+        self._stf_computed_token_sum[idx] += computed_tokens
         self._stf_effective_active_token_sum[idx] += effective_active_tokens
 
     @torch.no_grad()
@@ -881,7 +919,7 @@ class GPT(nn.Module):
             layer_ids = torch.where(compute_mask)[0].tolist()
             parts.extend(
                 [
-                    "compute_mode:full_block_then_freeze",
+                    f"compute_mode:{self.stf_compute_mode}",
                     f"computed_token_ratio:{computed_ratio.item():.4f}",
                     f"active_token_ratio:{active_token_ratio.item():.4f}",
                     f"frozen_token_ratio:{theoretical_skip_ratio.item():.4f}",
@@ -925,14 +963,8 @@ class GPT(nn.Module):
         ema_score: Tensor | None = None
         budget_prev_active = x.new_tensor(self.stf_target_active_ratio, dtype=torch.float32)
 
-        def apply_stf(layer_idx: int, x_in: Tensor, x_out: Tensor) -> Tensor:
+        def update_ema_score(x_in: Tensor, x_out: Tensor) -> tuple[Tensor, bool]:
             nonlocal ema_score, budget_prev_active
-            if self.stf_mode == "off":
-                return x_out
-            if layer_idx < self.stf_warmup_layers:
-                return x_out
-            if self.stf_depth_cap > 0 and layer_idx >= self.stf_depth_cap:
-                return x_out
 
             x_in_f = x_in.float()
             x_out_f = x_out.float()
@@ -947,21 +979,20 @@ class GPT(nn.Module):
                 delta = F.cosine_similarity(diff, x_in_f, dim=-1, eps=1e-6).abs().unsqueeze(-1)
             else:
                 delta = torch.linalg.vector_norm(diff, dim=-1, ord=2, keepdim=True)
-            if ema_score is None:
+            seeded = ema_score is None
+            if seeded:
                 ema_score = delta
             else:
                 ema_score = self.stf_ema_decay * ema_score + (1.0 - self.stf_ema_decay) * delta
+            return ema_score, seeded
 
-            if self.stf_mode == "learned_gate":
-                if self.stf_gate_scale is None or self.stf_gate_bias is None:
-                    return x_out
-                gate_pre = (
-                    self.stf_gate_scale[layer_idx].to(dtype=ema_score.dtype) * (ema_score - self.stf_threshold)
-                    + self.stf_gate_bias[layer_idx].to(dtype=ema_score.dtype)
-                )
-                gate = torch.sigmoid(gate_pre).to(dtype=x_out.dtype)
-                self._record_stf_stats(layer_idx, ema_score, gate=gate)
-                return gate * x_out + (1.0 - gate) * x_in
+        def select_active(layer_idx: int, *, force_all: bool = False) -> tuple[Tensor, Tensor]:
+            nonlocal budget_prev_active
+            if ema_score is None:
+                raise RuntimeError("STF active mask requested before score initialization")
+            if force_all:
+                active = torch.ones_like(ema_score, dtype=torch.bool)
+                return active, active
 
             threshold = ema_score.new_tensor(self.stf_threshold)
             if self.stf_mode == "budget_regularization":
@@ -982,10 +1013,34 @@ class GPT(nn.Module):
                 if k < token_scores.numel():
                     cutoff = torch.topk(token_scores, k, sorted=False).values.min()
                     active = ema_score >= cutoff
+            return active, active_pre_guard
+
+        def apply_stf(layer_idx: int, x_in: Tensor, x_out: Tensor) -> Tensor:
+            nonlocal budget_prev_active
+            if self.stf_mode == "off":
+                return x_out
+            if layer_idx < self.stf_warmup_layers:
+                return x_out
+            if self.stf_depth_cap > 0 and layer_idx >= self.stf_depth_cap:
+                return x_out
+
+            score, _ = update_ema_score(x_in, x_out)
+            if self.stf_mode == "learned_gate":
+                if self.stf_gate_scale is None or self.stf_gate_bias is None:
+                    return x_out
+                gate_pre = (
+                    self.stf_gate_scale[layer_idx].to(dtype=score.dtype) * (score - self.stf_threshold)
+                    + self.stf_gate_bias[layer_idx].to(dtype=score.dtype)
+                )
+                gate = torch.sigmoid(gate_pre).to(dtype=x_out.dtype)
+                self._record_stf_stats(layer_idx, score, gate=gate)
+                return gate * x_out + (1.0 - gate) * x_in
+
+            active, active_pre_guard = select_active(layer_idx)
 
             active_float = active.to(dtype=x_out.dtype)
             budget_prev_active = active_float.mean().detach()
-            self._record_stf_stats(layer_idx, ema_score, active_pre=active_pre_guard, active_final=active)
+            self._record_stf_stats(layer_idx, score, active_pre=active_pre_guard, active_final=active)
 
             if self.stf_mode == "soft_freeze":
                 frozen = self.stf_soft_keep * x_out + (1.0 - self.stf_soft_keep) * x_in
@@ -998,19 +1053,42 @@ class GPT(nn.Module):
                 return active_float * x_out + (1.0 - active_float) * quantized
             return active_float * x_out + (1.0 - active_float) * x_in
 
+        def run_block(layer_idx: int, x: Tensor, x0: Tensor) -> Tensor:
+            nonlocal budget_prev_active
+            if self.stf_compute_mode == "full_block_then_freeze":
+                x_in = x
+                x_out = self.blocks[layer_idx](x, x0)
+                return apply_stf(layer_idx, x_in, x_out)
+            if self.stf_compute_mode != "mlp_active_rows":
+                raise RuntimeError(f"unsupported STF_COMPUTE_MODE={self.stf_compute_mode!r}")
+            if self.stf_mode == "off" or layer_idx < self.stf_warmup_layers or (self.stf_depth_cap > 0 and layer_idx >= self.stf_depth_cap):
+                return self.blocks[layer_idx](x, x0)
+
+            block = self.blocks[layer_idx]
+            x_in = x
+            x_attn = block.forward_attn(x, x0)
+            score, seeded = update_ema_score(x_in, x_attn)
+            active, active_pre_guard = select_active(layer_idx, force_all=seeded)
+            active_float = active.to(dtype=x_attn.dtype)
+            budget_prev_active = active_float.mean().detach()
+            self._record_stf_stats(
+                layer_idx,
+                score,
+                active_pre=active_pre_guard,
+                active_final=active,
+                computed_tokens=active.detach().float().sum(),
+            )
+            return block.forward_mlp(x_attn, active)
+
         # First half stores skips; second half reuses them in reverse order.
         for i in range(self.num_encoder_layers):
-            x_in = x
-            x = self.blocks[i](x, x0)
-            x = apply_stf(i, x_in, x)
+            x = run_block(i, x, x0)
             skips.append(x)
         for i in range(self.num_decoder_layers):
             if skips:
                 x = x + self.skip_weights[i].to(dtype=x.dtype)[None, None, :] * skips.pop()
             layer_idx = self.num_encoder_layers + i
-            x_in = x
-            x = self.blocks[layer_idx](x, x0)
-            x = apply_stf(layer_idx, x_in, x)
+            x = run_block(layer_idx, x, x0)
 
         x = self.final_norm(x).reshape(-1, x.size(-1))
         targets = target_ids.reshape(-1)
@@ -1152,6 +1230,7 @@ def main() -> None:
         stf_quant_scale=args.stf_quant_scale,
         stf_score_fn=args.stf_score_fn,
         stf_telemetry=args.stf_telemetry,
+        stf_compute_mode=args.stf_compute_mode,
     ).to(device).bfloat16()
     base_model.reset_stf_stats()
     for module in base_model.modules():
