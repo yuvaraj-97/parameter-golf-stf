@@ -46,6 +46,7 @@ GPU_COUNT="1"
 GPU_NAME="unknown-gpu"
 GPU_SLUG="unknown-gpu"
 ALERT_SENT="0"
+CURRENT_CONSOLE_LOG=""
 
 timestamp() {
   date -u +%Y-%m-%dT%H:%M:%SZ
@@ -53,13 +54,35 @@ timestamp() {
 
 notify() {
   local text="$1"
-  echo "[$(timestamp)] $text"
+  printf '[%s] %s\n' "$(timestamp)" "$text"
   if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] || [ -z "${TELEGRAM_USER_ID:-}" ]; then
     return 0
   fi
   curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
     -d "chat_id=${TELEGRAM_USER_ID}" \
     --data-urlencode "text=${text}" >/dev/null || true
+}
+
+run_context() {
+  cat <<EOF
+Branch: ${CURRENT_BRANCH:-not set}
+Formula: ${CURRENT_SCORE_FN:-not set}
+Run: ${CURRENT_RUN_ID:-not assigned}
+GPU: ${GPU_COUNT}x ${GPU_NAME}
+Iterations: ${ITERATIONS}
+Pod: $(hostname)
+EOF
+}
+
+failure_summary() {
+  if [ -z "${CURRENT_CONSOLE_LOG:-}" ] || [ ! -f "$CURRENT_CONSOLE_LOG" ]; then
+    return 0
+  fi
+
+  grep -E "RuntimeError:|OSError:|ValueError:|FileNotFoundError:|ChildFailedError|train_gpt.py FAILED|Root Cause|error:" "$CURRENT_CONSOLE_LOG" \
+    | tail -n 8 \
+    | sed 's/^[[:space:]]*//; s/\[rank[0-9]\]://g' \
+    || true
 }
 
 notify_repeat() {
@@ -78,12 +101,24 @@ notify_repeat() {
 fail_with_alerts() {
   local exit_code="${1:-1}"
   local message="$2"
+  local summary
   cleanup_telemetry
   if [ "$ALERT_SENT" = "1" ]; then
     exit "$exit_code"
   fi
   ALERT_SENT="1"
-  notify_repeat "STOPPED: ${message} exit=${exit_code} branch=${CURRENT_BRANCH:-unknown} formula=${CURRENT_SCORE_FN:-unknown} run_id=${CURRENT_RUN_ID:-unknown}. Attend to the pod."
+  summary="$(failure_summary)"
+  notify_repeat "STOPPED
+
+Reason: ${message}
+Exit: ${exit_code}
+
+$(run_context)
+
+Key error:
+${summary:-No console summary available.}
+
+Action: attend to the pod."
   exit "$exit_code"
 }
 
@@ -192,7 +227,13 @@ preflight_training_inputs
 
 mkdir -p logs logs/telemetry vast/experiments
 
-notify "STARTED: Vast STF formula series branches='${STF_BRANCHES}' formulas='${STF_SCORE_FNS}' iterations=${ITERATIONS} gpu=${GPU_COUNT}x ${GPU_NAME}"
+notify "SERIES STARTED
+
+Branches: ${STF_BRANCHES}
+Formulas: ${STF_SCORE_FNS}
+Iterations: ${ITERATIONS}
+GPU: ${GPU_COUNT}x ${GPU_NAME}
+Pod: $(hostname)"
 
 for branch in $STF_BRANCHES; do
   CURRENT_BRANCH="$branch"
@@ -213,10 +254,13 @@ for branch in $STF_BRANCHES; do
     safe_branch="$(printf '%s' "$branch" | tr '/' '-')"
     CURRENT_RUN_ID="$(date +%F)_${safe_branch}_${score_fn}_${GPU_SLUG}_${GPU_COUNT}gpu_i${ITERATIONS}_run${RUN_NUMBER}"
     console_log="logs/${CURRENT_RUN_ID}.console.txt"
+    CURRENT_CONSOLE_LOG="$console_log"
 
     rm -f "logs/${CURRENT_RUN_ID}.txt" "$console_log" "logs/telemetry/${CURRENT_RUN_ID}.csv" final_model.pt final_model.int8.ptz
 
-    notify "STARTED variant branch=${branch} formula=${score_fn} run_id=${CURRENT_RUN_ID}"
+    notify "VARIANT STARTED
+
+$(run_context)"
 
     if [ -x "scripts/capture_telemetry.sh" ]; then
       RUN_ID="$CURRENT_RUN_ID" TELEMETRY_INTERVAL_SECONDS="$TELEMETRY_INTERVAL_SECONDS" ./scripts/capture_telemetry.sh &
@@ -242,9 +286,22 @@ for branch in $STF_BRANCHES; do
 
     run_dir="$(archive_run "$branch" "$score_fn" "$CURRENT_RUN_ID" "$console_log")"
     final_line="$(grep -E "final_int8_zlib_roundtrip_exact|final_int8_zlib_roundtrip|step:[0-9]+/[0-9]+ val_loss" "logs/${CURRENT_RUN_ID}.txt" 2>/dev/null | tail -n 1 || true)"
-    notify "ENDED variant branch=${branch} formula=${score_fn} run_id=${CURRENT_RUN_ID} archive=${run_dir} final='${final_line}'"
-    notify "MOVING TO NEXT variant after branch=${branch} formula=${score_fn}"
+    notify "VARIANT ENDED
+
+$(run_context)
+
+Archive: ${run_dir}
+Final: ${final_line:-not found}"
+    notify "MOVING TO NEXT
+
+Completed: ${branch} / ${score_fn}
+Next variant will start shortly."
   done
 done
 
-notify "DONE: Vast STF formula series completed branches='${STF_BRANCHES}' formulas='${STF_SCORE_FNS}' iterations=${ITERATIONS}"
+notify "SERIES DONE
+
+Branches: ${STF_BRANCHES}
+Formulas: ${STF_SCORE_FNS}
+Iterations: ${ITERATIONS}
+GPU: ${GPU_COUNT}x ${GPU_NAME}"
