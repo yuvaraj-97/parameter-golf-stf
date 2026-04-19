@@ -5,7 +5,6 @@ echo "[bootstrap] starting"
 
 PROJECT_DIR="${PROJECT_DIR:-/workspace/project}"
 R2_ENV_FILE="${R2_ENV_FILE:-/workspace/r2.env}"
-PROJECT_R2_ENV_FILE="${PROJECT_R2_ENV_FILE:-${PROJECT_DIR}/.r2.env}"
 R2_BUCKET="${R2_BUCKET:-parameter-golf-train}"
 RCLONE_REMOTE="${RCLONE_REMOTE:-r2}"
 BOOTSTRAP_PREFIX="${BOOTSTRAP_PREFIX:-bootstrap}"
@@ -42,7 +41,7 @@ require_env() {
   fi
 }
 
-load_env_file "${R2_ENV_FILE}" || load_env_file "${PROJECT_R2_ENV_FILE}" || true
+load_env_file "${R2_ENV_FILE}" || true
 
 require_env R2_ACCOUNT_ID
 require_env R2_ACCESS_KEY_ID
