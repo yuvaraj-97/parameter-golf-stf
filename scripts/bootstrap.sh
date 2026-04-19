@@ -181,7 +181,15 @@ restore_optional_dir "${BOOTSTRAP_PREFIX}/home" /root
 restore_optional_dir "${BOOTSTRAP_PREFIX}/root" /root
 setup_git_credentials
 configure_git_fetch
-write_project_env
+
+if r2_file_exists "${BOOTSTRAP_PREFIX}/project/.env"; then
+  echo "[bootstrap] restoring ${R2_BUCKET}/${BOOTSTRAP_PREFIX}/project/.env -> ${ENV_FILE}"
+  mkdir -p "$(dirname "${ENV_FILE}")"
+  rclone copyto "$(r2_path "${BOOTSTRAP_PREFIX}/project/.env")" "${ENV_FILE}" --progress
+  chmod 600 "${ENV_FILE}" 2>/dev/null || true
+else
+  write_project_env
+fi
 
 chmod 700 /root/.ssh || true
 chmod 600 /root/.ssh/* 2>/dev/null || true
