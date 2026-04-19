@@ -1011,8 +1011,10 @@ class GPT(nn.Module):
                 token_scores = ema_score.squeeze(-1).reshape(-1)
                 k = min(token_scores.numel(), max(1, int(math.ceil(self.stf_min_active_ratio * token_scores.numel()))))
                 if k < token_scores.numel():
-                    cutoff = torch.topk(token_scores, k, sorted=False).values.min()
-                    active = ema_score >= cutoff
+                    topk_idx = torch.topk(token_scores, k, sorted=False).indices
+                    floor_active = torch.zeros_like(token_scores, dtype=torch.bool)
+                    floor_active[topk_idx] = True
+                    active = active | floor_active.reshape_as(active)
             return active, active_pre_guard
 
         def apply_stf(layer_idx: int, x_in: Tensor, x_out: Tensor) -> Tensor:
