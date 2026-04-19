@@ -1,0 +1,883 @@
+{
+  "iterations": "5000",
+  "shardFilter": "80",
+  "records": [
+    {
+      "branch": "baseline-repro",
+      "status": "ok",
+      "path": "runpod/experiments/2026-04-16-nvidia-geforce-rtx-4090-4gpu/baseline-repro/2026-04-16_baseline-repro_nvidia-geforce-rtx-4090_4gpu_i5000_run2/train.log",
+      "mode": "baseline",
+      "compile_model": "",
+      "train_batch_tokens": 524288,
+      "train_shards": 80,
+      "model_params": 17059912,
+      "val_points": 26,
+      "best_step": 5000,
+      "best_val_bpb": 1.2475,
+      "final_step": 5000,
+      "final_val_bpb": 1.2475,
+      "roundtrip_val_bpb": 1.25187638,
+      "int8_zlib_model_bytes": 15797140,
+      "int8_payload_bytes": 17178912,
+      "int8_raw_torch_bytes": 17224025,
+      "int8_payload_ratio": 3.91,
+      "code_bytes": 47968,
+      "total_submission_int8_zlib_bytes": 15845108,
+      "artifact_margin_bytes": 154892,
+      "step_avg_ms": 389.39,
+      "telemetry_samples": 576,
+      "gpu_util_avg": 97.21875,
+      "gpu_util_p10": 100.0,
+      "gpu_util_p50": 100.0,
+      "gpu_util_p90": 100.0,
+      "gpu_util_lt80_frac": 0.027777777777777776,
+      "power_avg_w": 284.9069097222222,
+      "temp_avg_c": 57.220486111111114,
+      "mem_avg_gb": 10.556627061631945,
+      "mem_peak_gb": 10.8564453125,
+      "mem_total_gb": 23.98828125,
+      "family": "control",
+      "decision": "none",
+      "frozen_path": "none",
+      "control": "none",
+      "summary": "Control branch. No STF routing. Use this to judge whether STF helps at the same hardware and budget."
+    },
+    {
+      "branch": "stf-minimal",
+      "status": "missing",
+      "family": "decision",
+      "decision": "hard threshold",
+      "frozen_path": "previous state",
+      "control": "min active guardrail",
+      "summary": "Plain STF: freeze low-change tokens and carry the previous hidden state forward."
+    },
+    {
+      "branch": "stf-learned-gate",
+      "status": "ok",
+      "path": "runpod/experiments/2026-04-16-nvidia-geforce-rtx-4090-4gpu/stf-learned-gate/2026-04-16_stf-learned-gate_nvidia-geforce-rtx-4090_4gpu_i5000_run2/train.log",
+      "mode": "learned_gate",
+      "compile_model": "False",
+      "train_batch_tokens": 524288,
+      "train_shards": 80,
+      "model_params": 17059930,
+      "val_points": 26,
+      "best_step": 5000,
+      "best_val_bpb": 1.2585,
+      "final_step": 5000,
+      "final_val_bpb": 1.2585,
+      "roundtrip_val_bpb": 1.26287554,
+      "int8_zlib_model_bytes": 15780401,
+      "int8_payload_bytes": 17178948,
+      "int8_raw_torch_bytes": 17224661,
+      "int8_payload_ratio": 3.91,
+      "code_bytes": 54830,
+      "total_submission_int8_zlib_bytes": 15835231,
+      "artifact_margin_bytes": 164769,
+      "step_avg_ms": 612.29,
+      "telemetry_samples": 920,
+      "gpu_util_avg": 98.52608695652174,
+      "gpu_util_p10": 99.0,
+      "gpu_util_p50": 100.0,
+      "gpu_util_p90": 100.0,
+      "gpu_util_lt80_frac": 0.013043478260869565,
+      "power_avg_w": 302.2705760869565,
+      "temp_avg_c": 59.56195652173913,
+      "mem_avg_gb": 15.740739639945652,
+      "mem_peak_gb": 15.9072265625,
+      "mem_total_gb": 23.98828125,
+      "family": "decision",
+      "decision": "learned sigmoid gate",
+      "frozen_path": "continuous old/new blend",
+      "control": "min active guardrail",
+      "summary": "Learns the gate shape per layer instead of relying only on a fixed threshold."
+    },
+    {
+      "branch": "stf-soft-freeze",
+      "status": "missing",
+      "family": "frozen path",
+      "decision": "hard threshold",
+      "frozen_path": "soft keep of new state",
+      "control": "min active guardrail",
+      "summary": "Keeps a fraction of the newly computed state for frozen tokens, reducing hard-freeze brittleness."
+    },
+    {
+      "branch": "stf-reactivation",
+      "status": "missing",
+      "family": "control",
+      "decision": "hard threshold",
+      "frozen_path": "previous state",
+      "control": "periodic reopen",
+      "summary": "Periodically forces tokens active again so early freeze decisions are not permanent."
+    },
+    {
+      "branch": "stf-budget-regularization",
+      "status": "missing",
+      "family": "control",
+      "decision": "adaptive threshold",
+      "frozen_path": "previous state",
+      "control": "target active budget",
+      "summary": "Adjusts threshold pressure to stay near a target active-token ratio."
+    },
+    {
+      "branch": "stf-recurrence",
+      "status": "ok",
+      "path": "runpod/experiments/2026-04-16-nvidia-geforce-rtx-4090-4gpu/stf-recurrence/2026-04-16_stf-recurrence_nvidia-geforce-rtx-4090_4gpu_i5000_run2/train.log",
+      "mode": "recurrence",
+      "compile_model": "False",
+      "train_batch_tokens": 524288,
+      "train_shards": 80,
+      "model_params": 17059912,
+      "val_points": 26,
+      "best_step": 5000,
+      "best_val_bpb": 1.2649,
+      "final_step": 5000,
+      "final_val_bpb": 1.2649,
+      "roundtrip_val_bpb": 1.26902905,
+      "int8_zlib_model_bytes": 15777616,
+      "int8_payload_bytes": 17178912,
+      "int8_raw_torch_bytes": 17224025,
+      "int8_payload_ratio": 3.91,
+      "code_bytes": 54846,
+      "total_submission_int8_zlib_bytes": 15832462,
+      "artifact_margin_bytes": 167538,
+      "step_avg_ms": 614.64,
+      "telemetry_samples": 936,
+      "gpu_util_avg": 96.30555555555556,
+      "gpu_util_p10": 94.0,
+      "gpu_util_p50": 99.0,
+      "gpu_util_p90": 100.0,
+      "gpu_util_lt80_frac": 0.014957264957264958,
+      "power_avg_w": 295.0573183760684,
+      "temp_avg_c": 58.02350427350427,
+      "mem_avg_gb": 14.452695145566238,
+      "mem_peak_gb": 14.7158203125,
+      "mem_total_gb": 23.98828125,
+      "family": "frozen path",
+      "decision": "hard threshold",
+      "frozen_path": "recurrent old/new blend",
+      "control": "min active guardrail",
+      "summary": "Uses a recurrence-like blend for frozen tokens instead of a pure old-state carry."
+    },
+    {
+      "branch": "stf-quantization",
+      "status": "missing",
+      "family": "frozen path",
+      "decision": "hard threshold",
+      "frozen_path": "quantized previous state",
+      "control": "min active guardrail",
+      "summary": "Tests whether frozen tokens can carry a cheaper quantized state."
+    }
+  ],
+  "curves": {
+    "baseline-repro": [
+      {
+        "step": 0,
+        "total": 5000,
+        "val_loss": 6.9357,
+        "val_bpb": 4.1077,
+        "train_time_ms": 0.0,
+        "step_avg_ms": 0.03
+      },
+      {
+        "step": 200,
+        "total": 5000,
+        "val_loss": 2.85,
+        "val_bpb": 1.6879,
+        "train_time_ms": 78587.0,
+        "step_avg_ms": 392.93
+      },
+      {
+        "step": 400,
+        "total": 5000,
+        "val_loss": 2.5653,
+        "val_bpb": 1.5193,
+        "train_time_ms": 157024.0,
+        "step_avg_ms": 392.56
+      },
+      {
+        "step": 600,
+        "total": 5000,
+        "val_loss": 2.4498,
+        "val_bpb": 1.4509,
+        "train_time_ms": 235728.0,
+        "step_avg_ms": 392.88
+      },
+      {
+        "step": 800,
+        "total": 5000,
+        "val_loss": 2.3808,
+        "val_bpb": 1.4101,
+        "train_time_ms": 314429.0,
+        "step_avg_ms": 393.04
+      },
+      {
+        "step": 1000,
+        "total": 5000,
+        "val_loss": 2.336,
+        "val_bpb": 1.3835,
+        "train_time_ms": 392357.0,
+        "step_avg_ms": 392.36
+      },
+      {
+        "step": 1200,
+        "total": 5000,
+        "val_loss": 2.3025,
+        "val_bpb": 1.3637,
+        "train_time_ms": 470530.0,
+        "step_avg_ms": 392.11
+      },
+      {
+        "step": 1400,
+        "total": 5000,
+        "val_loss": 2.2795,
+        "val_bpb": 1.3501,
+        "train_time_ms": 548674.0,
+        "step_avg_ms": 391.91
+      },
+      {
+        "step": 1600,
+        "total": 5000,
+        "val_loss": 2.2651,
+        "val_bpb": 1.3415,
+        "train_time_ms": 626208.0,
+        "step_avg_ms": 391.38
+      },
+      {
+        "step": 1800,
+        "total": 5000,
+        "val_loss": 2.2489,
+        "val_bpb": 1.3319,
+        "train_time_ms": 703941.0,
+        "step_avg_ms": 391.08
+      },
+      {
+        "step": 2000,
+        "total": 5000,
+        "val_loss": 2.2345,
+        "val_bpb": 1.3234,
+        "train_time_ms": 782893.0,
+        "step_avg_ms": 391.45
+      },
+      {
+        "step": 2200,
+        "total": 5000,
+        "val_loss": 2.2252,
+        "val_bpb": 1.3179,
+        "train_time_ms": 860851.0,
+        "step_avg_ms": 391.3
+      },
+      {
+        "step": 2400,
+        "total": 5000,
+        "val_loss": 2.2151,
+        "val_bpb": 1.3119,
+        "train_time_ms": 938834.0,
+        "step_avg_ms": 391.18
+      },
+      {
+        "step": 2600,
+        "total": 5000,
+        "val_loss": 2.219,
+        "val_bpb": 1.3142,
+        "train_time_ms": 1016246.0,
+        "step_avg_ms": 390.86
+      },
+      {
+        "step": 2800,
+        "total": 5000,
+        "val_loss": 2.2005,
+        "val_bpb": 1.3033,
+        "train_time_ms": 1094366.0,
+        "step_avg_ms": 390.85
+      },
+      {
+        "step": 3000,
+        "total": 5000,
+        "val_loss": 2.1932,
+        "val_bpb": 1.2989,
+        "train_time_ms": 1172787.0,
+        "step_avg_ms": 390.93
+      },
+      {
+        "step": 3200,
+        "total": 5000,
+        "val_loss": 2.1887,
+        "val_bpb": 1.2963,
+        "train_time_ms": 1250368.0,
+        "step_avg_ms": 390.74
+      },
+      {
+        "step": 3400,
+        "total": 5000,
+        "val_loss": 2.185,
+        "val_bpb": 1.2941,
+        "train_time_ms": 1328341.0,
+        "step_avg_ms": 390.69
+      },
+      {
+        "step": 3600,
+        "total": 5000,
+        "val_loss": 2.1774,
+        "val_bpb": 1.2896,
+        "train_time_ms": 1406462.0,
+        "step_avg_ms": 390.68
+      },
+      {
+        "step": 3800,
+        "total": 5000,
+        "val_loss": 2.1737,
+        "val_bpb": 1.2874,
+        "train_time_ms": 1484435.0,
+        "step_avg_ms": 390.64
+      },
+      {
+        "step": 4000,
+        "total": 5000,
+        "val_loss": 2.1613,
+        "val_bpb": 1.2801,
+        "train_time_ms": 1561599.0,
+        "step_avg_ms": 390.4
+      },
+      {
+        "step": 4200,
+        "total": 5000,
+        "val_loss": 2.1485,
+        "val_bpb": 1.2724,
+        "train_time_ms": 1637442.0,
+        "step_avg_ms": 389.87
+      },
+      {
+        "step": 4400,
+        "total": 5000,
+        "val_loss": 2.1386,
+        "val_bpb": 1.2666,
+        "train_time_ms": 1715333.0,
+        "step_avg_ms": 389.85
+      },
+      {
+        "step": 4600,
+        "total": 5000,
+        "val_loss": 2.126,
+        "val_bpb": 1.2592,
+        "train_time_ms": 1793378.0,
+        "step_avg_ms": 389.86
+      },
+      {
+        "step": 4800,
+        "total": 5000,
+        "val_loss": 2.1147,
+        "val_bpb": 1.2524,
+        "train_time_ms": 1869882.0,
+        "step_avg_ms": 389.56
+      },
+      {
+        "step": 5000,
+        "total": 5000,
+        "val_loss": 2.1064,
+        "val_bpb": 1.2475,
+        "train_time_ms": 1946938.0,
+        "step_avg_ms": 389.39
+      }
+    ],
+    "stf-learned-gate": [
+      {
+        "step": 0,
+        "total": 5000,
+        "val_loss": 6.9357,
+        "val_bpb": 4.1077,
+        "train_time_ms": 0.0,
+        "step_avg_ms": 0.04
+      },
+      {
+        "step": 200,
+        "total": 5000,
+        "val_loss": 2.9231,
+        "val_bpb": 1.7312,
+        "train_time_ms": 122658.0,
+        "step_avg_ms": 613.29
+      },
+      {
+        "step": 400,
+        "total": 5000,
+        "val_loss": 2.6037,
+        "val_bpb": 1.542,
+        "train_time_ms": 245050.0,
+        "step_avg_ms": 612.63
+      },
+      {
+        "step": 600,
+        "total": 5000,
+        "val_loss": 2.4805,
+        "val_bpb": 1.4691,
+        "train_time_ms": 367556.0,
+        "step_avg_ms": 612.59
+      },
+      {
+        "step": 800,
+        "total": 5000,
+        "val_loss": 2.4048,
+        "val_bpb": 1.4243,
+        "train_time_ms": 490344.0,
+        "step_avg_ms": 612.93
+      },
+      {
+        "step": 1000,
+        "total": 5000,
+        "val_loss": 2.3561,
+        "val_bpb": 1.3954,
+        "train_time_ms": 612662.0,
+        "step_avg_ms": 612.66
+      },
+      {
+        "step": 1200,
+        "total": 5000,
+        "val_loss": 2.3254,
+        "val_bpb": 1.3772,
+        "train_time_ms": 735620.0,
+        "step_avg_ms": 613.02
+      },
+      {
+        "step": 1400,
+        "total": 5000,
+        "val_loss": 2.301,
+        "val_bpb": 1.3628,
+        "train_time_ms": 858684.0,
+        "step_avg_ms": 613.35
+      },
+      {
+        "step": 1600,
+        "total": 5000,
+        "val_loss": 2.2852,
+        "val_bpb": 1.3534,
+        "train_time_ms": 981585.0,
+        "step_avg_ms": 613.49
+      },
+      {
+        "step": 1800,
+        "total": 5000,
+        "val_loss": 2.2696,
+        "val_bpb": 1.3442,
+        "train_time_ms": 1104589.0,
+        "step_avg_ms": 613.66
+      },
+      {
+        "step": 2000,
+        "total": 5000,
+        "val_loss": 2.2532,
+        "val_bpb": 1.3345,
+        "train_time_ms": 1227572.0,
+        "step_avg_ms": 613.79
+      },
+      {
+        "step": 2200,
+        "total": 5000,
+        "val_loss": 2.2448,
+        "val_bpb": 1.3295,
+        "train_time_ms": 1350508.0,
+        "step_avg_ms": 613.87
+      },
+      {
+        "step": 2400,
+        "total": 5000,
+        "val_loss": 2.2342,
+        "val_bpb": 1.3232,
+        "train_time_ms": 1473099.0,
+        "step_avg_ms": 613.79
+      },
+      {
+        "step": 2600,
+        "total": 5000,
+        "val_loss": 2.2354,
+        "val_bpb": 1.3239,
+        "train_time_ms": 1596330.0,
+        "step_avg_ms": 613.97
+      },
+      {
+        "step": 2800,
+        "total": 5000,
+        "val_loss": 2.2195,
+        "val_bpb": 1.3145,
+        "train_time_ms": 1718136.0,
+        "step_avg_ms": 613.62
+      },
+      {
+        "step": 3000,
+        "total": 5000,
+        "val_loss": 2.2119,
+        "val_bpb": 1.31,
+        "train_time_ms": 1839249.0,
+        "step_avg_ms": 613.08
+      },
+      {
+        "step": 3200,
+        "total": 5000,
+        "val_loss": 2.2077,
+        "val_bpb": 1.3075,
+        "train_time_ms": 1960489.0,
+        "step_avg_ms": 612.65
+      },
+      {
+        "step": 3400,
+        "total": 5000,
+        "val_loss": 2.204,
+        "val_bpb": 1.3053,
+        "train_time_ms": 2083614.0,
+        "step_avg_ms": 612.83
+      },
+      {
+        "step": 3600,
+        "total": 5000,
+        "val_loss": 2.1957,
+        "val_bpb": 1.3004,
+        "train_time_ms": 2206820.0,
+        "step_avg_ms": 613.01
+      },
+      {
+        "step": 3800,
+        "total": 5000,
+        "val_loss": 2.1918,
+        "val_bpb": 1.2981,
+        "train_time_ms": 2329291.0,
+        "step_avg_ms": 612.97
+      },
+      {
+        "step": 4000,
+        "total": 5000,
+        "val_loss": 2.1793,
+        "val_bpb": 1.2907,
+        "train_time_ms": 2451460.0,
+        "step_avg_ms": 612.86
+      },
+      {
+        "step": 4200,
+        "total": 5000,
+        "val_loss": 2.1672,
+        "val_bpb": 1.2835,
+        "train_time_ms": 2573578.0,
+        "step_avg_ms": 612.76
+      },
+      {
+        "step": 4400,
+        "total": 5000,
+        "val_loss": 2.157,
+        "val_bpb": 1.2775,
+        "train_time_ms": 2694087.0,
+        "step_avg_ms": 612.29
+      },
+      {
+        "step": 4600,
+        "total": 5000,
+        "val_loss": 2.1443,
+        "val_bpb": 1.27,
+        "train_time_ms": 2815024.0,
+        "step_avg_ms": 611.96
+      },
+      {
+        "step": 4800,
+        "total": 5000,
+        "val_loss": 2.1331,
+        "val_bpb": 1.2633,
+        "train_time_ms": 2938157.0,
+        "step_avg_ms": 612.12
+      },
+      {
+        "step": 5000,
+        "total": 5000,
+        "val_loss": 2.1249,
+        "val_bpb": 1.2585,
+        "train_time_ms": 3061425.0,
+        "step_avg_ms": 612.29
+      }
+    ],
+    "stf-recurrence": [
+      {
+        "step": 0,
+        "total": 5000,
+        "val_loss": 6.9357,
+        "val_bpb": 4.1077,
+        "train_time_ms": 0.0,
+        "step_avg_ms": 0.03
+      },
+      {
+        "step": 200,
+        "total": 5000,
+        "val_loss": 2.9147,
+        "val_bpb": 1.7263,
+        "train_time_ms": 121859.0,
+        "step_avg_ms": 609.29
+      },
+      {
+        "step": 400,
+        "total": 5000,
+        "val_loss": 2.6217,
+        "val_bpb": 1.5527,
+        "train_time_ms": 243757.0,
+        "step_avg_ms": 609.39
+      },
+      {
+        "step": 600,
+        "total": 5000,
+        "val_loss": 2.4906,
+        "val_bpb": 1.4751,
+        "train_time_ms": 366520.0,
+        "step_avg_ms": 610.87
+      },
+      {
+        "step": 800,
+        "total": 5000,
+        "val_loss": 2.4167,
+        "val_bpb": 1.4313,
+        "train_time_ms": 489379.0,
+        "step_avg_ms": 611.72
+      },
+      {
+        "step": 1000,
+        "total": 5000,
+        "val_loss": 2.3687,
+        "val_bpb": 1.4029,
+        "train_time_ms": 612966.0,
+        "step_avg_ms": 612.97
+      },
+      {
+        "step": 1200,
+        "total": 5000,
+        "val_loss": 2.3354,
+        "val_bpb": 1.3831,
+        "train_time_ms": 736526.0,
+        "step_avg_ms": 613.77
+      },
+      {
+        "step": 1400,
+        "total": 5000,
+        "val_loss": 2.3114,
+        "val_bpb": 1.369,
+        "train_time_ms": 860162.0,
+        "step_avg_ms": 614.4
+      },
+      {
+        "step": 1600,
+        "total": 5000,
+        "val_loss": 2.2966,
+        "val_bpb": 1.3602,
+        "train_time_ms": 983333.0,
+        "step_avg_ms": 614.58
+      },
+      {
+        "step": 1800,
+        "total": 5000,
+        "val_loss": 2.2813,
+        "val_bpb": 1.3511,
+        "train_time_ms": 1105845.0,
+        "step_avg_ms": 614.36
+      },
+      {
+        "step": 2000,
+        "total": 5000,
+        "val_loss": 2.2647,
+        "val_bpb": 1.3413,
+        "train_time_ms": 1229265.0,
+        "step_avg_ms": 614.63
+      },
+      {
+        "step": 2200,
+        "total": 5000,
+        "val_loss": 2.2563,
+        "val_bpb": 1.3363,
+        "train_time_ms": 1352892.0,
+        "step_avg_ms": 614.95
+      },
+      {
+        "step": 2400,
+        "total": 5000,
+        "val_loss": 2.2459,
+        "val_bpb": 1.3301,
+        "train_time_ms": 1476918.0,
+        "step_avg_ms": 615.38
+      },
+      {
+        "step": 2600,
+        "total": 5000,
+        "val_loss": 2.2482,
+        "val_bpb": 1.3315,
+        "train_time_ms": 1600830.0,
+        "step_avg_ms": 615.7
+      },
+      {
+        "step": 2800,
+        "total": 5000,
+        "val_loss": 2.2313,
+        "val_bpb": 1.3215,
+        "train_time_ms": 1723485.0,
+        "step_avg_ms": 615.53
+      },
+      {
+        "step": 3000,
+        "total": 5000,
+        "val_loss": 2.223,
+        "val_bpb": 1.3166,
+        "train_time_ms": 1846611.0,
+        "step_avg_ms": 615.54
+      },
+      {
+        "step": 3200,
+        "total": 5000,
+        "val_loss": 2.2174,
+        "val_bpb": 1.3133,
+        "train_time_ms": 1969272.0,
+        "step_avg_ms": 615.4
+      },
+      {
+        "step": 3400,
+        "total": 5000,
+        "val_loss": 2.2145,
+        "val_bpb": 1.3116,
+        "train_time_ms": 2091914.0,
+        "step_avg_ms": 615.27
+      },
+      {
+        "step": 3600,
+        "total": 5000,
+        "val_loss": 2.2063,
+        "val_bpb": 1.3067,
+        "train_time_ms": 2215239.0,
+        "step_avg_ms": 615.34
+      },
+      {
+        "step": 3800,
+        "total": 5000,
+        "val_loss": 2.203,
+        "val_bpb": 1.3048,
+        "train_time_ms": 2336343.0,
+        "step_avg_ms": 614.83
+      },
+      {
+        "step": 4000,
+        "total": 5000,
+        "val_loss": 2.1899,
+        "val_bpb": 1.297,
+        "train_time_ms": 2458394.0,
+        "step_avg_ms": 614.6
+      },
+      {
+        "step": 4200,
+        "total": 5000,
+        "val_loss": 2.1776,
+        "val_bpb": 1.2897,
+        "train_time_ms": 2579391.0,
+        "step_avg_ms": 614.14
+      },
+      {
+        "step": 4400,
+        "total": 5000,
+        "val_loss": 2.1674,
+        "val_bpb": 1.2837,
+        "train_time_ms": 2703499.0,
+        "step_avg_ms": 614.43
+      },
+      {
+        "step": 4600,
+        "total": 5000,
+        "val_loss": 2.155,
+        "val_bpb": 1.2763,
+        "train_time_ms": 2827051.0,
+        "step_avg_ms": 614.58
+      },
+      {
+        "step": 4800,
+        "total": 5000,
+        "val_loss": 2.1438,
+        "val_bpb": 1.2697,
+        "train_time_ms": 2949686.0,
+        "step_avg_ms": 614.52
+      },
+      {
+        "step": 5000,
+        "total": 5000,
+        "val_loss": 2.1357,
+        "val_bpb": 1.2649,
+        "train_time_ms": 3073196.0,
+        "step_avg_ms": 614.64
+      }
+    ]
+  },
+  "missing": [
+    {
+      "branch": "stf-minimal",
+      "reason": "No i5000 with train_shards:80 train.log found on origin/stf-minimal"
+    },
+    {
+      "branch": "stf-soft-freeze",
+      "reason": "No i5000 with train_shards:80 train.log found on origin/stf-soft-freeze"
+    },
+    {
+      "branch": "stf-reactivation",
+      "reason": "No i5000 with train_shards:80 train.log found on origin/stf-reactivation"
+    },
+    {
+      "branch": "stf-budget-regularization",
+      "reason": "No i5000 with train_shards:80 train.log found on origin/stf-budget-regularization"
+    },
+    {
+      "branch": "stf-quantization",
+      "reason": "No i5000 with train_shards:80 train.log found on origin/stf-quantization"
+    }
+  ],
+  "branchModel": {
+    "baseline-repro": {
+      "family": "control",
+      "decision": "none",
+      "frozen_path": "none",
+      "control": "none",
+      "summary": "Control branch. No STF routing. Use this to judge whether STF helps at the same hardware and budget."
+    },
+    "stf-minimal": {
+      "family": "decision",
+      "decision": "hard threshold",
+      "frozen_path": "previous state",
+      "control": "min active guardrail",
+      "summary": "Plain STF: freeze low-change tokens and carry the previous hidden state forward."
+    },
+    "stf-learned-gate": {
+      "family": "decision",
+      "decision": "learned sigmoid gate",
+      "frozen_path": "continuous old/new blend",
+      "control": "min active guardrail",
+      "summary": "Learns the gate shape per layer instead of relying only on a fixed threshold."
+    },
+    "stf-soft-freeze": {
+      "family": "frozen path",
+      "decision": "hard threshold",
+      "frozen_path": "soft keep of new state",
+      "control": "min active guardrail",
+      "summary": "Keeps a fraction of the newly computed state for frozen tokens, reducing hard-freeze brittleness."
+    },
+    "stf-reactivation": {
+      "family": "control",
+      "decision": "hard threshold",
+      "frozen_path": "previous state",
+      "control": "periodic reopen",
+      "summary": "Periodically forces tokens active again so early freeze decisions are not permanent."
+    },
+    "stf-budget-regularization": {
+      "family": "control",
+      "decision": "adaptive threshold",
+      "frozen_path": "previous state",
+      "control": "target active budget",
+      "summary": "Adjusts threshold pressure to stay near a target active-token ratio."
+    },
+    "stf-recurrence": {
+      "family": "frozen path",
+      "decision": "hard threshold",
+      "frozen_path": "recurrent old/new blend",
+      "control": "min active guardrail",
+      "summary": "Uses a recurrence-like blend for frozen tokens instead of a pure old-state carry."
+    },
+    "stf-quantization": {
+      "family": "frozen path",
+      "decision": "hard threshold",
+      "frozen_path": "quantized previous state",
+      "control": "min active guardrail",
+      "summary": "Tests whether frozen tokens can carry a cheaper quantized state."
+    }
+  }
+}

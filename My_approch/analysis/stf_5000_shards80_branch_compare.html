@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>STF Branch Comparison</title>
+  <style>
+    :root { --bg:#080b10; --panel:#101722; --panel2:#151f2d; --ink:#eef4ff; --muted:#91a0b8; --faint:#5e6b80; --line:#263448; --accent:#ff8a4c; --cyan:#58d7e8; --green:#8ee06d; --gold:#ffc857; --red:#ff6b6b; --violet:#b99cff; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:radial-gradient(circle at 8% -8%, #1f4c58 0, transparent 29rem), radial-gradient(circle at 90% 4%, #5b3728 0, transparent 24rem), linear-gradient(160deg,#05070b,#0d1420 48%,#111827); color:var(--ink); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
+    main { max-width:1480px; margin:auto; padding:28px 20px 52px; }
+    section { background:linear-gradient(180deg, rgba(21,31,45,.94), rgba(12,18,27,.94)); border:1px solid var(--line); border-radius:24px; box-shadow:0 24px 72px #0009; padding:22px; margin:18px 0; }
+    h1 { font-size:clamp(2.35rem,4.6vw,5rem); line-height:.92; letter-spacing:-.065em; margin:0 0 14px; }
+    h2 { margin:0 0 14px; font-size:1.28rem; letter-spacing:-.02em; }
+    h3 { margin:0 0 10px; font-size:1rem; }
+    p, li { color:var(--muted); line-height:1.58; }
+    a { color:var(--cyan); text-decoration:none; }
+    code { background:#0a1018; border:1px solid var(--line); border-radius:6px; padding:1px 6px; color:#dce8ff; }
+    table { width:100%; border-collapse:collapse; font-size:.9rem; }
+    th,td { border-bottom:1px solid var(--line); padding:10px 8px; text-align:left; vertical-align:top; }
+    th { color:#9fb0c8; font-size:.74rem; text-transform:uppercase; letter-spacing:.08em; }
+    td span { color:var(--muted); font-size:.8rem; }
+    select { width:100%; border:1px solid var(--line); border-radius:13px; background:#0b111a; color:var(--ink); padding:11px 12px; font-size:1rem; outline:none; }
+    select:focus { border-color:var(--cyan); box-shadow:0 0 0 3px #58d7e822; }
+    input { width:100%; border:1px solid var(--line); border-radius:13px; background:#0b111a; color:var(--ink); padding:11px 12px; font-size:1rem; outline:none; }
+    button { border:1px solid var(--cyan); border-radius:13px; background:var(--cyan); color:#081018; padding:11px 14px; font-size:1rem; font-weight:800; cursor:pointer; }
+    button:hover { filter:brightness(1.08); }
+    .hero { display:grid; grid-template-columns:1.25fr .75fr; gap:18px; align-items:stretch; }
+    .eyebrow { text-transform:uppercase; letter-spacing:.13em; color:var(--accent); margin:0 0 10px; font-weight:700; }
+    .scale-row { display:grid; grid-template-columns:140px 1fr auto; gap:9px; margin-top:14px; align-items:center; }
+    .scale-label { color:var(--muted); font-size:.82rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
+    .scale-pill { border:1px solid var(--line); border-radius:999px; padding:7px 12px; background:#0b111a; color:var(--muted); font-weight:700; }
+    .scale-pill.active { color:#081018; background:var(--cyan); border-color:var(--cyan); }
+    .kpis { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .kpi { background:linear-gradient(180deg,#0e1520,#0a1018); border:1px solid var(--line); border-radius:17px; padding:14px; }
+    .kpi span { display:block; color:var(--muted); font-size:.82rem; }
+    .kpi b { display:block; margin-top:5px; font-size:1.35rem; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+    .full { grid-column:1 / -1; }
+    .chart-wrap { position:relative; }
+    canvas { width:100%; height:370px; background:linear-gradient(180deg,#0b111a,#090e15); border:1px solid var(--line); border-radius:18px; cursor:crosshair; }
+    .compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .select-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+    .branch-card { border:1px solid var(--line); background:linear-gradient(180deg,#0e1520,#0a1018); border-radius:18px; padding:16px; }
+    .metric-row { display:grid; grid-template-columns:1fr auto; gap:8px; border-top:1px solid var(--line); padding-top:8px; margin-top:8px; }
+    .metric-row span { color:var(--muted); }
+    .delta-good { color:var(--green); font-weight:800; }
+    .delta-bad { color:var(--red); font-weight:800; }
+    .pipeline { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:12px; }
+    .node { min-height:104px; border:1px solid var(--line); border-radius:16px; background:#0b111a; padding:13px; position:relative; overflow:hidden; }
+    .node::before { content:""; position:absolute; inset:0 0 auto 0; height:5px; background:var(--node); }
+    .node small { display:block; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; font-size:.68rem; margin-bottom:7px; }
+    .node b { display:block; }
+    .plain-explainer { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:12px 0 16px; }
+    .plain-card { border:1px solid var(--line); background:#0b111a; border-radius:16px; padding:14px; }
+    .plain-card b { display:block; margin-bottom:6px; }
+    .plain-card span { color:var(--muted); line-height:1.45; font-size:.9rem; }
+    .token-panel { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .token-lane { border:1px solid var(--line); background:#0b111a; border-radius:18px; padding:15px; }
+    .route-diagram { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0; align-items:stretch; }
+    .route-step { border:1px solid #314157; background:#080d14; border-radius:14px; padding:12px; min-height:82px; position:relative; }
+    .route-step small { display:block; color:var(--faint); text-transform:uppercase; letter-spacing:.08em; font-size:.66rem; margin-bottom:5px; }
+    .route-step b { display:block; }
+    .route-step p { margin:.35rem 0 0; font-size:.84rem; line-height:1.35; }
+    .route-wide { grid-column:1 / -1; }
+    .lane-box { border-radius:14px; padding:12px; min-height:92px; }
+    .lane-update { border:1px solid #487a45; background:linear-gradient(180deg,#19361f,#101c14); }
+    .lane-reuse { border:1px solid #4a596f; background:linear-gradient(180deg,#202a38,#101720); }
+    .lane-disabled { opacity:.42; filter:saturate(.55); }
+    .route-arrow { color:var(--faint); text-align:center; font-size:1.1rem; margin:-2px 0; }
+    .simple-badge { display:inline-flex; border-radius:999px; padding:5px 8px; margin:2px 4px 2px 0; background:#111a26; border:1px solid var(--line); color:#cbd7ea; font-size:.76rem; }
+    .tokens { display:grid; grid-template-columns:repeat(12, minmax(0,1fr)); gap:7px; margin:12px 0; }
+    .token { height:28px; border-radius:9px; border:1px solid #ffffff12; position:relative; overflow:hidden; }
+    .token::after { content:attr(data-i); position:absolute; inset:auto 4px 3px auto; color:#071018aa; font-size:.58rem; font-weight:800; }
+    .token.updated { background:var(--green); }
+    .token.frozen { background:#38465a; }
+    .token.blend { background:linear-gradient(90deg,var(--green),var(--cyan)); }
+    .token.reopen { background:linear-gradient(135deg,var(--gold),var(--green)); }
+    .token.quant { background:repeating-linear-gradient(135deg,#7f8ba0 0 5px,#4b596d 5px 10px); }
+    .token.recur { background:linear-gradient(135deg,var(--violet),#5263ff); }
+    .token-copy { color:var(--muted); font-size:.86rem; min-height:42px; }
+    .legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .pill { display:inline-flex; gap:7px; align-items:center; border:1px solid var(--line); border-radius:999px; padding:6px 10px; background:#0b111a; color:#cbd7ea; font-size:.84rem; }
+    .dot { width:10px; height:10px; border-radius:50%; background:var(--c); }
+    .warn { background:#201a0d; border-color:#6d5521; }
+    .tooltip { pointer-events:none; position:fixed; z-index:20; transform:translate(14px,14px); min-width:190px; max-width:300px; background:#05080dcc; backdrop-filter:blur(8px); border:1px solid #405069; border-radius:13px; padding:10px 11px; box-shadow:0 18px 42px #000b; display:none; color:var(--ink); font-size:.84rem; }
+    .tooltip b { display:block; margin-bottom:5px; }
+    .tooltip span { display:block; color:var(--muted); margin-top:2px; }
+    .hint { color:var(--faint); font-size:.83rem; margin-top:8px; }
+    @media(max-width:980px) { .hero,.grid,.compare-grid,.select-row,.pipeline,.token-panel,.scale-row,.plain-explainer,.route-diagram { grid-template-columns:1fr; } .route-wide { grid-column:auto; } }
+  </style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <div>
+      <p class="eyebrow">STF branch analysis</p>
+      <h1>5000-iteration branch comparison</h1>
+      <p>This report is generated from git-archived <code>train.log</code> and <code>telemetry.csv</code>. Re-run <code>python scripts/generate_stf_analysis.py 5000 80</code> after pulling logs to refresh the page from the active branch files.</p>
+      <p><b>Generated:</b> 2026-04-16 20:58:26 &nbsp; <b>Source:</b> local remote-tracking refs</p>
+      <div class="scale-row" aria-label="iteration reports">
+        <span class="scale-label">Iteration</span>
+        <select id="iterationSelect"><option value="2000" >2k</option><option value="5000" selected>5k</option><option value="10000" >10k</option><option value="20000" >20k</option></select>
+        <button id="loadIteration" type="button">Load / generate</button>
+      </div>
+      <div class="scale-row">
+        <span class="scale-label">Shards</span>
+        <select id="shardSelect"><option value="preferred" >Prefer 80 shards / highest available</option><option value="80" selected>Exactly 80 shards</option><option value="1" >Exactly 1 shard</option></select>
+        <span class="hint">Default prefers 80-shard runs when both 1 and 80 exist.</span>
+      </div>
+      <div class="scale-row" style="grid-template-columns:140px 1fr auto;">
+        <span class="scale-label">Custom</span>
+        <input id="customIterations" inputmode="numeric" pattern="[0-9]*" placeholder="optional, e.g. 50000">
+        <button id="loadCustomIteration" type="button">Use custom</button>
+      </div>
+      <p class="hint" id="scaleStatus">If this page is served by <code>python scripts/serve_stf_analysis.py</code>, missing reports are generated automatically. In plain file mode, the page will show the command to run.</p>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><span>Parsed runs</span><b>3</b></div>
+      <div class="kpi"><span>Missing</span><b>5</b></div>
+      <div class="kpi"><span>Best parsed</span><b>baseline-repro</b></div>
+      <div class="kpi"><span>Final BPB</span><b>1.2519</b></div>
+      <div class="kpi"><span>Shard mode</span><b>exactly 80</b></div>
+      <div class="kpi"><span>Parsed shards</span><b>80</b></div>
+    </div>
+  </section>
+  <section class="warn"><h2>Missing / incomplete</h2><ul><li><b>stf-minimal</b>: No i5000 with train_shards:80 train.log found on origin/stf-minimal</li><li><b>stf-soft-freeze</b>: No i5000 with train_shards:80 train.log found on origin/stf-soft-freeze</li><li><b>stf-reactivation</b>: No i5000 with train_shards:80 train.log found on origin/stf-reactivation</li><li><b>stf-budget-regularization</b>: No i5000 with train_shards:80 train.log found on origin/stf-budget-regularization</li><li><b>stf-quantization</b>: No i5000 with train_shards:80 train.log found on origin/stf-quantization</li></ul></section>
+  <section>
+    <h2>Two-branch comparator</h2>
+    <div class="select-row">
+      <select id="branchA"></select>
+      <select id="branchB"></select>
+    </div>
+    <div class="compare-grid">
+      <div class="branch-card" id="cardA"></div>
+      <div class="branch-card" id="cardB"></div>
+    </div>
+    <h2 style="margin-top:18px;">How STF changes token flow</h2>
+    <div class="plain-explainer">
+      <div class="plain-card"><b>Token</b><span>A small piece of text. The numbered blocks below are example tokens moving through the model.</span></div>
+      <div class="plain-card"><b>Layer</b><span>One repeated thinking step inside the model. A small model still runs many layers for every token.</span></div>
+      <div class="plain-card"><b>Hidden state</b><span>The model's working note for a token. If the note is barely changing, STF may reuse it.</span></div>
+      <div class="plain-card"><b>Update lane</b><span>The normal expensive path. A token gets fresh main-model math instead of reusing old work.</span></div>
+      <div class="plain-card"><b>Reuse lane</b><span>The shortcut path. A stable token keeps or blends an older working note instead of full compute.</span></div>
+      <div class="plain-card"><b>What good means</b><span>Final BPB stays close to baseline while step time, GPU work, or memory pressure improves.</span></div>
+    </div>
+    <p class="hint">This is a teaching visual, not the exact frozen-token list from the run. Current logs do not save which individual tokens froze at each layer.</p>
+    <div class="token-panel" id="tokenFlow"></div>
+    <div class="pipeline" id="pipeline"></div>
+    <div class="chart-wrap"><canvas id="pairCurve" style="margin-top:16px;"></canvas></div>
+  </section>
+  <section>
+    <h2>All-branch ranking</h2>
+    <table><thead><tr><th>#</th><th>Branch</th><th>Roundtrip BPB</th><th>Best raw BPB</th><th>Artifact bytes</th><th>Shards</th><th>Family</th><th>Step avg</th><th>GPU avg</th><th>VRAM peak</th></tr></thead><tbody><tr><td>1</td><td><b>baseline-repro</b><br><span>Control branch. No STF routing. Use this to judge whether STF helps at the same hardware and budget.</span></td><td><b>1.2519</b><br><span>raw 1.2475</span></td><td>1.2475 @ 5000</td><td>15,845,108<br><span>margin 154,892</span></td><td>80</td><td>control</td><td>389.39 ms</td><td>97.2%</td><td>10.86 GB</td></tr><tr><td>2</td><td><b>stf-learned-gate</b><br><span>Learns the gate shape per layer instead of relying only on a fixed threshold.</span></td><td><b>1.2629</b><br><span>raw 1.2585</span></td><td>1.2585 @ 5000</td><td>15,835,231<br><span>margin 164,769</span></td><td>80</td><td>decision</td><td>612.29 ms</td><td>98.5%</td><td>15.91 GB</td></tr><tr><td>3</td><td><b>stf-recurrence</b><br><span>Uses a recurrence-like blend for frozen tokens instead of a pure old-state carry.</span></td><td><b>1.2690</b><br><span>raw 1.2649</span></td><td>1.2649 @ 5000</td><td>15,832,462<br><span>margin 167,538</span></td><td>80</td><td>frozen path</td><td>614.64 ms</td><td>96.3%</td><td>14.72 GB</td></tr></tbody></table>
+  </section>
+  <section class="grid">
+    <div>
+      <h2>All validation curves</h2>
+      <div class="chart-wrap"><canvas id="allCurve"></canvas></div>
+      <div class="legend" id="legend"></div>
+      <p class="hint">Move the cursor over a point to inspect branch, step, BPB, and step average.</p>
+    </div>
+    <div>
+      <h2>Roundtrip BPB bars</h2>
+      <div class="chart-wrap"><canvas id="bars"></canvas></div>
+      <p class="hint">Hover bars for roundtrip BPB, artifact size, GPU utilization, and VRAM peak.</p>
+    </div>
+  </section>
+</main>
+<div class="tooltip" id="tooltip"></div>
+<script>
+const DATA = {"iterations": "5000", "shardFilter": "80", "records": [{"branch": "baseline-repro", "status": "ok", "path": "runpod/experiments/2026-04-16-nvidia-geforce-rtx-4090-4gpu/baseline-repro/2026-04-16_baseline-repro_nvidia-geforce-rtx-4090_4gpu_i5000_run2/train.log", "mode": "baseline", "compile_model": "", "train_batch_tokens": 524288, "train_shards": 80, "model_params": 17059912, "val_points": 26, "best_step": 5000, "best_val_bpb": 1.2475, "final_step": 5000, "final_val_bpb": 1.2475, "roundtrip_val_bpb": 1.25187638, "int8_zlib_model_bytes": 15797140, "int8_payload_bytes": 17178912, "int8_raw_torch_bytes": 17224025, "int8_payload_ratio": 3.91, "code_bytes": 47968, "total_submission_int8_zlib_bytes": 15845108, "artifact_margin_bytes": 154892, "step_avg_ms": 389.39, "telemetry_samples": 576, "gpu_util_avg": 97.21875, "gpu_util_p10": 100.0, "gpu_util_p50": 100.0, "gpu_util_p90": 100.0, "gpu_util_lt80_frac": 0.027777777777777776, "power_avg_w": 284.9069097222222, "temp_avg_c": 57.220486111111114, "mem_avg_gb": 10.556627061631945, "mem_peak_gb": 10.8564453125, "mem_total_gb": 23.98828125, "family": "control", "decision": "none", "frozen_path": "none", "control": "none", "summary": "Control branch. No STF routing. Use this to judge whether STF helps at the same hardware and budget."}, {"branch": "stf-minimal", "status": "missing", "family": "decision", "decision": "hard threshold", "frozen_path": "previous state", "control": "min active guardrail", "summary": "Plain STF: freeze low-change tokens and carry the previous hidden state forward."}, {"branch": "stf-learned-gate", "status": "ok", "path": "runpod/experiments/2026-04-16-nvidia-geforce-rtx-4090-4gpu/stf-learned-gate/2026-04-16_stf-learned-gate_nvidia-geforce-rtx-4090_4gpu_i5000_run2/train.log", "mode": "learned_gate", "compile_model": "False", "train_batch_tokens": 524288, "train_shards": 80, "model_params": 17059930, "val_points": 26, "best_step": 5000, "best_val_bpb": 1.2585, "final_step": 5000, "final_val_bpb": 1.2585, "roundtrip_val_bpb": 1.26287554, "int8_zlib_model_bytes": 15780401, "int8_payload_bytes": 17178948, "int8_raw_torch_bytes": 17224661, "int8_payload_ratio": 3.91, "code_bytes": 54830, "total_submission_int8_zlib_bytes": 15835231, "artifact_margin_bytes": 164769, "step_avg_ms": 612.29, "telemetry_samples": 920, "gpu_util_avg": 98.52608695652174, "gpu_util_p10": 99.0, "gpu_util_p50": 100.0, "gpu_util_p90": 100.0, "gpu_util_lt80_frac": 0.013043478260869565, "power_avg_w": 302.2705760869565, "temp_avg_c": 59.56195652173913, "mem_avg_gb": 15.740739639945652, "mem_peak_gb": 15.9072265625, "mem_total_gb": 23.98828125, "family": "decision", "decision": "learned sigmoid gate", "frozen_path": "continuous old/new blend", "control": "min active guardrail", "summary": "Learns the gate shape per layer instead of relying only on a fixed threshold."}, {"branch": "stf-soft-freeze", "status": "missing", "family": "frozen path", "decision": "hard threshold", "frozen_path": "soft keep of new state", "control": "min active guardrail", "summary": "Keeps a fraction of the newly computed state for frozen tokens, reducing hard-freeze brittleness."}, {"branch": "stf-reactivation", "status": "missing", "family": "control", "decision": "hard threshold", "frozen_path": "previous state", "control": "periodic reopen", "summary": "Periodically forces tokens active again so early freeze decisions are not permanent."}, {"branch": "stf-budget-regularization", "status": "missing", "family": "control", "decision": "adaptive threshold", "frozen_path": "previous state", "control": "target active budget", "summary": "Adjusts threshold pressure to stay near a target active-token ratio."}, {"branch": "stf-recurrence", "status": "ok", "path": "runpod/experiments/2026-04-16-nvidia-geforce-rtx-4090-4gpu/stf-recurrence/2026-04-16_stf-recurrence_nvidia-geforce-rtx-4090_4gpu_i5000_run2/train.log", "mode": "recurrence", "compile_model": "False", "train_batch_tokens": 524288, "train_shards": 80, "model_params": 17059912, "val_points": 26, "best_step": 5000, "best_val_bpb": 1.2649, "final_step": 5000, "final_val_bpb": 1.2649, "roundtrip_val_bpb": 1.26902905, "int8_zlib_model_bytes": 15777616, "int8_payload_bytes": 17178912, "int8_raw_torch_bytes": 17224025, "int8_payload_ratio": 3.91, "code_bytes": 54846, "total_submission_int8_zlib_bytes": 15832462, "artifact_margin_bytes": 167538, "step_avg_ms": 614.64, "telemetry_samples": 936, "gpu_util_avg": 96.30555555555556, "gpu_util_p10": 94.0, "gpu_util_p50": 99.0, "gpu_util_p90": 100.0, "gpu_util_lt80_frac": 0.014957264957264958, "power_avg_w": 295.0573183760684, "temp_avg_c": 58.02350427350427, "mem_avg_gb": 14.452695145566238, "mem_peak_gb": 14.7158203125, "mem_total_gb": 23.98828125, "family": "frozen path", "decision": "hard threshold", "frozen_path": "recurrent old/new blend", "control": "min active guardrail", "summary": "Uses a recurrence-like blend for frozen tokens instead of a pure old-state carry."}, {"branch": "stf-quantization", "status": "missing", "family": "frozen path", "decision": "hard threshold", "frozen_path": "quantized previous state", "control": "min active guardrail", "summary": "Tests whether frozen tokens can carry a cheaper quantized state."}], "curves": {"baseline-repro": [{"step": 0, "total": 5000, "val_loss": 6.9357, "val_bpb": 4.1077, "train_time_ms": 0.0, "step_avg_ms": 0.03}, {"step": 200, "total": 5000, "val_loss": 2.85, "val_bpb": 1.6879, "train_time_ms": 78587.0, "step_avg_ms": 392.93}, {"step": 400, "total": 5000, "val_loss": 2.5653, "val_bpb": 1.5193, "train_time_ms": 157024.0, "step_avg_ms": 392.56}, {"step": 600, "total": 5000, "val_loss": 2.4498, "val_bpb": 1.4509, "train_time_ms": 235728.0, "step_avg_ms": 392.88}, {"step": 800, "total": 5000, "val_loss": 2.3808, "val_bpb": 1.4101, "train_time_ms": 314429.0, "step_avg_ms": 393.04}, {"step": 1000, "total": 5000, "val_loss": 2.336, "val_bpb": 1.3835, "train_time_ms": 392357.0, "step_avg_ms": 392.36}, {"step": 1200, "total": 5000, "val_loss": 2.3025, "val_bpb": 1.3637, "train_time_ms": 470530.0, "step_avg_ms": 392.11}, {"step": 1400, "total": 5000, "val_loss": 2.2795, "val_bpb": 1.3501, "train_time_ms": 548674.0, "step_avg_ms": 391.91}, {"step": 1600, "total": 5000, "val_loss": 2.2651, "val_bpb": 1.3415, "train_time_ms": 626208.0, "step_avg_ms": 391.38}, {"step": 1800, "total": 5000, "val_loss": 2.2489, "val_bpb": 1.3319, "train_time_ms": 703941.0, "step_avg_ms": 391.08}, {"step": 2000, "total": 5000, "val_loss": 2.2345, "val_bpb": 1.3234, "train_time_ms": 782893.0, "step_avg_ms": 391.45}, {"step": 2200, "total": 5000, "val_loss": 2.2252, "val_bpb": 1.3179, "train_time_ms": 860851.0, "step_avg_ms": 391.3}, {"step": 2400, "total": 5000, "val_loss": 2.2151, "val_bpb": 1.3119, "train_time_ms": 938834.0, "step_avg_ms": 391.18}, {"step": 2600, "total": 5000, "val_loss": 2.219, "val_bpb": 1.3142, "train_time_ms": 1016246.0, "step_avg_ms": 390.86}, {"step": 2800, "total": 5000, "val_loss": 2.2005, "val_bpb": 1.3033, "train_time_ms": 1094366.0, "step_avg_ms": 390.85}, {"step": 3000, "total": 5000, "val_loss": 2.1932, "val_bpb": 1.2989, "train_time_ms": 1172787.0, "step_avg_ms": 390.93}, {"step": 3200, "total": 5000, "val_loss": 2.1887, "val_bpb": 1.2963, "train_time_ms": 1250368.0, "step_avg_ms": 390.74}, {"step": 3400, "total": 5000, "val_loss": 2.185, "val_bpb": 1.2941, "train_time_ms": 1328341.0, "step_avg_ms": 390.69}, {"step": 3600, "total": 5000, "val_loss": 2.1774, "val_bpb": 1.2896, "train_time_ms": 1406462.0, "step_avg_ms": 390.68}, {"step": 3800, "total": 5000, "val_loss": 2.1737, "val_bpb": 1.2874, "train_time_ms": 1484435.0, "step_avg_ms": 390.64}, {"step": 4000, "total": 5000, "val_loss": 2.1613, "val_bpb": 1.2801, "train_time_ms": 1561599.0, "step_avg_ms": 390.4}, {"step": 4200, "total": 5000, "val_loss": 2.1485, "val_bpb": 1.2724, "train_time_ms": 1637442.0, "step_avg_ms": 389.87}, {"step": 4400, "total": 5000, "val_loss": 2.1386, "val_bpb": 1.2666, "train_time_ms": 1715333.0, "step_avg_ms": 389.85}, {"step": 4600, "total": 5000, "val_loss": 2.126, "val_bpb": 1.2592, "train_time_ms": 1793378.0, "step_avg_ms": 389.86}, {"step": 4800, "total": 5000, "val_loss": 2.1147, "val_bpb": 1.2524, "train_time_ms": 1869882.0, "step_avg_ms": 389.56}, {"step": 5000, "total": 5000, "val_loss": 2.1064, "val_bpb": 1.2475, "train_time_ms": 1946938.0, "step_avg_ms": 389.39}], "stf-learned-gate": [{"step": 0, "total": 5000, "val_loss": 6.9357, "val_bpb": 4.1077, "train_time_ms": 0.0, "step_avg_ms": 0.04}, {"step": 200, "total": 5000, "val_loss": 2.9231, "val_bpb": 1.7312, "train_time_ms": 122658.0, "step_avg_ms": 613.29}, {"step": 400, "total": 5000, "val_loss": 2.6037, "val_bpb": 1.542, "train_time_ms": 245050.0, "step_avg_ms": 612.63}, {"step": 600, "total": 5000, "val_loss": 2.4805, "val_bpb": 1.4691, "train_time_ms": 367556.0, "step_avg_ms": 612.59}, {"step": 800, "total": 5000, "val_loss": 2.4048, "val_bpb": 1.4243, "train_time_ms": 490344.0, "step_avg_ms": 612.93}, {"step": 1000, "total": 5000, "val_loss": 2.3561, "val_bpb": 1.3954, "train_time_ms": 612662.0, "step_avg_ms": 612.66}, {"step": 1200, "total": 5000, "val_loss": 2.3254, "val_bpb": 1.3772, "train_time_ms": 735620.0, "step_avg_ms": 613.02}, {"step": 1400, "total": 5000, "val_loss": 2.301, "val_bpb": 1.3628, "train_time_ms": 858684.0, "step_avg_ms": 613.35}, {"step": 1600, "total": 5000, "val_loss": 2.2852, "val_bpb": 1.3534, "train_time_ms": 981585.0, "step_avg_ms": 613.49}, {"step": 1800, "total": 5000, "val_loss": 2.2696, "val_bpb": 1.3442, "train_time_ms": 1104589.0, "step_avg_ms": 613.66}, {"step": 2000, "total": 5000, "val_loss": 2.2532, "val_bpb": 1.3345, "train_time_ms": 1227572.0, "step_avg_ms": 613.79}, {"step": 2200, "total": 5000, "val_loss": 2.2448, "val_bpb": 1.3295, "train_time_ms": 1350508.0, "step_avg_ms": 613.87}, {"step": 2400, "total": 5000, "val_loss": 2.2342, "val_bpb": 1.3232, "train_time_ms": 1473099.0, "step_avg_ms": 613.79}, {"step": 2600, "total": 5000, "val_loss": 2.2354, "val_bpb": 1.3239, "train_time_ms": 1596330.0, "step_avg_ms": 613.97}, {"step": 2800, "total": 5000, "val_loss": 2.2195, "val_bpb": 1.3145, "train_time_ms": 1718136.0, "step_avg_ms": 613.62}, {"step": 3000, "total": 5000, "val_loss": 2.2119, "val_bpb": 1.31, "train_time_ms": 1839249.0, "step_avg_ms": 613.08}, {"step": 3200, "total": 5000, "val_loss": 2.2077, "val_bpb": 1.3075, "train_time_ms": 1960489.0, "step_avg_ms": 612.65}, {"step": 3400, "total": 5000, "val_loss": 2.204, "val_bpb": 1.3053, "train_time_ms": 2083614.0, "step_avg_ms": 612.83}, {"step": 3600, "total": 5000, "val_loss": 2.1957, "val_bpb": 1.3004, "train_time_ms": 2206820.0, "step_avg_ms": 613.01}, {"step": 3800, "total": 5000, "val_loss": 2.1918, "val_bpb": 1.2981, "train_time_ms": 2329291.0, "step_avg_ms": 612.97}, {"step": 4000, "total": 5000, "val_loss": 2.1793, "val_bpb": 1.2907, "train_time_ms": 2451460.0, "step_avg_ms": 612.86}, {"step": 4200, "total": 5000, "val_loss": 2.1672, "val_bpb": 1.2835, "train_time_ms": 2573578.0, "step_avg_ms": 612.76}, {"step": 4400, "total": 5000, "val_loss": 2.157, "val_bpb": 1.2775, "train_time_ms": 2694087.0, "step_avg_ms": 612.29}, {"step": 4600, "total": 5000, "val_loss": 2.1443, "val_bpb": 1.27, "train_time_ms": 2815024.0, "step_avg_ms": 611.96}, {"step": 4800, "total": 5000, "val_loss": 2.1331, "val_bpb": 1.2633, "train_time_ms": 2938157.0, "step_avg_ms": 612.12}, {"step": 5000, "total": 5000, "val_loss": 2.1249, "val_bpb": 1.2585, "train_time_ms": 3061425.0, "step_avg_ms": 612.29}], "stf-recurrence": [{"step": 0, "total": 5000, "val_loss": 6.9357, "val_bpb": 4.1077, "train_time_ms": 0.0, "step_avg_ms": 0.03}, {"step": 200, "total": 5000, "val_loss": 2.9147, "val_bpb": 1.7263, "train_time_ms": 121859.0, "step_avg_ms": 609.29}, {"step": 400, "total": 5000, "val_loss": 2.6217, "val_bpb": 1.5527, "train_time_ms": 243757.0, "step_avg_ms": 609.39}, {"step": 600, "total": 5000, "val_loss": 2.4906, "val_bpb": 1.4751, "train_time_ms": 366520.0, "step_avg_ms": 610.87}, {"step": 800, "total": 5000, "val_loss": 2.4167, "val_bpb": 1.4313, "train_time_ms": 489379.0, "step_avg_ms": 611.72}, {"step": 1000, "total": 5000, "val_loss": 2.3687, "val_bpb": 1.4029, "train_time_ms": 612966.0, "step_avg_ms": 612.97}, {"step": 1200, "total": 5000, "val_loss": 2.3354, "val_bpb": 1.3831, "train_time_ms": 736526.0, "step_avg_ms": 613.77}, {"step": 1400, "total": 5000, "val_loss": 2.3114, "val_bpb": 1.369, "train_time_ms": 860162.0, "step_avg_ms": 614.4}, {"step": 1600, "total": 5000, "val_loss": 2.2966, "val_bpb": 1.3602, "train_time_ms": 983333.0, "step_avg_ms": 614.58}, {"step": 1800, "total": 5000, "val_loss": 2.2813, "val_bpb": 1.3511, "train_time_ms": 1105845.0, "step_avg_ms": 614.36}, {"step": 2000, "total": 5000, "val_loss": 2.2647, "val_bpb": 1.3413, "train_time_ms": 1229265.0, "step_avg_ms": 614.63}, {"step": 2200, "total": 5000, "val_loss": 2.2563, "val_bpb": 1.3363, "train_time_ms": 1352892.0, "step_avg_ms": 614.95}, {"step": 2400, "total": 5000, "val_loss": 2.2459, "val_bpb": 1.3301, "train_time_ms": 1476918.0, "step_avg_ms": 615.38}, {"step": 2600, "total": 5000, "val_loss": 2.2482, "val_bpb": 1.3315, "train_time_ms": 1600830.0, "step_avg_ms": 615.7}, {"step": 2800, "total": 5000, "val_loss": 2.2313, "val_bpb": 1.3215, "train_time_ms": 1723485.0, "step_avg_ms": 615.53}, {"step": 3000, "total": 5000, "val_loss": 2.223, "val_bpb": 1.3166, "train_time_ms": 1846611.0, "step_avg_ms": 615.54}, {"step": 3200, "total": 5000, "val_loss": 2.2174, "val_bpb": 1.3133, "train_time_ms": 1969272.0, "step_avg_ms": 615.4}, {"step": 3400, "total": 5000, "val_loss": 2.2145, "val_bpb": 1.3116, "train_time_ms": 2091914.0, "step_avg_ms": 615.27}, {"step": 3600, "total": 5000, "val_loss": 2.2063, "val_bpb": 1.3067, "train_time_ms": 2215239.0, "step_avg_ms": 615.34}, {"step": 3800, "total": 5000, "val_loss": 2.203, "val_bpb": 1.3048, "train_time_ms": 2336343.0, "step_avg_ms": 614.83}, {"step": 4000, "total": 5000, "val_loss": 2.1899, "val_bpb": 1.297, "train_time_ms": 2458394.0, "step_avg_ms": 614.6}, {"step": 4200, "total": 5000, "val_loss": 2.1776, "val_bpb": 1.2897, "train_time_ms": 2579391.0, "step_avg_ms": 614.14}, {"step": 4400, "total": 5000, "val_loss": 2.1674, "val_bpb": 1.2837, "train_time_ms": 2703499.0, "step_avg_ms": 614.43}, {"step": 4600, "total": 5000, "val_loss": 2.155, "val_bpb": 1.2763, "train_time_ms": 2827051.0, "step_avg_ms": 614.58}, {"step": 4800, "total": 5000, "val_loss": 2.1438, "val_bpb": 1.2697, "train_time_ms": 2949686.0, "step_avg_ms": 614.52}, {"step": 5000, "total": 5000, "val_loss": 2.1357, "val_bpb": 1.2649, "train_time_ms": 3073196.0, "step_avg_ms": 614.64}]}, "missing": [{"branch": "stf-minimal", "reason": "No i5000 with train_shards:80 train.log found on origin/stf-minimal"}, {"branch": "stf-soft-freeze", "reason": "No i5000 with train_shards:80 train.log found on origin/stf-soft-freeze"}, {"branch": "stf-reactivation", "reason": "No i5000 with train_shards:80 train.log found on origin/stf-reactivation"}, {"branch": "stf-budget-regularization", "reason": "No i5000 with train_shards:80 train.log found on origin/stf-budget-regularization"}, {"branch": "stf-quantization", "reason": "No i5000 with train_shards:80 train.log found on origin/stf-quantization"}], "branchModel": {"baseline-repro": {"family": "control", "decision": "none", "frozen_path": "none", "control": "none", "summary": "Control branch. No STF routing. Use this to judge whether STF helps at the same hardware and budget."}, "stf-minimal": {"family": "decision", "decision": "hard threshold", "frozen_path": "previous state", "control": "min active guardrail", "summary": "Plain STF: freeze low-change tokens and carry the previous hidden state forward."}, "stf-learned-gate": {"family": "decision", "decision": "learned sigmoid gate", "frozen_path": "continuous old/new blend", "control": "min active guardrail", "summary": "Learns the gate shape per layer instead of relying only on a fixed threshold."}, "stf-soft-freeze": {"family": "frozen path", "decision": "hard threshold", "frozen_path": "soft keep of new state", "control": "min active guardrail", "summary": "Keeps a fraction of the newly computed state for frozen tokens, reducing hard-freeze brittleness."}, "stf-reactivation": {"family": "control", "decision": "hard threshold", "frozen_path": "previous state", "control": "periodic reopen", "summary": "Periodically forces tokens active again so early freeze decisions are not permanent."}, "stf-budget-regularization": {"family": "control", "decision": "adaptive threshold", "frozen_path": "previous state", "control": "target active budget", "summary": "Adjusts threshold pressure to stay near a target active-token ratio."}, "stf-recurrence": {"family": "frozen path", "decision": "hard threshold", "frozen_path": "recurrent old/new blend", "control": "min active guardrail", "summary": "Uses a recurrence-like blend for frozen tokens instead of a pure old-state carry."}, "stf-quantization": {"family": "frozen path", "decision": "hard threshold", "frozen_path": "quantized previous state", "control": "min active guardrail", "summary": "Tests whether frozen tokens can carry a cheaper quantized state."}}};
+const colors = ['#b84f31','#246b70','#527b39','#8a5a9b','#a97828','#5d6f91','#9d3f5f','#3d7d5d'];
+const chartState = {};
+const okRecords = DATA.records.filter(r => r.status === 'ok');
+const byBranch = Object.fromEntries(DATA.records.map(r => [r.branch, r]));
+function f(v, d=4) { return Number.isFinite(v) ? v.toFixed(d) : 'n/a'; }
+function fb(v) { return Number.isFinite(v) ? Math.trunc(v).toLocaleString() : 'n/a'; }
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function setup(c) { const dpr=window.devicePixelRatio||1, r=c.getBoundingClientRect(); c.width=r.width*dpr; c.height=r.height*dpr; const ctx=c.getContext('2d'); ctx.scale(dpr,dpr); return [ctx,r.width,r.height]; }
+function axes(ctx,w,h,p,ymin,ymax,xmax) {
+  ctx.strokeStyle='#263448'; ctx.lineWidth=1; ctx.font='12px sans-serif';
+  for(let i=0;i<=4;i++){ const y=p+(h-2*p)*i/4; ctx.beginPath(); ctx.moveTo(p,y); ctx.lineTo(w-p,y); ctx.stroke(); }
+  ctx.strokeStyle='#46566d'; ctx.beginPath(); ctx.moveTo(p,h-p); ctx.lineTo(w-p,h-p); ctx.lineTo(w-p,p); ctx.stroke();
+  ctx.fillStyle='#91a0b8'; ctx.fillText('BPB ' + ymax.toFixed(3), p, p-12); ctx.fillText(ymin.toFixed(3), w-p-52, h-p+18); ctx.fillText('step ' + xmax, w-p-58, h-p+34);
+}
+function drawCurve(id, branches) {
+  const [ctx,w,h]=setup(document.getElementById(id)), p=42; ctx.clearRect(0,0,w,h);
+  const pts=branches.flatMap(b => DATA.curves[b] || []); if(!pts.length) return;
+  const xs=pts.map(x=>x.step), ys=pts.map(x=>x.val_bpb), xmin=Math.min(...xs), xmax=Math.max(...xs), rawMin=Math.min(...ys), rawMax=Math.max(...ys);
+  const pad=Math.max((rawMax-rawMin)*0.08, 0.01), ymin=rawMin-pad, ymax=rawMax+pad;
+  axes(ctx,w,h,p,ymin,ymax,xmax);
+  const X=s=>p+(s-xmin)/(xmax-xmin||1)*(w-2*p), Y=v=>h-p-(v-ymin)/(ymax-ymin||1)*(h-2*p);
+  const hit=[];
+  branches.forEach((b,i)=>{ const arr=DATA.curves[b]||[], color=colors[i%colors.length]; ctx.strokeStyle=color; ctx.lineWidth=2.4; ctx.beginPath(); arr.forEach((pt,j)=>{ const x=X(pt.step), y=Y(pt.val_bpb); if(j) ctx.lineTo(x,y); else ctx.moveTo(x,y); hit.push({type:'curve', x, y, branch:b, color, ...pt}); }); ctx.stroke(); arr.forEach(pt=>{ const x=X(pt.step), y=Y(pt.val_bpb); ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill(); }); });
+  chartState[id]={type:'curve', hit};
+}
+function drawBars() {
+  const score = r => Number.isFinite(r.roundtrip_val_bpb) ? r.roundtrip_val_bpb : r.final_val_bpb;
+  const [ctx,w,h]=setup(document.getElementById('bars')), p=35; const rows=[...okRecords].sort((a,b)=>score(a)-score(b));
+  ctx.clearRect(0,0,w,h); const mx=Math.max(...rows.map(score)), mn=Math.min(...rows.map(score)); const gap=(h-2*p)/Math.max(rows.length,1), bh=Math.min(gap*.62, 28); ctx.font='12px sans-serif';
+  const hit=[];
+  rows.forEach((r,i)=>{ const v=score(r), y=p+i*gap, ww=(v-mn)/(mx-mn||1)*(w-270)+28; ctx.fillStyle=colors[i%colors.length]; ctx.fillRect(190,y,ww,bh); ctx.fillStyle='#dce8ff'; ctx.fillText(r.branch,8,y+bh*.72); ctx.fillText(f(v),200+ww,y+bh*.72); hit.push({type:'bar', x:190, y, w:ww, h:bh, record:r, color:colors[i%colors.length]}); });
+  chartState.bars={type:'bar', hit};
+}
+function metric(label, a, b, lower=true, suffix='') {
+  const delta = Number.isFinite(a) && Number.isFinite(b) ? b - a : NaN;
+  const cls = !Number.isFinite(delta) ? '' : ((lower ? delta < 0 : delta > 0) ? 'delta-good' : 'delta-bad');
+  return `<div class="metric-row"><span>${label}</span><b>${f(a, label.includes('ms') ? 2 : 4)}${suffix}</b></div><div class="metric-row"><span>vs other</span><b class="${cls}">${Number.isFinite(delta) ? (delta > 0 ? '+' : '') + delta.toFixed(label.includes('ms') ? 2 : 4) + suffix : 'n/a'}</b></div>`;
+}
+function card(r, other) {
+  return `<h3>${r.branch}</h3><p>${r.summary || ''}</p>
+  <div class="metric-row"><span>family</span><b>${r.family || ''}</b></div>
+  <div class="metric-row"><span>decision</span><b>${r.decision || ''}</b></div>
+  <div class="metric-row"><span>frozen path</span><b>${r.frozen_path || ''}</b></div>
+  <div class="metric-row"><span>control</span><b>${r.control || ''}</b></div>
+  <div class="metric-row"><span>train shards</span><b>${r.train_shards || 'n/a'}</b></div>
+  <div class="metric-row"><span>roundtrip BPB</span><b>${f(r.roundtrip_val_bpb)}</b></div>
+  <div class="metric-row"><span>artifact bytes</span><b>${fb(r.total_submission_int8_zlib_bytes)}</b></div>
+  <div class="metric-row"><span>16MB margin</span><b class="${Number.isFinite(r.artifact_margin_bytes) && r.artifact_margin_bytes >= 0 ? 'delta-good' : 'delta-bad'}">${fb(r.artifact_margin_bytes)}</b></div>
+  ${metric('final BPB', r.final_val_bpb, other.final_val_bpb)}
+  ${metric('step avg ms', r.step_avg_ms, other.step_avg_ms)}
+  ${metric('GPU util', r.gpu_util_avg, other.gpu_util_avg, false, '%')}`;
+}
+function tokenPattern(r) {
+  const mode = r.branch || '';
+  const out = [];
+  for(let i=0;i<24;i++){
+    let cls='updated', label='full transformer update';
+    if(mode === 'baseline-repro') { cls='updated'; label='always updated'; }
+    else if(mode.includes('learned-gate')) { cls=i%3===0?'updated':'blend'; label='learned old/new gate'; }
+    else if(mode.includes('soft-freeze')) { cls=i%4===0?'updated':'blend'; label='soft keep of new state'; }
+    else if(mode.includes('reactivation')) { cls=i%5===0?'reopen':(i%2?'frozen':'updated'); label='periodic reopen plus freeze'; }
+    else if(mode.includes('budget')) { cls=i%3===0?'updated':'frozen'; label='threshold adjusted to budget'; }
+    else if(mode.includes('recurrence')) { cls=i%4===0?'updated':'recur'; label='recurrent old/new blend'; }
+    else if(mode.includes('quantization')) { cls=i%4===0?'updated':'quant'; label='quantized carry state'; }
+    else { cls=i%4===0?'updated':'frozen'; label='hard threshold freeze'; }
+    out.push(`<span class="token ${cls}" data-i="${i+1}" title="${esc(label)}"></span>`);
+  }
+  return out.join('');
+}
+function tokenCopy(r) {
+  if(r.branch === 'baseline-repro') return 'Plain English: every token pays the full compute cost at every layer. There is no shortcut lane.';
+  if(r.branch.includes('learned-gate')) return 'Plain English: the model learns how much of the new update to mix with the old state instead of using only a fixed rule.';
+  if(r.branch.includes('soft-freeze')) return 'Plain English: even frozen tokens keep a small part of the new update, so freezing is less abrupt.';
+  if(r.branch.includes('reactivation')) return 'Plain English: frozen tokens are periodically reopened so an early freeze decision does not trap them forever.';
+  if(r.branch.includes('budget')) return 'Plain English: the branch tries to keep the number of fully-updated tokens near a target budget.';
+  if(r.branch.includes('recurrence')) return 'Plain English: frozen tokens use a recurrent blend of old and new state rather than a pure copy.';
+  if(r.branch.includes('quantization')) return 'Plain English: frozen tokens reuse a cheaper compressed version of their previous state.';
+  return 'Plain English: stable tokens skip the expensive update and reuse their previous state.';
+}
+function routeBadges(r) {
+  if(r.branch === 'baseline-repro') return ['all tokens update', 'highest compute', 'control branch'];
+  return [`decision: ${r.decision}`, `reuse lane: ${r.frozen_path}`, `control: ${r.control}`];
+}
+function routeDiagram(r, idx) {
+  const baseline = r.branch === 'baseline-repro';
+  const badges = routeBadges(r).map(x => `<span class="simple-badge">${esc(x)}</span>`).join('');
+  const reuseClass = baseline ? 'lane-box lane-reuse lane-disabled' : 'lane-box lane-reuse';
+  const reuseText = baseline ? 'Disabled in baseline. No token is allowed to skip.' : `Stable tokens go here. They reuse ${esc(r.frozen_path || 'previous state')}.`;
+  return `<div class="token-lane">
+    <h3>${idx===0?'A':'B'}: ${esc(r.branch)}</h3>
+    <div class="route-diagram">
+      <div class="route-step route-wide"><small>1. Text pieces enter</small><b>Tokens arrive at a layer</b><p>Each numbered block is one token being processed by this branch.</p><div class="tokens">${tokenPattern(r)}</div></div>
+      <div class="route-step"><small>2. Change check</small><b>Is this token still changing?</b><p>STF compares the token's current working note with its older note.</p></div>
+      <div class="route-step"><small>3. Branch rule</small><b>${esc(r.decision || 'no STF rule')}</b><p>${baseline ? 'Baseline does not make a routing decision.' : 'This branch decides which lane each token takes.'}</p></div>
+      <div class="lane-box lane-update"><small>Update lane</small><b>Run main math</b><p>Important or changing tokens get a fresh full update.</p></div>
+      <div class="${reuseClass}"><small>Reuse lane</small><b>${baseline ? 'Not used' : 'Freeze / carry'}</b><p>${reuseText}</p></div>
+    </div>
+    <div>${badges}</div>
+    <div class="token-copy">${esc(tokenCopy(r))}</div>
+  </div>`;
+}
+function renderTokenFlow(a,b) {
+  document.getElementById('tokenFlow').innerHTML = [a,b].map(routeDiagram).join('');
+}
+function pipeline(a, b) {
+  const steps = [
+    ['Decision', a.decision, b.decision, '#b84f31'],
+    ['Freeze signal', 'EMA(||h_new - h_old||)', 'EMA(||h_new - h_old||)', '#246b70'],
+    ['Frozen path', a.frozen_path, b.frozen_path, '#527b39'],
+    ['Control', a.control, b.control, '#a97828'],
+  ];
+  document.getElementById('pipeline').innerHTML = steps.map(s => `<div class="node" style="--node:${s[3]}"><small>${s[0]}</small><b>A: ${s[1]}</b><p style="margin:.4rem 0 0;">B: ${s[2]}</p></div>`).join('');
+}
+function renderPair() {
+  const a=byBranch[document.getElementById('branchA').value], b=byBranch[document.getElementById('branchB').value];
+  document.getElementById('cardA').innerHTML=card(a,b); document.getElementById('cardB').innerHTML=card(b,a); renderTokenFlow(a,b); pipeline(a,b); drawCurve('pairCurve',[a.branch,b.branch]);
+}
+function selectedIteration() {
+  const custom = document.getElementById('customIterations')?.value.trim();
+  return custom || document.getElementById('iterationSelect').value;
+}
+function selectedShard() {
+  return document.getElementById('shardSelect')?.value || 'preferred';
+}
+function reportName(iter, shard) {
+  return shard === 'preferred' ? `stf_${iter}_branch_compare.html` : `stf_${iter}_shards${shard}_branch_compare.html`;
+}
+function setScaleStatus(html) {
+  document.getElementById('scaleStatus').innerHTML = html;
+}
+async function loadIteration() {
+  const iter = selectedIteration();
+  const shard = selectedShard();
+  if(!/^\d+$/.test(iter)) { setScaleStatus('Iteration must be numeric.'); return; }
+  if(iter === String(DATA.iterations) && shard === String(DATA.shardFilter || 'preferred')) { setScaleStatus('Already viewing this iteration and shard report.'); return; }
+  const target = reportName(iter, shard);
+  const command = `python scripts/generate_stf_analysis.py ${iter} ${shard}`;
+  const serverMode = location.protocol === 'http:' || location.protocol === 'https:';
+  if(!serverMode) {
+    setScaleStatus(`Static file mode cannot execute Python. Run <code>${command}</code>, then open <a href="${target}">${target}</a>.`);
+    return;
+  }
+  setScaleStatus(`Generating/loading <code>${iter}</code> with shard mode <code>${shard}</code> from branch logs...`);
+  try {
+    const res = await fetch(`/api/report?iterations=${encodeURIComponent(iter)}&shards=${encodeURIComponent(shard)}`);
+    const body = await res.json().catch(() => ({}));
+    if(!res.ok || !body.ok) {
+      setScaleStatus(`Generation failed. Run <code>${command}</code> in the repo root. ${esc(body.error || '')}`);
+      return;
+    }
+    window.location.href = target;
+  } catch (err) {
+    setScaleStatus(`Could not reach the local analysis server. Run <code>python scripts/serve_stf_analysis.py</code> or run <code>${command}</code> manually.`);
+  }
+}
+function tooltipHtml(item) {
+  if(item.type === 'bar') { const r=item.record; return `<b>${esc(r.branch)}</b><span>train shards: ${r.train_shards || 'n/a'}</span><span>roundtrip BPB: ${f(r.roundtrip_val_bpb)}</span><span>final raw BPB: ${f(r.final_val_bpb)}</span><span>best BPB: ${f(r.best_val_bpb)} @ step ${r.best_step}</span><span>artifact: ${fb(r.total_submission_int8_zlib_bytes)} bytes</span><span>16MB margin: ${fb(r.artifact_margin_bytes)} bytes</span><span>step avg: ${f(r.step_avg_ms,2)} ms</span><span>GPU avg: ${f(r.gpu_util_avg,1)}%</span><span>VRAM peak: ${f(r.mem_peak_gb,2)} GB</span>`; }
+  return `<b>${esc(item.branch)}</b><span>step: ${item.step} / ${item.total}</span><span>val BPB: ${f(item.val_bpb)}</span><span>val loss: ${f(item.val_loss)}</span><span>step avg: ${f(item.step_avg_ms,2)} ms</span>`;
+}
+function attachHover(canvas) {
+  const tip=document.getElementById('tooltip');
+  canvas.addEventListener('mousemove', ev => {
+    const state=chartState[canvas.id]; if(!state) return;
+    const r=canvas.getBoundingClientRect(), x=ev.clientX-r.left, y=ev.clientY-r.top;
+    let item=null;
+    if(state.type === 'bar') item=state.hit.find(h => x>=h.x && x<=h.x+h.w && y>=h.y && y<=h.y+h.h);
+    else {
+      let best={d:999,item:null};
+      state.hit.forEach(h => { const d=Math.hypot(h.x-x,h.y-y); if(d<best.d) best={d,item:h}; });
+      if(best.d < 26) item=best.item;
+    }
+    if(!item) { tip.style.display='none'; return; }
+    tip.innerHTML=tooltipHtml(item); tip.style.left=ev.clientX+'px'; tip.style.top=ev.clientY+'px'; tip.style.display='block';
+  });
+  canvas.addEventListener('mouseleave', () => { tip.style.display='none'; });
+}
+function init() {
+  const opts = okRecords.map(r => `<option value="${r.branch}">${r.branch}</option>`).join('');
+  branchA.innerHTML=opts; branchB.innerHTML=opts; branchA.value=okRecords[0]?.branch || ''; branchB.value=okRecords[1]?.branch || branchA.value;
+  branchA.onchange=renderPair; branchB.onchange=renderPair; renderPair();
+  document.getElementById('loadIteration').onclick=loadIteration;
+  document.getElementById('loadCustomIteration').onclick=loadIteration;
+  const all=okRecords.map(r=>r.branch); drawCurve('allCurve', all); drawBars();
+  const legend=document.getElementById('legend'); legend.innerHTML=''; all.forEach((b,i)=>{ const e=document.createElement('span'); e.className='pill'; e.innerHTML=`<span class="dot" style="--c:${colors[i%colors.length]}"></span>${b}`; legend.appendChild(e); });
+  document.querySelectorAll('canvas').forEach(attachHover);
+  window.addEventListener('resize', () => { renderPair(); drawCurve('allCurve', all); drawBars(); });
+}
+init();
+</script>
+</body>
+</html>
