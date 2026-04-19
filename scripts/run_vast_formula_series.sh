@@ -74,6 +74,14 @@ notify_repeat() {
   done
 }
 
+fail_with_alerts() {
+  local exit_code="${1:-1}"
+  local message="$2"
+  cleanup_telemetry
+  notify_repeat "STOPPED: ${message} exit=${exit_code} branch=${CURRENT_BRANCH:-unknown} formula=${CURRENT_SCORE_FN:-unknown} run_id=${CURRENT_RUN_ID:-unknown}. Attend to the pod."
+  exit "$exit_code"
+}
+
 cleanup_telemetry() {
   if [ -n "${TELEMETRY_PID:-}" ] && kill -0 "$TELEMETRY_PID" >/dev/null 2>&1; then
     kill "$TELEMETRY_PID" >/dev/null 2>&1 || true
@@ -84,9 +92,7 @@ cleanup_telemetry() {
 
 on_error() {
   local exit_code="$?"
-  cleanup_telemetry
-  notify_repeat "STOPPED: Vast STF formula series crashed exit=${exit_code} branch=${CURRENT_BRANCH:-unknown} formula=${CURRENT_SCORE_FN:-unknown} run_id=${CURRENT_RUN_ID:-unknown}. Attend to the pod."
-  exit "$exit_code"
+  fail_with_alerts "$exit_code" "Vast STF formula series crashed"
 }
 trap on_error ERR
 trap cleanup_telemetry EXIT
@@ -95,8 +101,7 @@ require_integer() {
   local name="$1"
   local value="$2"
   if ! [[ "$value" =~ ^[0-9]+$ ]]; then
-    echo "error: ${name} must be an integer, got '${value}'" >&2
-    exit 1
+    fail_with_alerts 1 "${name} must be an integer, got '${value}'"
   fi
 }
 
@@ -178,8 +183,7 @@ for branch in $STF_BRANCHES; do
   fi
 
   if [ "$REQUIRE_SCORE_FN_SUPPORT" = "1" ] && ! grep -q "stf_score_fn" train_gpt.py; then
-    echo "error: branch ${branch} does not appear to support STF_SCORE_FN yet" >&2
-    exit 1
+    fail_with_alerts 1 "branch ${branch} does not appear to support STF_SCORE_FN yet"
   fi
 
   for score_fn in $STF_SCORE_FNS; do
