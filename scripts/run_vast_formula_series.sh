@@ -55,6 +55,9 @@ VARIANT_TOTAL="$((BRANCH_TOTAL * FORMULA_TOTAL))"
 CURRENT_BRANCH_INDEX="0"
 CURRENT_FORMULA_INDEX="0"
 CURRENT_VARIANT_INDEX="0"
+SUCCESS_COUNT="0"
+FAILED_COUNT="0"
+FAILED_VARIANTS=""
 
 timestamp() {
   date -u +%Y-%m-%dT%H:%M:%SZ
@@ -107,6 +110,15 @@ GPU: ${GPU_COUNT}x ${GPU_NAME}
 Iterations: ${ITERATIONS}
 Pod: $(hostname)
 EOF
+}
+
+append_failed_variant() {
+  local item="$1"
+  if [ -z "$FAILED_VARIANTS" ]; then
+    FAILED_VARIANTS="$item"
+  else
+    FAILED_VARIANTS="${FAILED_VARIANTS}, ${item}"
+  fi
 }
 
 failure_summary() {
@@ -289,6 +301,7 @@ for branch in "${BRANCH_LIST[@]}"; do
 
   CURRENT_FORMULA_INDEX="0"
   for score_fn in "${FORMULA_LIST[@]}"; do
+    variant_exit=0
     CURRENT_FORMULA_INDEX="$((CURRENT_FORMULA_INDEX + 1))"
     CURRENT_VARIANT_INDEX="$((CURRENT_VARIANT_INDEX + 1))"
     CURRENT_SCORE_FN="$score_fn"
@@ -314,19 +327,41 @@ $(run_context)"
     export STF_TELEMETRY WARMUP_STEPS MUON_BACKEND_STEPS MAX_WALLCLOCK_SECONDS
     export STF_SCORE_FN="$score_fn"
 
-    {
+    if {
       echo "timestamp=$(timestamp)"
       echo "branch=${branch}"
       echo "run_id=${CURRENT_RUN_ID}"
       echo "score_fn=${score_fn}"
       echo "nproc_per_node=${NPROC_PER_NODE}"
       torchrun --standalone --nproc_per_node="$NPROC_PER_NODE" train_gpt.py
-    } 2>&1 | tee "$console_log"
+    } 2>&1 | tee "$console_log"; then
+      variant_exit=0
+    else
+      variant_exit="$?"
+    fi
 
     cleanup_telemetry
 
     run_dir="$(archive_run "$branch" "$score_fn" "$CURRENT_RUN_ID" "$console_log")"
     final_line="$(grep -E "final_int8_zlib_roundtrip_exact|final_int8_zlib_roundtrip|step:[0-9]+/[0-9]+ val_loss" "logs/${CURRENT_RUN_ID}.txt" 2>/dev/null | tail -n 1 || true)"
+    if [ "$variant_exit" -ne 0 ]; then
+      FAILED_COUNT="$((FAILED_COUNT + 1))"
+      append_failed_variant "${branch}/${score_fn}"
+      notify "VARIANT FAILED - CONTINUING
+
+$(run_context)
+
+Exit: ${variant_exit}
+Archive: ${run_dir}
+
+Key error:
+$(failure_summary)
+
+Next variant will start shortly."
+      continue
+    fi
+
+    SUCCESS_COUNT="$((SUCCESS_COUNT + 1))"
     notify "VARIANT ENDED
 
 $(run_context)
@@ -346,5 +381,8 @@ notify "SERIES DONE
 Branches (${BRANCH_TOTAL}): ${STF_BRANCHES}
 Formulas (${FORMULA_TOTAL}): ${STF_SCORE_FNS}
 Progress: $(progress_bar "$VARIANT_TOTAL" "$VARIANT_TOTAL") ${VARIANT_TOTAL}/${VARIANT_TOTAL}
+Succeeded: ${SUCCESS_COUNT}
+Failed: ${FAILED_COUNT}
+Failed variants: ${FAILED_VARIANTS:-none}
 Iterations: ${ITERATIONS}
 GPU: ${GPU_COUNT}x ${GPU_NAME}"
