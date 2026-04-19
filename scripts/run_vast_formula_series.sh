@@ -37,6 +37,13 @@ TELEMETRY_INTERVAL_SECONDS="${TELEMETRY_INTERVAL_SECONDS:-15}"
 FETCH_BEFORE_RUN="${FETCH_BEFORE_RUN:-1}"
 REQUIRE_SCORE_FN_SUPPORT="${REQUIRE_SCORE_FN_SUPPORT:-1}"
 AUTO_COMMIT_RESULTS="${AUTO_COMMIT_RESULTS:-0}"
+SEND_COMPLETED_LOGS="${SEND_COMPLETED_LOGS:-1}"
+SEND_CONSOLE_LOGS="${SEND_CONSOLE_LOGS:-0}"
+AUTO_GIT_SYNC_LOGS="${AUTO_GIT_SYNC_LOGS:-0}"
+AUTO_GIT_PUSH_LOGS="${AUTO_GIT_PUSH_LOGS:-1}"
+AUTO_GIT_SYNC_REMOTE="${AUTO_GIT_SYNC_REMOTE:-origin}"
+AUTO_GIT_SYNC_BRANCH="${AUTO_GIT_SYNC_BRANCH:-main}"
+AUTO_GIT_SYNC_WORKTREE="${AUTO_GIT_SYNC_WORKTREE:-/tmp/$(basename "$ROOT_DIR")-log-sync}"
 
 CURRENT_BRANCH=""
 CURRENT_SCORE_FN=""
@@ -72,6 +79,22 @@ notify() {
   curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
     -d "chat_id=${TELEGRAM_USER_ID}" \
     --data-urlencode "text=${text}" >/dev/null || true
+}
+
+notify_file() {
+  local file_path="$1"
+  local caption="${2:-}"
+  if [ ! -f "$file_path" ]; then
+    return 0
+  fi
+  printf '[%s] sending file %s\n' "$(timestamp)" "$file_path"
+  if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] || [ -z "${TELEGRAM_USER_ID:-}" ]; then
+    return 0
+  fi
+  curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
+    -F "chat_id=${TELEGRAM_USER_ID}" \
+    -F "document=@${file_path}" \
+    -F "caption=${caption}" >/dev/null || true
 }
 
 progress_bar() {
@@ -118,6 +141,56 @@ append_failed_variant() {
     FAILED_VARIANTS="$item"
   else
     FAILED_VARIANTS="${FAILED_VARIANTS}, ${item}"
+  fi
+}
+
+git_sync_logs() {
+  local message="$1"
+  shift
+  local paths=("$@")
+  local existing_paths=()
+  local path
+  local dest
+  local attempt
+
+  if [ "$AUTO_GIT_SYNC_LOGS" != "1" ]; then
+    return 0
+  fi
+
+  for path in "${paths[@]}"; do
+    if [ -e "$path" ]; then
+      existing_paths+=("$path")
+    fi
+  done
+  if [ "${#existing_paths[@]}" -eq 0 ]; then
+    return 0
+  fi
+
+  git fetch "$AUTO_GIT_SYNC_REMOTE" "$AUTO_GIT_SYNC_BRANCH" || true
+  if [ ! -d "${AUTO_GIT_SYNC_WORKTREE}/.git" ] && [ ! -f "${AUTO_GIT_SYNC_WORKTREE}/.git" ]; then
+    git worktree add -B "vast-log-sync-${AUTO_GIT_SYNC_BRANCH}" \
+      "$AUTO_GIT_SYNC_WORKTREE" "${AUTO_GIT_SYNC_REMOTE}/${AUTO_GIT_SYNC_BRANCH}" || return 0
+  fi
+
+  git -C "$AUTO_GIT_SYNC_WORKTREE" pull --rebase "$AUTO_GIT_SYNC_REMOTE" "$AUTO_GIT_SYNC_BRANCH" || true
+  for path in "${existing_paths[@]}"; do
+    dest="${AUTO_GIT_SYNC_WORKTREE}/${path}"
+    mkdir -p "$(dirname "$dest")"
+    cp "$path" "$dest"
+  done
+
+  git -C "$AUTO_GIT_SYNC_WORKTREE" add -- "${existing_paths[@]}"
+  if git -C "$AUTO_GIT_SYNC_WORKTREE" diff --cached --quiet; then
+    return 0
+  fi
+  git -C "$AUTO_GIT_SYNC_WORKTREE" commit -m "$message" || true
+  if [ "$AUTO_GIT_PUSH_LOGS" = "1" ]; then
+    for attempt in 1 2 3; do
+      if git -C "$AUTO_GIT_SYNC_WORKTREE" push "$AUTO_GIT_SYNC_REMOTE" "HEAD:${AUTO_GIT_SYNC_BRANCH}"; then
+        break
+      fi
+      git -C "$AUTO_GIT_SYNC_WORKTREE" pull --rebase "$AUTO_GIT_SYNC_REMOTE" "$AUTO_GIT_SYNC_BRANCH" || true
+    done
   fi
 }
 
@@ -267,6 +340,41 @@ EOF
   echo "$run_dir"
 }
 
+send_completed_run_logs() {
+  local run_dir="$1"
+  local branch="$2"
+  local score_fn="$3"
+  local run_id="$4"
+  local caption
+
+  if [ "$SEND_COMPLETED_LOGS" != "1" ]; then
+    return 0
+  fi
+
+  caption="${branch}/${score_fn} completed (${ITERATIONS} iters, ${run_id})"
+  notify_file "${run_dir}/README.md" "${caption} summary"
+  notify_file "${run_dir}/train.log" "${caption} train.log"
+  if [ "$SEND_CONSOLE_LOGS" = "1" ]; then
+    notify_file "${run_dir}/console.log" "${caption} console.log"
+  fi
+}
+
+sync_completed_run_logs() {
+  local run_dir="$1"
+  local branch="$2"
+  local score_fn="$3"
+  local run_id="$4"
+  local paths=(
+    "${run_dir}/README.md"
+    "${run_dir}/train.log"
+    "${run_dir}/console.log"
+    "${run_dir}/telemetry.csv"
+    "${run_dir}/train_gpt.py"
+  )
+
+  git_sync_logs "logs: add ${run_id} (${branch}, ${score_fn})" "${paths[@]}"
+}
+
 require_integer "ITERATIONS" "$ITERATIONS"
 require_integer "RUN_NUMBER" "$RUN_NUMBER"
 gpu_info
@@ -287,6 +395,12 @@ Pod: $(hostname)"
 for branch in "${BRANCH_LIST[@]}"; do
   CURRENT_BRANCH_INDEX="$((CURRENT_BRANCH_INDEX + 1))"
   CURRENT_BRANCH="$branch"
+  BRANCH_SUCCESS_COUNT="0"
+  BRANCH_FAILED_COUNT="0"
+  BRANCH_SUMMARY_FILE="logs/${branch//\//-}_i${ITERATIONS}_run${RUN_NUMBER}_summary.txt"
+  mkdir -p logs
+  : > "$BRANCH_SUMMARY_FILE"
+
   if [ "$FETCH_BEFORE_RUN" = "1" ]; then
     git fetch origin "$branch"
   fi
@@ -346,7 +460,10 @@ $(run_context)"
     final_line="$(grep -E "final_int8_zlib_roundtrip_exact|final_int8_zlib_roundtrip|step:[0-9]+/[0-9]+ val_loss" "logs/${CURRENT_RUN_ID}.txt" 2>/dev/null | tail -n 1 || true)"
     if [ "$variant_exit" -ne 0 ]; then
       FAILED_COUNT="$((FAILED_COUNT + 1))"
+      BRANCH_FAILED_COUNT="$((BRANCH_FAILED_COUNT + 1))"
       append_failed_variant "${branch}/${score_fn}"
+      printf '%s\t%s\tFAILED\t%s\n' "$branch" "$score_fn" "$run_dir" >> "$BRANCH_SUMMARY_FILE"
+      sync_completed_run_logs "$run_dir" "$branch" "$score_fn" "$CURRENT_RUN_ID"
       notify "VARIANT FAILED - CONTINUING
 
 $(run_context)
@@ -362,18 +479,32 @@ Next variant will start shortly."
     fi
 
     SUCCESS_COUNT="$((SUCCESS_COUNT + 1))"
+    BRANCH_SUCCESS_COUNT="$((BRANCH_SUCCESS_COUNT + 1))"
+    printf '%s\t%s\tOK\t%s\t%s\n' "$branch" "$score_fn" "${final_line:-not found}" "$run_dir" >> "$BRANCH_SUMMARY_FILE"
     notify "VARIANT ENDED
 
 $(run_context)
 
 Archive: ${run_dir}
 Final: ${final_line:-not found}"
+    send_completed_run_logs "$run_dir" "$branch" "$score_fn" "$CURRENT_RUN_ID"
+    sync_completed_run_logs "$run_dir" "$branch" "$score_fn" "$CURRENT_RUN_ID"
     notify "MOVING TO NEXT
 
 Completed: ${branch} / ${score_fn}
 Progress: $(progress_bar "$CURRENT_VARIANT_INDEX" "$VARIANT_TOTAL") ${CURRENT_VARIANT_INDEX}/${VARIANT_TOTAL}
 Next variant will start shortly."
   done
+
+  notify "BRANCH ENDED
+
+Branch: ${branch} (${CURRENT_BRANCH_INDEX}/${BRANCH_TOTAL})
+Succeeded: ${BRANCH_SUCCESS_COUNT}
+Failed: ${BRANCH_FAILED_COUNT}
+Progress: $(progress_bar "$CURRENT_VARIANT_INDEX" "$VARIANT_TOTAL") ${CURRENT_VARIANT_INDEX}/${VARIANT_TOTAL}
+Summary: ${BRANCH_SUMMARY_FILE}"
+  notify_file "$BRANCH_SUMMARY_FILE" "${branch} branch summary (${ITERATIONS} iters)"
+  git_sync_logs "logs: add ${branch} summary (${ITERATIONS} iters)" "$BRANCH_SUMMARY_FILE"
 done
 
 notify "SERIES DONE
