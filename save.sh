@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Save one completed run into runpod/experiments/... and push it.
+# Save one completed run into vast/experiments/... and push it.
 # Expected training outputs from this repo:
 # - logs/${RUN_ID}.txt (required)
 # - final_model.pt (optional)
@@ -39,7 +39,7 @@ fi
 GPU_SLUG="$(printf '%s' "$GPU_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g; s/-\+/-/g; s/^-//; s/-$//')"
 DATE_TAG="$(date +%F)"
 POD_NAME="$(hostname)"
-RUN_DIR="runpod/experiments/${DATE_TAG}-${GPU_SLUG}-${GPU_COUNT}gpu/${BRANCH}/${RUN_ID}"
+RUN_DIR="vast/experiments/${DATE_TAG}-${GPU_SLUG}-${GPU_COUNT}gpu/${BRANCH}/${RUN_ID}"
 
 mkdir -p "$RUN_DIR"
 
