@@ -13,6 +13,7 @@ from pathlib import Path
 
 
 KEY_VALUE_RE = re.compile(r"([A-Za-z_]+):([-+0-9.eE]+)")
+STRING_VALUE_RE = re.compile(r"\b(compute_mode):([A-Za-z0-9_./-]+)")
 VAL_RE = re.compile(r"step:(\d+)/(\d+)\s+val_loss:([-+0-9.eE]+)\s+val_bpb:([-+0-9.eE]+)")
 TRAIN_RE = re.compile(r"step:(\d+)/(\d+)\s+train_loss:([-+0-9.eE]+)\s+train_time:(\d+)ms\s+step_avg:([-+0-9.eE]+)ms")
 FINAL_RE = re.compile(r"final_int8_zlib_roundtrip(?:_exact)?\s+val_loss:([-+0-9.eE]+)\s+val_bpb:([-+0-9.eE]+)")
@@ -34,6 +35,7 @@ class Variant:
     last_train_loss: float | None = None
     last_step_avg_ms: float | None = None
     stats: dict[str, float] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
     layer_stats: dict[str, dict[int, float]] = field(default_factory=dict)
     telemetry: list[dict[str, object]] = field(default_factory=list)
     val_history: list[tuple[int, float]] = field(default_factory=list)
@@ -183,6 +185,8 @@ def parse_logs(paths: list[Path]) -> list[Variant]:
                         if parsed is not None:
                             variant.stats[key] = parsed
                             line_stats[key] = parsed
+                    for key, value in STRING_VALUE_RE.findall(line):
+                        variant.labels[key] = value
 
                     line_layers = parse_layer_series(line)
                     for key, values in line_layers.items():
@@ -194,6 +198,7 @@ def parse_logs(paths: list[Path]) -> list[Variant]:
                             {
                                 "step": int(step_match.group(1)),
                                 "stats": line_stats,
+                                "labels": dict(variant.labels),
                                 "layers": line_layers,
                             }
                         )
@@ -346,10 +351,10 @@ def render_outcome_dashboard(rows: list[Variant], width: int = 1120) -> str:
     parts = [
         f'<svg class="outcome-viz" viewBox="0 0 {width} {height}" role="img" aria-label="Quality learning speed comparison">',
         '<text x="24" y="34" class="outcome-title">One-glance outcome map</text>',
-        '<text x="24" y="58" class="outcome-subtitle">Longer bars are better. Quality = lower validation BPB, learning = lower train loss, speed = lower average iteration time.</text>',
+        '<text x="24" y="58" class="outcome-subtitle">Longer bars are better. Quality = lower validation BPB, learning = lower train loss, wall-clock = lower average iteration time.</text>',
         f'<text x="{left}" y="70" class="axis-label">quality</text>',
         f'<text x="{left + bar_w * 0.36}" y="70" class="axis-label">learning</text>',
-        f'<text x="{left + bar_w * 0.70}" y="70" class="axis-label">speed</text>',
+        f'<text x="{left + bar_w * 0.70}" y="70" class="axis-label">wall-clock</text>',
     ]
 
     for idx, variant in enumerate(rows):
@@ -398,10 +403,12 @@ def render_speed_reality(rows: list[Variant]) -> str:
         logical_frozen = variant.stats.get("frozen_token_ratio", variant.frozen_proxy())
         actual_skip = variant.stats.get("actual_skip_ratio")
         efficiency = variant.stats.get("skip_efficiency")
+        compute_mode = variant.labels.get("compute_mode", "-")
         compute_rows.append(
             "<tr>"
             f"<td>{html.escape(variant.branch)}</td>"
             f"<td>{html.escape(variant.score_fn)}</td>"
+            f"<td>{html.escape(compute_mode)}</td>"
             f"<td>{pct(logical_frozen)}</td>"
             f"<td>{pct(computed)}</td>"
             f"<td>{pct(actual_skip)}</td>"
@@ -414,7 +421,7 @@ def render_speed_reality(rows: list[Variant]) -> str:
         compute_table = f"""
       <div class="table-wrap compact">
         <table>
-          <thead><tr><th>Branch</th><th>Formula</th><th>Logically Frozen</th><th>Actually Computed</th><th>Actually Skipped</th><th>Skip Efficiency</th></tr></thead>
+          <thead><tr><th>Branch</th><th>Formula</th><th>Compute Mode</th><th>Logically Frozen</th><th>Actually Computed</th><th>Actually Skipped</th><th>Skip Efficiency</th></tr></thead>
           <tbody>{''.join(compute_rows)}</tbody>
         </table>
       </div>
@@ -436,6 +443,46 @@ def render_speed_reality(rows: list[Variant]) -> str:
       </div>
       {compute_table}
     </div>
+    """
+
+
+def render_branch_tree(completed: list[Variant]) -> str:
+    soft_done = sorted(v.score_fn for v in completed if v.branch == "stf-soft-freeze-telemetry")
+    soft_done_text = ", ".join(soft_done) if soft_done else "waiting for completed telemetry logs"
+    has_compute = any("actual_skip_ratio" in v.stats for v in completed)
+    compute_text = "compute telemetry proves full_block_then_freeze" if has_compute else "compute telemetry pending"
+    return f"""
+    <section class="branch-tree-card">
+      <div>
+        <p class="eyebrow">Implementation map</p>
+        <h2>Git Branch Tree</h2>
+        <p class="note">Experiment-result branches stay separate from implementation branches. The first runnable true-skip branch is the MLP active-row prototype; query-sparse attention and K/V reuse stay gated until the cheaper smoke tests prove value.</p>
+      </div>
+      <pre class="branch-tree">main
+├── stf-soft-freeze-telemetry <span class="status done">done</span>
+│   ├── done: 2k {html.escape(soft_done_text)}
+│   ├── done: {html.escape(compute_text)}
+│   └── next: base for true-skip implementation
+│
+├── codex/stf-true-skip-foundation <span class="status running">running</span>
+│   ├── running: pre-block active-mask foundation
+│   ├── running: predictor / compute telemetry
+│   └── todo: local smoke tests
+│
+├── codex/stf-mlp-skip <span class="status running">running</span>
+│   ├── running: MLP active-row gather/scatter
+│   ├── todo: prove computed_token_ratio &lt; 1.0
+│   └── todo: 500-step Vast smoke
+│
+├── codex/stf-query-sparse-attn <span class="status todo">todo</span>
+│   ├── todo: active-query Q path
+│   ├── todo: explicit causal mask
+│   └── todo: compare speed after MLP skip
+│
+└── codex/stf-kv-reuse-experiment <span class="status todo">todo</span>
+    ├── todo: cache/reuse frozen K/V or states
+    └── todo: only run if previous tracks succeed</pre>
+    </section>
     """
 
 
@@ -645,6 +692,14 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     if hard_freeze:
         hard_vals = [v.frozen_proxy() for v in hard_freeze if v.frozen_proxy() is not None]
         hard_avg = sum(hard_vals) / len(hard_vals) if hard_vals else None
+    logical_frozen_values = [
+        v.stats.get("frozen_token_ratio", v.frozen_proxy())
+        for v in completed
+        if v.stats.get("frozen_token_ratio", v.frozen_proxy()) is not None
+    ]
+    actual_skip_values = [v.stats["actual_skip_ratio"] for v in completed if "actual_skip_ratio" in v.stats]
+    max_logical_frozen = max(logical_frozen_values) if logical_frozen_values else hard_avg
+    max_actual_skip = max(actual_skip_values) if actual_skip_values else None
 
     best = completed[0] if completed else None
     visual_rows = selected or completed[:12]
@@ -655,6 +710,10 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
         if base and base.final_bpb is not None and variant.final_bpb is not None:
             delta = base.final_bpb - variant.final_bpb
         delta_text = f"{delta:+.4f}" if delta is not None else "-"
+        compute_mode = variant.labels.get("compute_mode", "-")
+        computed_ratio = variant.stats.get("computed_token_ratio")
+        actual_skip = variant.stats.get("actual_skip_ratio")
+        skip_efficiency = variant.stats.get("skip_efficiency")
         rows_html.append(
             "<tr>"
             f"<td>{rank}</td>"
@@ -666,6 +725,10 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
             f"<td>{fmt(variant.last_step_avg_ms, 1)}ms</td>"
             f"<td>{pct(variant.frozen_proxy())}</td>"
             f"<td>{pct(variant.active_proxy())}</td>"
+            f"<td>{html.escape(compute_mode)}</td>"
+            f"<td>{pct(computed_ratio)}</td>"
+            f"<td>{pct(actual_skip)}</td>"
+            f"<td>{pct(skip_efficiency)}</td>"
             f"<td>{html.escape(variant.control_kind())}</td>"
             f"<td>{html.escape(variant.health_reason())}</td>"
             "</tr>"
@@ -693,6 +756,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
 
     outcome_dashboard = render_outcome_dashboard(completed)
     speed_reality = render_speed_reality(completed)
+    branch_tree = render_branch_tree(completed)
     movie_cards = []
     for variant in visual_rows[:8]:
         movie_cards.append(
@@ -762,6 +826,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     .metric {{ padding: 18px; border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.035); }}
     .metric strong {{ display: block; font-size: 1.8rem; letter-spacing: -0.04em; }}
     .metric span {{ color: var(--muted); font-size: .86rem; }}
+    .metric.warn strong {{ color: var(--bad); }}
     .section-title {{ margin: 42px 0 16px; display: flex; align-items: end; justify-content: space-between; gap: 20px; }}
     h2 {{ margin: 0; font-size: clamp(1.6rem, 4vw, 3rem); letter-spacing: -0.05em; }}
     .note {{ color: var(--muted); max-width: 680px; line-height: 1.55; }}
@@ -837,6 +902,35 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       background: linear-gradient(135deg, rgba(74,168,255,.10), rgba(88,242,111,.05));
     }}
     .speed-card p {{ color: var(--muted); line-height: 1.55; }}
+    .branch-tree-card {{
+      margin-top: 22px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 22px;
+      background: rgba(14, 22, 18, 0.86);
+    }}
+    .branch-tree {{
+      margin: 18px 0 0;
+      padding: 18px;
+      overflow-x: auto;
+      border-radius: 18px;
+      background: rgba(0,0,0,.28);
+      color: var(--text);
+      line-height: 1.55;
+      font-size: .92rem;
+    }}
+    .status {{
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }}
+    .status.done {{ color: #061208; background: var(--good); }}
+    .status.running {{ color: #07121a; background: var(--frozen); }}
+    .status.todo {{ color: var(--muted); background: rgba(255,255,255,.08); }}
     table {{ width: 100%; border-collapse: collapse; min-width: 1040px; }}
     th, td {{ text-align: left; padding: 13px 14px; border-bottom: 1px solid rgba(255,255,255,.07); white-space: nowrap; }}
     th {{ color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .09em; }}
@@ -860,17 +954,19 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
 <body>
   <main>
     <section class="hero">
-      <p class="eyebrow">Pod A + Pod B, 500 iteration sweep</p>
-      <h1>Are the tokens actually freezing?</h1>
-      <p>Mostly yes for the hard-freeze variants: after the first telemetry step, layers 3-8 sit at the configured <b>35% active floor</b>, so roughly <b>65% of token-layer work is frozen</b>. That is real freezing, but it also means most formulas are being clipped to the same floor rather than freely expressing different freeze budgets.</p>
+      <p class="eyebrow">Pod A + Pod B, completed 2k telemetry sweep</p>
+      <h1>Tokens freeze logically, but compute is not reduced yet.</h1>
+      <p>The completed telemetry runs show real logical freezing, but the current implementation still runs the full transformer block first and freezes/blends afterward. Treat <b>logical freeze</b> as a model-state signal, not as speed saved, until <code>actual_skip_ratio</code> rises above zero.</p>
     <div class="metrics">
         <div class="metric"><strong>{len(completed)}</strong><span>completed variants</span></div>
         <div class="metric"><strong>{branch_count}</strong><span>branches compared</span></div>
-        <div class="metric"><strong>{formula_count}</strong><span>score formulas</span></div>
-        <div class="metric"><strong>{pct(hard_avg)}</strong><span>avg hard frozen share</span></div>
+        <div class="metric"><strong>{pct(max_logical_frozen)}</strong><span>max logical freeze</span></div>
+        <div class="metric warn"><strong>{pct(max_actual_skip)}</strong><span>actual compute skipped</span></div>
       </div>
       <p>{'Best run: <b>' + html.escape(best.branch) + ' / ' + html.escape(best.score_fn) + '</b> at <b>' + fmt(best.final_bpb) + ' BPB</b>.' if best else ''} Learned-gate is shown separately as a gate-open proxy, because a near-1.0 gate means it is mostly <i>not</i> freezing even when the score looks healthy.</p>
     </section>
+
+    {branch_tree}
 
     <div class="section-title">
       <h2>Freeze Mini Movies</h2>
@@ -890,7 +986,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
 
     <div class="section-title">
       <h2>Non-Technical Outcome View</h2>
-      <p class="note">This is the “single image” view: each row combines three things people care about without needing model-training jargon. Longer bars are better: lower validation BPB, lower training loss, and faster average iteration time.</p>
+      <p class="note">This is the “single image” view: each row combines three things people care about without needing model-training jargon. Longer bars are better: lower validation BPB, lower training loss, and lower wall-clock iteration time. Wall-clock speed is not proof of token compute skipping; the compute columns below answer that.</p>
     </div>
     <div class="outcome-card">
       {outcome_dashboard}
@@ -910,7 +1006,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       <table>
         <thead>
           <tr>
-            <th>#</th><th>Branch</th><th>Formula</th><th>Final BPB</th><th>Delta</th><th>Train Loss</th><th>Avg Iter</th><th>Frozen</th><th>Active</th><th>Control</th><th>Health</th>
+            <th>#</th><th>Branch</th><th>Formula</th><th>Final BPB</th><th>Delta</th><th>Train Loss</th><th>Avg Iter</th><th>Frozen</th><th>Active</th><th>Compute Mode</th><th>Computed</th><th>Actual Skip</th><th>Skip Eff.</th><th>Control</th><th>Health</th>
           </tr>
         </thead>
         <tbody>
