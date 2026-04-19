@@ -104,6 +104,7 @@ class Hyperparameters:
     stf_score_fn = os.environ.get("STF_SCORE_FN", "l2")
     stf_telemetry = bool(int(os.environ.get("STF_TELEMETRY", "1")))
     stf_compute_mode = os.environ.get("STF_COMPUTE_MODE", "full_block_then_freeze")
+    stf_active_selection = os.environ.get("STF_ACTIVE_SELECTION", "threshold_floor")
     compile_model = bool(int(os.environ.get("COMPILE_MODEL", "0")))
 
 # -----------------------------
@@ -722,6 +723,7 @@ class GPT(nn.Module):
         stf_score_fn: str,
         stf_telemetry: bool,
         stf_compute_mode: str,
+        stf_active_selection: str,
     ):
         super().__init__()
         if logit_softcap <= 0.0:
@@ -733,6 +735,9 @@ class GPT(nn.Module):
         if stf_compute_mode not in {"full_block_then_freeze", "mlp_active_rows"}:
             raise ValueError(f"unsupported STF_COMPUTE_MODE={stf_compute_mode!r}")
         self.stf_compute_mode = stf_compute_mode
+        if stf_active_selection not in {"threshold_floor", "topk_budget"}:
+            raise ValueError(f"unsupported STF_ACTIVE_SELECTION={stf_active_selection!r}")
+        self.stf_active_selection = stf_active_selection
         self.num_layers = num_layers
         self.stf_warmup_layers = max(stf_warmup_layers, 0)
         self.stf_depth_cap = max(stf_depth_cap, 0)
@@ -1003,18 +1008,24 @@ class GPT(nn.Module):
 
             active = ema_score >= threshold
             active_pre_guard = active
+            force_reactivated = False
             if self.stf_reactivate_every > 0 and self.stf_mode == "reactivation":
                 if (layer_idx - self.stf_warmup_layers + 1) % self.stf_reactivate_every == 0:
                     active = torch.ones_like(active, dtype=torch.bool)
+                    force_reactivated = True
 
-            if self.stf_min_active_ratio > 0.0:
+            if self.stf_min_active_ratio > 0.0 and not force_reactivated:
                 token_scores = ema_score.squeeze(-1).reshape(-1)
                 k = min(token_scores.numel(), max(1, int(math.ceil(self.stf_min_active_ratio * token_scores.numel()))))
                 if k < token_scores.numel():
                     topk_idx = torch.topk(token_scores, k, sorted=False).indices
-                    floor_active = torch.zeros_like(token_scores, dtype=torch.bool)
-                    floor_active[topk_idx] = True
-                    active = active | floor_active.reshape_as(active)
+                    topk_active = torch.zeros_like(token_scores, dtype=torch.bool)
+                    topk_active[topk_idx] = True
+                    topk_active = topk_active.reshape_as(active)
+                    if self.stf_active_selection == "topk_budget":
+                        active = topk_active
+                    else:
+                        active = active | topk_active
             return active, active_pre_guard
 
         def apply_stf(layer_idx: int, x_in: Tensor, x_out: Tensor) -> Tensor:
@@ -1233,6 +1244,7 @@ def main() -> None:
         stf_score_fn=args.stf_score_fn,
         stf_telemetry=args.stf_telemetry,
         stf_compute_mode=args.stf_compute_mode,
+        stf_active_selection=args.stf_active_selection,
     ).to(device).bfloat16()
     base_model.reset_stf_stats()
     for module in base_model.modules():
@@ -1314,7 +1326,7 @@ def main() -> None:
         f"stf_mode:{args.stf_mode} stf_warmup_layers:{args.stf_warmup_layers} stf_depth_cap:{args.stf_depth_cap} "
         f"stf_threshold:{args.stf_threshold} stf_ema_decay:{args.stf_ema_decay} "
         f"stf_min_active_ratio:{args.stf_min_active_ratio} stf_score_fn:{args.stf_score_fn} "
-        f"stf_telemetry:{args.stf_telemetry}"
+        f"stf_active_selection:{args.stf_active_selection} stf_telemetry:{args.stf_telemetry}"
     )
     log0(f"seed:{args.seed}")
 
