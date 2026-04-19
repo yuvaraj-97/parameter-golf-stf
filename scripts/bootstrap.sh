@@ -14,6 +14,7 @@ ENV_FILE="${ENV_FILE:-${PROJECT_DIR}/.env}"
 ENV_AUTOSYNC_INTERVAL="${ENV_AUTOSYNC_INTERVAL:-300}"
 RCLONE_TRANSFERS="${RCLONE_TRANSFERS:-8}"
 RCLONE_CHECKERS="${RCLONE_CHECKERS:-16}"
+GIT_PUSH_REMOTE="${GIT_PUSH_REMOTE:-git@github.com:yuvaraj-97/parameter-golf-stf.git}"
 
 require_env() {
   local name="$1"
@@ -52,6 +53,63 @@ restore_optional_dir() {
   fi
 }
 
+write_secret_file() {
+  local target="$1"
+  local raw_value="${2:-}"
+  local b64_value="${3:-}"
+
+  if [ -n "$b64_value" ]; then
+    printf '%s' "$b64_value" | base64 -d >"$target"
+  elif [ -n "$raw_value" ]; then
+    printf '%s\n' "$raw_value" >"$target"
+  else
+    return 1
+  fi
+}
+
+setup_git_credentials() {
+  mkdir -p /root/.ssh
+
+  if write_secret_file /root/.ssh/id_ed25519 "${GITHUB_SSH_PRIVATE_KEY:-}" "${GITHUB_SSH_PRIVATE_KEY_B64:-}"; then
+    chmod 600 /root/.ssh/id_ed25519
+  fi
+
+  if write_secret_file /root/.ssh/id_ed25519.pub "${GITHUB_SSH_PUBLIC_KEY:-}" "${GITHUB_SSH_PUBLIC_KEY_B64:-}"; then
+    chmod 644 /root/.ssh/id_ed25519.pub
+  elif [ -f /root/.ssh/id_ed25519 ] && command -v ssh-keygen >/dev/null 2>&1; then
+    ssh-keygen -y -f /root/.ssh/id_ed25519 >/root/.ssh/id_ed25519.pub 2>/dev/null || true
+    chmod 644 /root/.ssh/id_ed25519.pub 2>/dev/null || true
+  fi
+
+  if command -v ssh-keyscan >/dev/null 2>&1; then
+    ssh-keyscan -H github.com >>/root/.ssh/known_hosts 2>/dev/null || true
+    chmod 644 /root/.ssh/known_hosts 2>/dev/null || true
+  fi
+
+  cat >/root/.ssh/config <<EOF
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile /root/.ssh/id_ed25519
+  IdentitiesOnly yes
+  StrictHostKeyChecking yes
+  BatchMode yes
+EOF
+  chmod 600 /root/.ssh/config
+
+  if [ -n "${GIT_USER_NAME:-}" ]; then
+    git config --global user.name "${GIT_USER_NAME}"
+  fi
+
+  if [ -n "${GIT_USER_EMAIL:-}" ]; then
+    git config --global user.email "${GIT_USER_EMAIL}"
+  fi
+
+  if [ -d "${PROJECT_DIR}/.git" ] && [ -n "${GIT_PUSH_REMOTE}" ]; then
+    git -C "${PROJECT_DIR}" remote set-url --push origin "${GIT_PUSH_REMOTE}" || true
+  fi
+}
+
 # -----------------------------
 # RCLONE CONFIG
 # -----------------------------
@@ -81,6 +139,7 @@ restore_optional_dir "${BOOTSTRAP_PREFIX}/ssh" /root/.ssh
 restore_optional_dir "${BOOTSTRAP_PREFIX}/config" /root/.config
 restore_optional_dir "${BOOTSTRAP_PREFIX}/home" /root
 restore_optional_dir "${BOOTSTRAP_PREFIX}/root" /root
+setup_git_credentials
 
 chmod 700 /root/.ssh || true
 chmod 600 /root/.ssh/* 2>/dev/null || true

@@ -67,7 +67,7 @@ ${FINAL_LINE}
 \`\`\`
 EOF
 
-git add "$RUN_DIR"
+git add --sparse "$RUN_DIR"
 git commit -m "logs: add ${RUN_ID} (${BRANCH}, ${GPU_SLUG}, ${GPU_COUNT}gpu)"
 git push origin "$BRANCH"
 
