@@ -700,6 +700,21 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     actual_skip_values = [v.stats["actual_skip_ratio"] for v in completed if "actual_skip_ratio" in v.stats]
     max_logical_frozen = max(logical_frozen_values) if logical_frozen_values else hard_avg
     max_actual_skip = max(actual_skip_values) if actual_skip_values else None
+    has_actual_skip = max_actual_skip is not None and max_actual_skip > 0.0
+    hero_title = (
+        "True-skip MLP now skips some compute."
+        if has_actual_skip
+        else "Tokens freeze logically, but compute is not reduced yet."
+    )
+    hero_body = (
+        "The newest true-skip run shows <b>actual_skip_ratio</b> above zero in "
+        "<code>mlp_active_rows</code> mode, so some MLP token-row compute is now really skipped. "
+        "Attention is still dense, so wall-clock speed must be judged separately from logical freeze."
+        if has_actual_skip
+        else "The completed telemetry runs show real logical freezing, but the current implementation still "
+        "runs the full transformer block first and freezes/blends afterward. Treat <b>logical freeze</b> as "
+        "a model-state signal, not as speed saved, until <code>actual_skip_ratio</code> rises above zero."
+    )
 
     best = completed[0] if completed else None
     visual_rows = selected or completed[:12]
@@ -955,8 +970,8 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
   <main>
     <section class="hero">
       <p class="eyebrow">Pod A + Pod B, completed 2k telemetry sweep</p>
-      <h1>Tokens freeze logically, but compute is not reduced yet.</h1>
-      <p>The completed telemetry runs show real logical freezing, but the current implementation still runs the full transformer block first and freezes/blends afterward. Treat <b>logical freeze</b> as a model-state signal, not as speed saved, until <code>actual_skip_ratio</code> rises above zero.</p>
+      <h1>{hero_title}</h1>
+      <p>{hero_body}</p>
     <div class="metrics">
         <div class="metric"><strong>{len(completed)}</strong><span>completed variants</span></div>
         <div class="metric"><strong>{branch_count}</strong><span>branches compared</span></div>

@@ -181,8 +181,8 @@
   <main>
     <section class="hero">
       <p class="eyebrow">Pod A + Pod B, completed 2k telemetry sweep</p>
-      <h1>Tokens freeze logically, but compute is not reduced yet.</h1>
-      <p>The completed telemetry runs show real logical freezing, but the current implementation still runs the full transformer block first and freezes/blends afterward. Treat <b>logical freeze</b> as a model-state signal, not as speed saved, until <code>actual_skip_ratio</code> rises above zero.</p>
+      <h1>True-skip MLP now skips some compute.</h1>
+      <p>The newest true-skip run shows <b>actual_skip_ratio</b> above zero in <code>mlp_active_rows</code> mode, so some MLP token-row compute is now really skipped. Attention is still dense, so wall-clock speed must be judged separately from logical freeze.</p>
     <div class="metrics">
         <div class="metric"><strong>70</strong><span>completed variants</span></div>
         <div class="metric"><strong>11</strong><span>branches compared</span></div>
