@@ -761,6 +761,9 @@ class GPT(nn.Module):
         self.register_buffer("_stf_gate_sum", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
         self.register_buffer("_stf_gate_min", torch.ones(stat_shape, dtype=torch.float32), persistent=False)
         self.register_buffer("_stf_gate_max", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
+        self.register_buffer("_stf_total_token_sum", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
+        self.register_buffer("_stf_computed_token_sum", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
+        self.register_buffer("_stf_effective_active_token_sum", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
         self._init_weights()
 
     def _init_weights(self) -> None:
@@ -783,6 +786,9 @@ class GPT(nn.Module):
         self._stf_gate_sum = torch.zeros(shape, device=device, dtype=torch.float32)
         self._stf_gate_min = torch.ones(shape, device=device, dtype=torch.float32)
         self._stf_gate_max = torch.zeros(shape, device=device, dtype=torch.float32)
+        self._stf_total_token_sum = torch.zeros(shape, device=device, dtype=torch.float32)
+        self._stf_computed_token_sum = torch.zeros(shape, device=device, dtype=torch.float32)
+        self._stf_effective_active_token_sum = torch.zeros(shape, device=device, dtype=torch.float32)
 
     @torch.no_grad()
     def _record_stf_stats(
@@ -804,13 +810,33 @@ class GPT(nn.Module):
         if active_pre is not None:
             self._stf_active_pre_sum[idx] += active_pre.detach().float().mean()
         if active_final is not None:
-            self._stf_active_sum[idx] += active_final.detach().float().mean()
+            active_final_f = active_final.detach().float()
+            self._stf_active_sum[idx] += active_final_f.mean()
+            self._record_stf_compute(idx, total_tokens=active_final_f.numel(), effective_active_tokens=active_final_f.sum())
         if gate is not None:
             gate_f = gate.detach().float()
             self._stf_gate_calls[idx] += 1.0
             self._stf_gate_sum[idx] += gate_f.mean()
             self._stf_gate_min[idx] = torch.minimum(self._stf_gate_min[idx], gate_f.min())
             self._stf_gate_max[idx] = torch.maximum(self._stf_gate_max[idx], gate_f.max())
+            self._record_stf_compute(idx, total_tokens=gate_f.numel(), effective_active_tokens=gate_f.sum())
+
+    @torch.no_grad()
+    def _record_stf_compute(
+        self,
+        layer_idx: int,
+        *,
+        total_tokens: int,
+        effective_active_tokens: Tensor | float,
+    ) -> None:
+        if not self.stf_telemetry or total_tokens <= 0:
+            return
+        idx = int(layer_idx)
+        self._stf_total_token_sum[idx] += float(total_tokens)
+        # Current STF computes the whole transformer block first, then freezes/blends.
+        # If we later add true token skipping, this is the field that should fall below 1.0.
+        self._stf_computed_token_sum[idx] += float(total_tokens)
+        self._stf_effective_active_token_sum[idx] += effective_active_tokens
 
     @torch.no_grad()
     def consume_stf_stats(self) -> str:
@@ -827,6 +853,7 @@ class GPT(nn.Module):
         active = avg(self._stf_active_sum)
         active_pre = avg(self._stf_active_pre_sum)
         score = avg(self._stf_score_sum)
+        compute_mask = self._stf_total_token_sum > 0
         parts = [
             f"stf_stats calls:{int(calls[mask].sum().item())}",
             f"layers:{int(mask.sum().item())}",
@@ -841,6 +868,28 @@ class GPT(nn.Module):
                     f"active_min:{active.min().item():.4f}",
                     f"active_max:{active.max().item():.4f}",
                     "active_by_layer:" + ",".join(f"{i}:{active[j].item():.3f}" for j, i in enumerate(torch.where(mask)[0].tolist())),
+                ]
+            )
+        if bool(compute_mask.any().item()):
+            total_tokens = self._stf_total_token_sum[compute_mask].sum().clamp_min(1.0)
+            computed_ratio = self._stf_computed_token_sum[compute_mask].sum() / total_tokens
+            active_token_ratio = self._stf_effective_active_token_sum[compute_mask].sum() / total_tokens
+            actual_skip_ratio = (1.0 - computed_ratio).clamp(0.0, 1.0)
+            theoretical_skip_ratio = (1.0 - active_token_ratio).clamp(0.0, 1.0)
+            computed_by_layer = self._stf_computed_token_sum[compute_mask] / self._stf_total_token_sum[compute_mask].clamp_min(1.0)
+            actual_skip_by_layer = (1.0 - computed_by_layer).clamp(0.0, 1.0)
+            layer_ids = torch.where(compute_mask)[0].tolist()
+            parts.extend(
+                [
+                    "compute_mode:full_block_then_freeze",
+                    f"computed_token_ratio:{computed_ratio.item():.4f}",
+                    f"active_token_ratio:{active_token_ratio.item():.4f}",
+                    f"frozen_token_ratio:{theoretical_skip_ratio.item():.4f}",
+                    f"actual_skip_ratio:{actual_skip_ratio.item():.4f}",
+                    f"theoretical_skip_ratio:{theoretical_skip_ratio.item():.4f}",
+                    f"skip_efficiency:{(actual_skip_ratio / theoretical_skip_ratio.clamp_min(1e-6)).item():.4f}",
+                    "computed_by_layer:" + ",".join(f"{i}:{computed_by_layer[j].item():.3f}" for j, i in enumerate(layer_ids)),
+                    "actual_skip_by_layer:" + ",".join(f"{i}:{actual_skip_by_layer[j].item():.3f}" for j, i in enumerate(layer_ids)),
                 ]
             )
         gate_mask = self._stf_gate_calls > 0
@@ -863,6 +912,9 @@ class GPT(nn.Module):
         self._stf_gate_sum.zero_()
         self._stf_gate_min.fill_(1.0)
         self._stf_gate_max.zero_()
+        self._stf_total_token_sum.zero_()
+        self._stf_computed_token_sum.zero_()
+        self._stf_effective_active_token_sum.zero_()
         return " ".join(parts)
 
     def forward(self, input_ids: Tensor, target_ids: Tensor) -> Tensor:
