@@ -101,6 +101,7 @@ class Hyperparameters:
     stf_reactivate_every = int(os.environ.get("STF_REACTIVATE_EVERY", 3))
     stf_recur_mix = float(os.environ.get("STF_RECUR_MIX", 0.55))
     stf_quant_scale = float(os.environ.get("STF_QUANT_SCALE", 64.0))
+    stf_score_fn = os.environ.get("STF_SCORE_FN", "l2")
     stf_telemetry = bool(int(os.environ.get("STF_TELEMETRY", "1")))
     compile_model = bool(int(os.environ.get("COMPILE_MODEL", "0")))
 
@@ -689,6 +690,7 @@ class GPT(nn.Module):
         stf_reactivate_every: int,
         stf_recur_mix: float,
         stf_quant_scale: float,
+        stf_score_fn: str,
         stf_telemetry: bool,
     ):
         super().__init__()
@@ -710,6 +712,9 @@ class GPT(nn.Module):
         self.stf_reactivate_every = max(stf_reactivate_every, 0)
         self.stf_recur_mix = min(max(stf_recur_mix, 0.0), 1.0)
         self.stf_quant_scale = max(stf_quant_scale, 1.0)
+        if stf_score_fn not in {"l2", "relative_l2", "cosine", "direction"}:
+            raise ValueError(f"unsupported STF_SCORE_FN={stf_score_fn!r}")
+        self.stf_score_fn = stf_score_fn
         self.stf_telemetry = stf_telemetry and self.stf_mode != "off"
         self.tok_emb = nn.Embedding(vocab_size, model_dim)
         self.num_encoder_layers = num_layers // 2
@@ -870,7 +875,19 @@ class GPT(nn.Module):
             if self.stf_depth_cap > 0 and layer_idx >= self.stf_depth_cap:
                 return x_out
 
-            delta = torch.linalg.vector_norm((x_out.detach() - x_in.detach()).float(), dim=-1, ord=2, keepdim=True)
+            x_in_f = x_in.detach().float()
+            x_out_f = x_out.detach().float()
+            diff = x_out_f - x_in_f
+            if self.stf_score_fn == "relative_l2":
+                delta = torch.linalg.vector_norm(diff, dim=-1, ord=2, keepdim=True)
+                delta = delta / (torch.linalg.vector_norm(x_in_f, dim=-1, ord=2, keepdim=True) + 1e-6)
+            elif self.stf_score_fn == "cosine":
+                cos = F.cosine_similarity(x_in_f, x_out_f, dim=-1, eps=1e-6).unsqueeze(-1)
+                delta = (1.0 - cos) * 0.5
+            elif self.stf_score_fn == "direction":
+                delta = F.cosine_similarity(diff, x_in_f, dim=-1, eps=1e-6).abs().unsqueeze(-1)
+            else:
+                delta = torch.linalg.vector_norm(diff, dim=-1, ord=2, keepdim=True)
             if ema_score is None:
                 ema_score = delta
             else:
@@ -1074,6 +1091,7 @@ def main() -> None:
         stf_reactivate_every=args.stf_reactivate_every,
         stf_recur_mix=args.stf_recur_mix,
         stf_quant_scale=args.stf_quant_scale,
+        stf_score_fn=args.stf_score_fn,
         stf_telemetry=args.stf_telemetry,
     ).to(device).bfloat16()
     base_model.reset_stf_stats()
@@ -1155,7 +1173,8 @@ def main() -> None:
     log0(
         f"stf_mode:{args.stf_mode} stf_warmup_layers:{args.stf_warmup_layers} stf_depth_cap:{args.stf_depth_cap} "
         f"stf_threshold:{args.stf_threshold} stf_ema_decay:{args.stf_ema_decay} "
-        f"stf_min_active_ratio:{args.stf_min_active_ratio} stf_telemetry:{args.stf_telemetry}"
+        f"stf_min_active_ratio:{args.stf_min_active_ratio} stf_score_fn:{args.stf_score_fn} "
+        f"stf_telemetry:{args.stf_telemetry}"
     )
     log0(f"seed:{args.seed}")
 
