@@ -45,6 +45,7 @@ TELEMETRY_PID=""
 GPU_COUNT="1"
 GPU_NAME="unknown-gpu"
 GPU_SLUG="unknown-gpu"
+ALERT_SENT="0"
 
 timestamp() {
   date -u +%Y-%m-%dT%H:%M:%SZ
@@ -78,6 +79,10 @@ fail_with_alerts() {
   local exit_code="${1:-1}"
   local message="$2"
   cleanup_telemetry
+  if [ "$ALERT_SENT" = "1" ]; then
+    exit "$exit_code"
+  fi
+  ALERT_SENT="1"
   notify_repeat "STOPPED: ${message} exit=${exit_code} branch=${CURRENT_BRANCH:-unknown} formula=${CURRENT_SCORE_FN:-unknown} run_id=${CURRENT_RUN_ID:-unknown}. Attend to the pod."
   exit "$exit_code"
 }
