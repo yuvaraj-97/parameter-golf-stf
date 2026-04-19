@@ -10,8 +10,9 @@ RCLONE_REMOTE="${RCLONE_REMOTE:-r2}"
 BOOTSTRAP_PREFIX="${BOOTSTRAP_PREFIX:-bootstrap}"
 DATASET_NAME="${DATASET_NAME:-fineweb10B_sp1024}"
 DATASET_DIR="${DATASET_DIR:-${PROJECT_DIR}/data/datasets/${DATASET_NAME}}"
-EXPECTED_DATASET_SHARDS="${EXPECTED_DATASET_SHARDS:-89}"
+EXPECTED_DATASET_SHARDS="${EXPECTED_DATASET_SHARDS:-81}"
 ENV_FILE="${ENV_FILE:-${PROJECT_DIR}/.env}"
+PROJECT_ENV_KEYS="${PROJECT_ENV_KEYS:-TELEGRAM_BOT_TOKEN TELEGRAM_USER_ID}"
 ENV_AUTOSYNC_INTERVAL="${ENV_AUTOSYNC_INTERVAL:-300}"
 RCLONE_TRANSFERS="${RCLONE_TRANSFERS:-8}"
 RCLONE_CHECKERS="${RCLONE_CHECKERS:-16}"
@@ -121,6 +122,31 @@ EOF
   fi
 }
 
+configure_git_fetch() {
+  if [ -d "${PROJECT_DIR}/.git" ]; then
+    echo "[bootstrap] configuring git fetch refs"
+    git -C "${PROJECT_DIR}" config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+    git -C "${PROJECT_DIR}" fetch origin
+  fi
+}
+
+write_project_env() {
+  local key
+
+  echo "[bootstrap] writing ${ENV_FILE}"
+  mkdir -p "$(dirname "${ENV_FILE}")"
+  : >"${ENV_FILE}"
+
+  for key in ${PROJECT_ENV_KEYS}; do
+    if [ -z "${!key:-}" ]; then
+      echo "[bootstrap] warning: ${key} is not set; writing empty value to .env"
+    fi
+    printf '%s=%s\n' "$key" "${!key:-}" >>"${ENV_FILE}"
+  done
+
+  chmod 600 "${ENV_FILE}" 2>/dev/null || true
+}
+
 # -----------------------------
 # RCLONE CONFIG
 # -----------------------------
@@ -151,6 +177,8 @@ restore_optional_dir "${BOOTSTRAP_PREFIX}/config" /root/.config
 restore_optional_dir "${BOOTSTRAP_PREFIX}/home" /root
 restore_optional_dir "${BOOTSTRAP_PREFIX}/root" /root
 setup_git_credentials
+configure_git_fetch
+write_project_env
 
 chmod 700 /root/.ssh || true
 chmod 600 /root/.ssh/* 2>/dev/null || true
