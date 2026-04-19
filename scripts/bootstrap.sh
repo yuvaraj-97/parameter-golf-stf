@@ -3,18 +3,63 @@ set -euo pipefail
 
 echo "[bootstrap] starting"
 
-export R2_BUCKET="${R2_BUCKET:-parameter-golf-train}"
+PROJECT_DIR="${PROJECT_DIR:-/workspace/project}"
+R2_BUCKET="${R2_BUCKET:-parameter-golf-train}"
+RCLONE_REMOTE="${RCLONE_REMOTE:-r2}"
+BOOTSTRAP_PREFIX="${BOOTSTRAP_PREFIX:-bootstrap}"
+DATASET_NAME="${DATASET_NAME:-fineweb10B_sp1024}"
+DATASET_DIR="${DATASET_DIR:-${PROJECT_DIR}/data/datasets/${DATASET_NAME}}"
+EXPECTED_DATASET_SHARDS="${EXPECTED_DATASET_SHARDS:-89}"
+ENV_FILE="${ENV_FILE:-${PROJECT_DIR}/.env}"
+ENV_AUTOSYNC_INTERVAL="${ENV_AUTOSYNC_INTERVAL:-300}"
+RCLONE_TRANSFERS="${RCLONE_TRANSFERS:-8}"
+RCLONE_CHECKERS="${RCLONE_CHECKERS:-16}"
+
+require_env() {
+  local name="$1"
+  if [ -z "${!name:-}" ]; then
+    echo "error: ${name} is not set in the RunPod template environment" >&2
+    exit 1
+  fi
+}
+
+require_env R2_ACCOUNT_ID
+require_env R2_ACCESS_KEY_ID
+require_env R2_SECRET_ACCESS_KEY
+
+r2_path() {
+  printf '%s:%s/%s' "${RCLONE_REMOTE}" "${R2_BUCKET}" "$1"
+}
+
+r2_dir_exists() {
+  rclone lsf "$(r2_path "$1")" >/dev/null 2>&1
+}
+
+r2_file_exists() {
+  rclone lsf "$(r2_path "$(dirname "$1")")" 2>/dev/null | grep -Fxq "$(basename "$1")"
+}
+
+restore_optional_dir() {
+  local source="$1"
+  local target="$2"
+
+  if r2_dir_exists "$source"; then
+    echo "[bootstrap] restoring ${R2_BUCKET}/${source} -> ${target}"
+    mkdir -p "$target"
+    rclone copy "$(r2_path "$source")" "$target" --progress --stats 10s || true
+  else
+    echo "[bootstrap] skipping missing ${R2_BUCKET}/${source}"
+  fi
+}
 
 # -----------------------------
-
 # RCLONE CONFIG
-
 # -----------------------------
 
 mkdir -p /root/.config/rclone
 
 cat > /root/.config/rclone/rclone.conf <<EOF
-[r2]
+[${RCLONE_REMOTE}]
 type = s3
 provider = Cloudflare
 access_key_id = ${R2_ACCESS_KEY_ID}
@@ -25,102 +70,65 @@ EOF
 chmod 600 /root/.config/rclone/rclone.conf
 
 # -----------------------------
-
 # RESTORE CONFIG
-
 # -----------------------------
 
 echo "[bootstrap] restoring configs"
 
 mkdir -p /root/.ssh
-rclone sync r2:${R2_BUCKET}/bootstrap/ssh /root/.ssh || true
-rm -rf /root/.gitconfig
-rclone copyto r2:${R2_BUCKET}/bootstrap/git/.gitconfig /root/.gitconfig || true
+restore_optional_dir "${BOOTSTRAP_PREFIX}/git" /root
+restore_optional_dir "${BOOTSTRAP_PREFIX}/ssh" /root/.ssh
+restore_optional_dir "${BOOTSTRAP_PREFIX}/config" /root/.config
+restore_optional_dir "${BOOTSTRAP_PREFIX}/home" /root
+restore_optional_dir "${BOOTSTRAP_PREFIX}/root" /root
 
 chmod 700 /root/.ssh || true
 chmod 600 /root/.ssh/* 2>/dev/null || true
+chmod 600 /root/.gitconfig 2>/dev/null || true
+chmod 600 /root/.git-credentials 2>/dev/null || true
 
 # -----------------------------
-
-# CLONE WITH SPARSE CHECKOUT
-
-# -----------------------------
-
-echo "[bootstrap] cloning repo"
-
-rm -rf /workspace/project
-
-git clone --filter=blob:none --no-checkout git@github.com:yuvaraj-97/parameter-golf-stf.git /workspace/project
-
-git -C /workspace/project sparse-checkout init --no-cone
-
-cat > /workspace/project/.git/info/sparse-checkout <<'EOF'
-/*
-!/*.pt
-!/*.ptz
-!/telemetry.csv
-!/train.log
-EOF
-
-git -C /workspace/project checkout HEAD
-
-# -----------------------------
-
-# RESTORE PROJECT FILES
-
-# -----------------------------
-
-echo "[bootstrap] restoring env + scripts"
-
-rclone copyto r2:${R2_BUCKET}/bootstrap/project/.env /workspace/project/.env || true
-rclone copyto r2:${R2_BUCKET}/bootstrap/scripts/post_launch_check.sh /workspace/post_launch_check.sh || true
-
-chmod 600 /workspace/project/.env 2>/dev/null || true
-chmod +x /workspace/post_launch_check.sh 2>/dev/null || true
-
-# -----------------------------
-
 # DATASET
-
 # -----------------------------
 
-echo "[bootstrap] restoring dataset"
+echo "[bootstrap] restoring dataset to ${DATASET_DIR}"
 
-mkdir -p /workspace/project/data/datasets/fineweb10B_sp1024
+mkdir -p "${DATASET_DIR}"
+rclone sync "$(r2_path "datasets/${DATASET_NAME}")" "${DATASET_DIR}" \
+  --progress \
+  --stats 10s \
+  --transfers "${RCLONE_TRANSFERS}" \
+  --checkers "${RCLONE_CHECKERS}"
 
-rclone sync 
-r2:${R2_BUCKET}/datasets/fineweb10B_sp1024 
-/workspace/project/data/datasets/fineweb10B_sp1024 
---transfers 8 --checkers 16 || true
+dataset_shards="$(find "${DATASET_DIR}" -type f -name '*.bin' | wc -l | tr -d ' ')"
+echo "[bootstrap] dataset shards present: ${dataset_shards}/${EXPECTED_DATASET_SHARDS}"
 
-# -----------------------------
-
-# HF CACHE
-
-# -----------------------------
-
-mkdir -p /workspace/hf/hub
-
-export HF_HOME=/workspace/hf
-export HUGGINGFACE_HUB_CACHE=/workspace/hf/hub
+if [ "${EXPECTED_DATASET_SHARDS}" != "0" ] && [ "${dataset_shards}" -lt "${EXPECTED_DATASET_SHARDS}" ]; then
+  echo "error: dataset restore is incomplete" >&2
+  exit 1
+fi
 
 # -----------------------------
-
-# AUTOSYNC
-
+# ENV AUTOSYNC
 # -----------------------------
 
-echo "[bootstrap] starting autosync"
+echo "[bootstrap] starting .env autosync"
 
-cat >/usr/local/bin/pg-autosync.sh <<EOF
+mkdir -p /workspace/logs
+cat >/usr/local/bin/pg-env-autosync.sh <<EOF
 #!/usr/bin/env bash
+set -euo pipefail
+
 while true; do
-rclone sync /workspace/project/data/datasets/fineweb10B_sp1024 r2:${R2_BUCKET}/datasets/fineweb10B_sp1024 || true
-sleep 300
+  if [ -f "${ENV_FILE}" ]; then
+    rclone copyto "${ENV_FILE}" "$(r2_path "${BOOTSTRAP_PREFIX}/project/.env")" || true
+    chmod 600 "${ENV_FILE}" 2>/dev/null || true
+  fi
+  sleep "${ENV_AUTOSYNC_INTERVAL}"
 done
 EOF
 
-chmod +x /usr/local/bin/pg-autosync.sh
-nohup /usr/local/bin/pg-autosync.sh >/workspace/logs/autosync.log 2>&1 &
+chmod +x /usr/local/bin/pg-env-autosync.sh
+nohup /usr/local/bin/pg-env-autosync.sh >/workspace/logs/env-autosync.log 2>&1 &
 
 echo "[bootstrap] done"
