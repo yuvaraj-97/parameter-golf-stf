@@ -608,26 +608,66 @@ class CausalSelfAttention(nn.Module):
         self.q_gain = nn.Parameter(torch.full((num_heads,), qk_gain_init, dtype=torch.float32))
         self.rotary = Rotary(self.head_dim, base=rope_base)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor, query_active: Tensor | None = None) -> Tensor:
         bsz, seqlen, dim = x.shape
-        q = self.c_q(x).reshape(bsz, seqlen, self.num_heads, self.head_dim).transpose(1, 2)
         k = self.c_k(x).reshape(bsz, seqlen, self.num_kv_heads, self.head_dim).transpose(1, 2)
         v = self.c_v(x).reshape(bsz, seqlen, self.num_kv_heads, self.head_dim).transpose(1, 2)
-        q = F.rms_norm(q, (q.size(-1),))
+        if query_active is None:
+            q = self.c_q(x).reshape(bsz, seqlen, self.num_heads, self.head_dim).transpose(1, 2)
+            q = F.rms_norm(q, (q.size(-1),))
+            k = F.rms_norm(k, (k.size(-1),))
+            cos, sin = self.rotary(seqlen, x.device, q.dtype)
+            q = apply_rotary_emb(q, cos, sin)
+            k = apply_rotary_emb(k, cos, sin)
+            q = q * self.q_gain.to(dtype=q.dtype)[None, :, None, None]
+            y = F.scaled_dot_product_attention(
+                q,
+                k,
+                v,
+                attn_mask=None,
+                is_causal=True,
+                enable_gqa=(self.num_kv_heads != self.num_heads),
+            )
+            y = y.transpose(1, 2).contiguous().reshape(bsz, seqlen, dim)
+            return self.proj(y)
+
+        query_mask = query_active.squeeze(-1) if query_active.ndim == 3 else query_active
+        query_mask = query_mask.to(dtype=torch.bool)
+        if not bool(query_mask.any().item()):
+            return torch.zeros_like(x)
+        if bool(query_mask.all().item()):
+            return self.forward(x)
+
         k = F.rms_norm(k, (k.size(-1),))
-        cos, sin = self.rotary(seqlen, x.device, q.dtype)
-        q = apply_rotary_emb(q, cos, sin)
+        cos, sin = self.rotary(seqlen, x.device, k.dtype)
         k = apply_rotary_emb(k, cos, sin)
-        q = q * self.q_gain.to(dtype=q.dtype)[None, :, None, None]
-        y = F.scaled_dot_product_attention(
-            q,
-            k,
-            v,
-            attn_mask=None,
-            is_causal=True,
-            enable_gqa=(self.num_kv_heads != self.num_heads),
-        )
-        y = y.transpose(1, 2).contiguous().reshape(bsz, seqlen, dim)
+        y = torch.zeros_like(x)
+        key_positions = torch.arange(seqlen, device=x.device)
+        for batch_idx in range(bsz):
+            active_idx = torch.nonzero(query_mask[batch_idx], as_tuple=False).squeeze(-1)
+            if active_idx.numel() == 0:
+                continue
+            x_b = x[batch_idx : batch_idx + 1][:, active_idx]
+            q = self.c_q(x_b)
+            q = q.reshape(1, active_idx.numel(), self.num_heads, self.head_dim).transpose(1, 2)
+            q = F.rms_norm(q, (q.size(-1),))
+            q = apply_rotary_emb(q, cos.index_select(2, active_idx), sin.index_select(2, active_idx))
+            q = q * self.q_gain.to(dtype=q.dtype)[None, :, None, None]
+            # The query index is the original token position, so the causal mask is built from
+            # the uncompressed sequence coordinates rather than the compacted active set.
+            causal_mask = key_positions[None, :] <= active_idx[:, None]
+            attn_out = F.scaled_dot_product_attention(
+                q,
+                k[batch_idx : batch_idx + 1],
+                v[batch_idx : batch_idx + 1],
+                attn_mask=causal_mask[None, None, :, :],
+                is_causal=False,
+                enable_gqa=(self.num_kv_heads != self.num_heads),
+            )
+            attn_out = attn_out.transpose(1, 2).contiguous().reshape(1, active_idx.numel(), dim)
+            # Scatter the active outputs back into the original [B, T, C] layout; inactive rows
+            # stay zero so they do not receive an attention residual update.
+            y[batch_idx, active_idx] = attn_out[0]
         return self.proj(y)
 
 
@@ -664,14 +704,14 @@ class Block(nn.Module):
         self.mlp_scale = nn.Parameter(torch.ones(dim, dtype=torch.float32))
         self.resid_mix = nn.Parameter(torch.stack((torch.ones(dim), torch.zeros(dim))).float())
 
-    def forward(self, x: Tensor, x0: Tensor) -> Tensor:
-        x = self.forward_attn(x, x0)
+    def forward(self, x: Tensor, x0: Tensor, query_active: Tensor | None = None) -> Tensor:
+        x = self.forward_attn(x, x0, query_active=query_active)
         return self.forward_mlp(x)
 
-    def forward_attn(self, x: Tensor, x0: Tensor) -> Tensor:
+    def forward_attn(self, x: Tensor, x0: Tensor, query_active: Tensor | None = None) -> Tensor:
         mix = self.resid_mix.to(dtype=x.dtype)
         x = mix[0][None, None, :] * x + mix[1][None, None, :] * x0
-        attn_out = self.attn(self.attn_norm(x))
+        attn_out = self.attn(self.attn_norm(x), query_active=query_active)
         x = x + self.attn_scale.to(dtype=x.dtype)[None, None, :] * attn_out
         return x
 
@@ -732,7 +772,7 @@ class GPT(nn.Module):
         self.tied_embed_init_std = tied_embed_init_std
         self.logit_softcap = logit_softcap
         self.stf_mode = stf_mode
-        if stf_compute_mode not in {"full_block_then_freeze", "mlp_active_rows"}:
+        if stf_compute_mode not in {"full_block_then_freeze", "mlp_active_rows", "query_sparse_attn_mlp_active_rows"}:
             raise ValueError(f"unsupported STF_COMPUTE_MODE={stf_compute_mode!r}")
         self.stf_compute_mode = stf_compute_mode
         if stf_active_selection not in {"threshold_floor", "topk_budget"}:
@@ -795,6 +835,8 @@ class GPT(nn.Module):
         self.register_buffer("_stf_total_token_sum", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
         self.register_buffer("_stf_computed_token_sum", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
         self.register_buffer("_stf_effective_active_token_sum", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
+        self.register_buffer("_stf_attn_query_total_token_sum", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
+        self.register_buffer("_stf_attn_query_computed_token_sum", torch.zeros(stat_shape, dtype=torch.float32), persistent=False)
         self._init_weights()
 
     def _init_weights(self) -> None:
@@ -820,6 +862,8 @@ class GPT(nn.Module):
         self._stf_total_token_sum = torch.zeros(shape, device=device, dtype=torch.float32)
         self._stf_computed_token_sum = torch.zeros(shape, device=device, dtype=torch.float32)
         self._stf_effective_active_token_sum = torch.zeros(shape, device=device, dtype=torch.float32)
+        self._stf_attn_query_total_token_sum = torch.zeros(shape, device=device, dtype=torch.float32)
+        self._stf_attn_query_computed_token_sum = torch.zeros(shape, device=device, dtype=torch.float32)
 
     @torch.no_grad()
     def _record_stf_stats(
@@ -882,6 +926,20 @@ class GPT(nn.Module):
         self._stf_effective_active_token_sum[idx] += effective_active_tokens
 
     @torch.no_grad()
+    def _record_stf_attn_query_compute(
+        self,
+        layer_idx: int,
+        *,
+        total_tokens: int,
+        computed_tokens: Tensor | float | int,
+    ) -> None:
+        if not self.stf_telemetry or total_tokens <= 0:
+            return
+        idx = int(layer_idx)
+        self._stf_attn_query_total_token_sum[idx] += float(total_tokens)
+        self._stf_attn_query_computed_token_sum[idx] += computed_tokens
+
+    @torch.no_grad()
     def consume_stf_stats(self) -> str:
         if not self.stf_telemetry:
             return ""
@@ -935,6 +993,16 @@ class GPT(nn.Module):
                     "actual_skip_by_layer:" + ",".join(f"{i}:{actual_skip_by_layer[j].item():.3f}" for j, i in enumerate(layer_ids)),
                 ]
             )
+        attn_query_mask = self._stf_attn_query_total_token_sum > 0
+        if bool(attn_query_mask.any().item()):
+            attn_total = self._stf_attn_query_total_token_sum[attn_query_mask].sum().clamp_min(1.0)
+            attn_query_ratio = self._stf_attn_query_computed_token_sum[attn_query_mask].sum() / attn_total
+            parts.extend(
+                [
+                    f"attn_query_compute_ratio:{attn_query_ratio.item():.4f}",
+                    "kv_token_ratio:1.0000",
+                ]
+            )
         gate_mask = self._stf_gate_calls > 0
         if bool(gate_mask.any().item()):
             gate = self._stf_gate_sum[gate_mask] / self._stf_gate_calls[gate_mask].clamp_min(1.0)
@@ -958,6 +1026,8 @@ class GPT(nn.Module):
         self._stf_total_token_sum.zero_()
         self._stf_computed_token_sum.zero_()
         self._stf_effective_active_token_sum.zero_()
+        self._stf_attn_query_total_token_sum.zero_()
+        self._stf_attn_query_computed_token_sum.zero_()
         return " ".join(parts)
 
     def forward(self, input_ids: Tensor, target_ids: Tensor) -> Tensor:
@@ -967,6 +1037,7 @@ class GPT(nn.Module):
         skips: list[Tensor] = []
         ema_score: Tensor | None = None
         budget_prev_active = x.new_tensor(self.stf_target_active_ratio, dtype=torch.float32)
+        prev_attn_active: Tensor | None = None
 
         def update_ema_score(x_in: Tensor, x_out: Tensor) -> tuple[Tensor, bool]:
             nonlocal ema_score, budget_prev_active
@@ -1067,22 +1138,36 @@ class GPT(nn.Module):
             return active_float * x_out + (1.0 - active_float) * x_in
 
         def run_block(layer_idx: int, x: Tensor, x0: Tensor) -> Tensor:
-            nonlocal budget_prev_active
+            nonlocal budget_prev_active, prev_attn_active
             if self.stf_compute_mode == "full_block_then_freeze":
                 x_in = x
                 x_out = self.blocks[layer_idx](x, x0)
                 return apply_stf(layer_idx, x_in, x_out)
-            if self.stf_compute_mode != "mlp_active_rows":
+            if self.stf_compute_mode not in {"mlp_active_rows", "query_sparse_attn_mlp_active_rows"}:
                 raise RuntimeError(f"unsupported STF_COMPUTE_MODE={self.stf_compute_mode!r}")
             if self.stf_mode == "off" or layer_idx < self.stf_warmup_layers or (self.stf_depth_cap > 0 and layer_idx >= self.stf_depth_cap):
+                if self.stf_compute_mode == "query_sparse_attn_mlp_active_rows":
+                    prev_attn_active = None
                 return self.blocks[layer_idx](x, x0)
 
             block = self.blocks[layer_idx]
             x_in = x
-            x_attn = block.forward_attn(x, x0)
+            query_active = prev_attn_active if self.stf_compute_mode == "query_sparse_attn_mlp_active_rows" else None
+            if self.stf_compute_mode == "query_sparse_attn_mlp_active_rows":
+                query_token_count = x.size(0) * x.size(1)
+                computed_query_tokens = query_token_count if query_active is None else query_active.squeeze(-1).sum()
+                self._record_stf_attn_query_compute(
+                    layer_idx,
+                    total_tokens=query_token_count,
+                    computed_tokens=computed_query_tokens,
+                )
+            x_attn = block.forward_attn(x, x0, query_active=query_active)
             score, seeded = update_ema_score(x_in, x_attn)
             active, active_pre_guard = select_active(layer_idx, force_all=seeded)
             active_float = active.to(dtype=x_attn.dtype)
+            next_query_active = active
+            if self.stf_compute_mode == "query_sparse_attn_mlp_active_rows":
+                next_query_active, _ = select_active(layer_idx, force_all=False)
             budget_prev_active = active_float.mean().detach()
             self._record_stf_stats(
                 layer_idx,
@@ -1091,6 +1176,8 @@ class GPT(nn.Module):
                 active_final=active,
                 computed_tokens=active.detach().float().sum(),
             )
+            if self.stf_compute_mode == "query_sparse_attn_mlp_active_rows":
+                prev_attn_active = next_query_active.detach()
             return block.forward_mlp(x_attn, active)
 
         # First half stores skips; second half reuses them in reverse order.
@@ -1326,6 +1413,7 @@ def main() -> None:
         f"stf_mode:{args.stf_mode} stf_warmup_layers:{args.stf_warmup_layers} stf_depth_cap:{args.stf_depth_cap} "
         f"stf_threshold:{args.stf_threshold} stf_ema_decay:{args.stf_ema_decay} "
         f"stf_min_active_ratio:{args.stf_min_active_ratio} stf_score_fn:{args.stf_score_fn} "
+        f"stf_compute_mode:{args.stf_compute_mode} "
         f"stf_active_selection:{args.stf_active_selection} stf_telemetry:{args.stf_telemetry}"
     )
     log0(f"seed:{args.seed}")
