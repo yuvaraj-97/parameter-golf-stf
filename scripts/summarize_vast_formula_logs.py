@@ -29,6 +29,7 @@ class Variant:
     run_id: str = ""
     final_loss: float | None = None
     final_bpb: float | None = None
+    max_steps: int | None = None
     last_val_step: int | None = None
     last_val_bpb: float | None = None
     last_train_step: int | None = None
@@ -159,6 +160,7 @@ def parse_logs(paths: list[Path]) -> list[Variant]:
                 val_match = VAL_RE.search(line)
                 if val_match:
                     variant.last_val_step = int(val_match.group(1))
+                    variant.max_steps = int(val_match.group(2))
                     variant.last_val_bpb = parse_float(val_match.group(4))
                     if variant.last_val_bpb is not None:
                         variant.val_history.append((variant.last_val_step, variant.last_val_bpb))
@@ -166,6 +168,7 @@ def parse_logs(paths: list[Path]) -> list[Variant]:
                 train_match = TRAIN_RE.search(line)
                 if train_match:
                     variant.last_train_step = int(train_match.group(1))
+                    variant.max_steps = int(train_match.group(2))
                     variant.last_train_loss = parse_float(train_match.group(3))
                     variant.last_step_avg_ms = parse_float(train_match.group(5))
                     if variant.last_train_loss is not None and variant.last_step_avg_ms is not None:
@@ -194,6 +197,7 @@ def parse_logs(paths: list[Path]) -> list[Variant]:
 
                     step_match = STEP_RE.search(line)
                     if step_match:
+                        variant.max_steps = int(step_match.group(2))
                         variant.telemetry.append(
                             {
                                 "step": int(step_match.group(1)),
@@ -207,6 +211,26 @@ def parse_logs(paths: list[Path]) -> list[Variant]:
                     variant.failed = True
 
     return list(variants.values())
+
+
+def dedupe_variants(rows: list[Variant]) -> list[Variant]:
+    deduped: dict[tuple[object, ...], Variant] = {}
+    for variant in rows:
+        key = (
+            variant.branch,
+            variant.score_fn,
+            variant_steps(variant),
+            round(variant.final_bpb or -1.0, 8),
+            round(variant.last_val_bpb or -1.0, 8),
+            round(variant.stats.get("active_mean", -1.0), 6),
+            round(variant.stats.get("gate_mean", -1.0), 6),
+            round(variant.stats.get("computed_token_ratio", -1.0), 6),
+            round(variant.stats.get("actual_skip_ratio", -1.0), 6),
+        )
+        current = deduped.get(key)
+        if current is None or ("/console.log" in current.source and "/console.log" not in variant.source):
+            deduped[key] = variant
+    return list(deduped.values())
 
 
 def fmt(value: float | int | None, digits: int = 4) -> str:
@@ -446,38 +470,151 @@ def render_speed_reality(rows: list[Variant]) -> str:
     """
 
 
+def variant_steps(variant: Variant) -> int | None:
+    return variant.max_steps or variant.last_val_step or variant.last_train_step
+
+
+def is_fixed_mlp_skip_075(variant: Variant) -> bool:
+    if variant.branch != "codex/stf-mlp-skip-runner" or variant.score_fn != "relative_l2":
+        return False
+    budget = variant.stats.get("active_budget")
+    if budget is not None:
+        return 0.745 <= budget <= 0.755
+    actual_skip = variant.stats.get("actual_skip_ratio")
+    computed = variant.stats.get("computed_token_ratio")
+    source_hint = "a075" in variant.source or "i5000_run79" in variant.source or "i10000_run76" in variant.source
+    telemetry_hint = actual_skip is not None and 0.205 <= actual_skip <= 0.212
+    computed_hint = computed is not None and 0.788 <= computed <= 0.795
+    return source_hint or telemetry_hint or computed_hint
+
+
+def is_adaptive_mlp_budget(variant: Variant) -> bool:
+    return variant.branch == "codex/stf-adaptive-mlp-budget" and variant.score_fn == "relative_l2"
+
+
+def best_by_steps(rows: list[Variant], predicate) -> dict[int, Variant]:
+    grouped: dict[int, list[Variant]] = defaultdict(list)
+    for variant in rows:
+        steps = variant_steps(variant)
+        if steps is not None and predicate(variant):
+            grouped[steps].append(variant)
+    best: dict[int, Variant] = {}
+    for steps, variants in grouped.items():
+        best[steps] = min(
+            variants,
+            key=lambda v: (
+                v.final_bpb if v.final_bpb is not None else float("inf"),
+                v.source,
+            ),
+        )
+    return best
+
+
+def render_validation_ladder(completed: list[Variant]) -> str:
+    fixed = best_by_steps(completed, is_fixed_mlp_skip_075)
+    adaptive = best_by_steps(completed, is_adaptive_mlp_budget)
+    if not fixed and not adaptive:
+        return ""
+
+    rows: list[tuple[str, int, Variant]] = []
+    for steps in sorted(fixed):
+        if steps in {2000, 5000, 10000}:
+            rows.append(("Fixed MLP skip, active 0.75", steps, fixed[steps]))
+    for steps in sorted(adaptive):
+        if steps in {500, 2000, 10000}:
+            rows.append(("Adaptive MLP budget, 0.75 -> 0.70 -> 0.65", steps, adaptive[steps]))
+
+    body = []
+    for label, steps, variant in rows:
+        reference = fixed.get(steps)
+        quality_delta = None
+        speed_delta = None
+        if reference and reference is not variant:
+            if reference.final_bpb is not None and variant.final_bpb is not None:
+                quality_delta = variant.final_bpb - reference.final_bpb
+            if reference.last_step_avg_ms is not None and variant.last_step_avg_ms is not None:
+                speed_delta = (reference.last_step_avg_ms - variant.last_step_avg_ms) / reference.last_step_avg_ms
+
+        if variant.branch == "codex/stf-adaptive-mlp-budget":
+            verdict = "Best speed-quality tradeoff so far" if steps == 10000 else "Useful budget smoke"
+        elif steps == 10000:
+            verdict = "Best quality reference"
+        else:
+            verdict = "Reference run"
+
+        body.append(
+            "<tr>"
+            f"<td>{html.escape(label)}</td>"
+            f"<td>{steps:,}</td>"
+            f"<td>{fmt(variant.final_bpb)}</td>"
+            f"<td>{fmt(variant.last_val_bpb)}</td>"
+            f"<td>{fmt(variant.last_step_avg_ms, 1)}ms</td>"
+            f"<td>{pct(variant.stats.get('actual_skip_ratio'))}</td>"
+            f"<td>{pct(variant.stats.get('computed_token_ratio'))}</td>"
+            f"<td class=\"{('bad' if quality_delta and quality_delta > 0 else 'good') if quality_delta is not None else 'neutral'}\">{fmt(quality_delta)}</td>"
+            f"<td class=\"{('good' if speed_delta and speed_delta > 0 else 'bad') if speed_delta is not None else 'neutral'}\">{pct(speed_delta)}</td>"
+            f"<td>{html.escape(verdict)}</td>"
+            "</tr>"
+        )
+
+    if not body:
+        return ""
+
+    return f"""
+    <div class="ladder-card">
+      <div>
+        <p class="eyebrow">Budget-aware validation ladder</p>
+        <h2>What We Actually Proved</h2>
+        <p class="note">500-step runs are treated as smoke tests. The 10k rows are the real quality signal. Quality delta is shown against the fixed active-0.75 MLP-skip run at the same iteration count when available.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Track</th><th>Iterations</th><th>Final BPB</th><th>Last Val BPB</th><th>Avg Iter</th><th>Actual Skip</th><th>Computed</th><th>BPB Cost</th><th>Speed Gain</th><th>Verdict</th></tr></thead>
+          <tbody>{''.join(body)}</tbody>
+        </table>
+      </div>
+    </div>
+    """
+
+
 def render_branch_tree(completed: list[Variant]) -> str:
-    soft_done = sorted(v.score_fn for v in completed if v.branch == "stf-soft-freeze-telemetry")
+    soft_done = sorted({v.score_fn for v in completed if v.branch == "stf-soft-freeze-telemetry"})
     soft_done_text = ", ".join(soft_done) if soft_done else "waiting for completed telemetry logs"
-    has_compute = any("actual_skip_ratio" in v.stats for v in completed)
-    compute_text = "compute telemetry proves full_block_then_freeze" if has_compute else "compute telemetry pending"
+    fixed_done = sorted(variant_steps(v) for v in completed if is_fixed_mlp_skip_075(v) and variant_steps(v) is not None)
+    adaptive_done = sorted(variant_steps(v) for v in completed if is_adaptive_mlp_budget(v) and variant_steps(v) is not None)
+    fixed_text = ", ".join(f"{steps // 1000}k" if steps >= 1000 else str(steps) for steps in sorted(set(fixed_done))) or "waiting"
+    adaptive_text = ", ".join(f"{steps // 1000}k" if steps >= 1000 else str(steps) for steps in sorted(set(adaptive_done))) or "waiting"
     return f"""
     <section class="branch-tree-card">
       <div>
         <p class="eyebrow">Implementation map</p>
         <h2>Git Branch Tree</h2>
-        <p class="note">Experiment-result branches stay separate from implementation branches. The first runnable true-skip branch is the MLP active-row prototype; query-sparse attention and K/V reuse stay gated until the cheaper smoke tests prove value.</p>
+        <p class="note">Experiment-result branches stay separate from implementation branches. The older off-main static analysis bundle was inspected and folded into this single generated report, so `vast_formula_summary.html` stays the one file to open.</p>
       </div>
       <pre class="branch-tree">main
 ├── stf-soft-freeze-telemetry <span class="status done">done</span>
 │   ├── done: 2k {html.escape(soft_done_text)}
-│   ├── done: {html.escape(compute_text)}
-│   └── next: base for true-skip implementation
+│   ├── done: full_block_then_freeze telemetry
+│   └── result: logical freeze can be high while actual compute skipped is 0%
 │
-├── codex/stf-true-skip-foundation <span class="status running">running</span>
-│   ├── running: pre-block active-mask foundation
-│   ├── running: predictor / compute telemetry
-│   └── todo: local smoke tests
+├── codex/stf-true-skip-foundation <span class="status done">done</span>
+│   ├── done: pre-block active-mask foundation
+│   ├── done: predictor / compute telemetry plumbing
+│   └── result: base for true-skip implementations
 │
-├── codex/stf-mlp-skip <span class="status running">running</span>
-│   ├── running: MLP active-row gather/scatter
-│   ├── todo: prove computed_token_ratio &lt; 1.0
-│   └── todo: 500-step Vast smoke
+├── codex/stf-mlp-skip-runner <span class="status done">validated</span>
+│   ├── done: MLP active-row gather/scatter
+│   ├── done: relative_l2 active 0.75 at {html.escape(fixed_text)}
+│   └── result: best quality reference, actual_skip_ratio about 20.8%
 │
-├── codex/stf-query-sparse-attn <span class="status todo">todo</span>
-│   ├── todo: active-query Q path
-│   ├── todo: explicit causal mask
-│   └── todo: compare speed after MLP skip
+├── codex/stf-adaptive-mlp-budget <span class="status done">validated</span>
+│   ├── done: active budget schedule 0.75 -> 0.70 -> 0.65
+│   ├── done: relative_l2 at {html.escape(adaptive_text)}
+│   └── result: speed-quality tradeoff, actual_skip_ratio about 29.2%
+│
+├── codex/stf-query-sparse-attn <span class="status blocked">blocked</span>
+│   ├── blocked: backend/OOM/stall before reliable 500-step smoke
+│   └── next: redesign locally before spending more pod time
 │
 └── codex/stf-kv-reuse-experiment <span class="status todo">todo</span>
     ├── todo: cache/reuse frozen K/V or states
@@ -702,14 +839,14 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     max_actual_skip = max(actual_skip_values) if actual_skip_values else None
     has_actual_skip = max_actual_skip is not None and max_actual_skip > 0.0
     hero_title = (
-        "True-skip MLP now skips some compute."
+        "MLP true-skip is validated; adaptive budget is the speed tradeoff."
         if has_actual_skip
         else "Tokens freeze logically, but compute is not reduced yet."
     )
     hero_body = (
-        "The newest true-skip run shows <b>actual_skip_ratio</b> above zero in "
-        "<code>mlp_active_rows</code> mode, so some MLP token-row compute is now really skipped. "
-        "Attention is still dense, so wall-clock speed must be judged separately from logical freeze."
+        "The fixed <code>mlp_active_rows</code> run gives the best quality reference, while the adaptive "
+        "0.75 -> 0.70 -> 0.65 budget raises actual skip to about 29% with a small 10k BPB cost. "
+        "Attention remains dense, so this report separates logical freeze, real skipped compute, and wall-clock speed."
         if has_actual_skip
         else "The completed telemetry runs show real logical freezing, but the current implementation still "
         "runs the full transformer block first and freezes/blends afterward. Treat <b>logical freeze</b> as "
@@ -772,6 +909,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     outcome_dashboard = render_outcome_dashboard(completed)
     speed_reality = render_speed_reality(completed)
     branch_tree = render_branch_tree(completed)
+    validation_ladder = render_validation_ladder(completed)
     movie_cards = []
     for variant in visual_rows[:8]:
         movie_cards.append(
@@ -806,7 +944,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       --good: #7dff9f;
       --bad: #ff817d;
     }}
-    * {{ box-sizing: border-box; }}
+    * {{ box-sizing: border-box; letter-spacing: 0 !important; }}
     body {{
       margin: 0;
       color: var(--text);
@@ -835,7 +973,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       transform: rotate(-6deg);
       opacity: .72;
     }}
-    h1 {{ font-size: clamp(2.3rem, 6vw, 5.6rem); line-height: .92; margin: 0 0 18px; letter-spacing: -0.07em; max-width: 880px; }}
+    h1 {{ font-size: clamp(2.3rem, 6vw, 5.6rem); line-height: .98; margin: 0 0 18px; max-width: 960px; }}
     .hero p {{ color: var(--muted); max-width: 830px; font-size: 1.04rem; line-height: 1.65; }}
     .metrics {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 24px 0 34px; }}
     .metric {{ padding: 18px; border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.035); }}
@@ -843,7 +981,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     .metric span {{ color: var(--muted); font-size: .86rem; }}
     .metric.warn strong {{ color: var(--bad); }}
     .section-title {{ margin: 42px 0 16px; display: flex; align-items: end; justify-content: space-between; gap: 20px; }}
-    h2 {{ margin: 0; font-size: clamp(1.6rem, 4vw, 3rem); letter-spacing: -0.05em; }}
+    h2 {{ margin: 0; font-size: clamp(1.6rem, 4vw, 3rem); }}
     .note {{ color: var(--muted); max-width: 680px; line-height: 1.55; }}
     .viz-grid {{ display: grid; gap: 18px; }}
     .viz-card {{
@@ -857,8 +995,8 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       background: var(--panel);
       box-shadow: inset 0 1px rgba(255,255,255,.08);
     }}
-    .eyebrow {{ color: var(--active); text-transform: uppercase; letter-spacing: .14em; font-size: .72rem; margin: 0 0 10px; }}
-    h3 {{ margin: 0 0 12px; font-size: 2rem; letter-spacing: -0.05em; }}
+    .eyebrow {{ color: var(--active); text-transform: uppercase; font-size: .72rem; margin: 0 0 10px; }}
+    h3 {{ margin: 0 0 12px; font-size: 2rem; }}
     .small {{ color: var(--muted); font-size: .9rem; line-height: 1.5; }}
     .layer-viz {{ width: 100%; min-height: 220px; border-radius: 24px; background: radial-gradient(circle at 50% 45%, rgba(88,242,208,.12), transparent 58%); }}
     .layer-shell {{ fill: rgba(255,255,255,.045); stroke: rgba(238,248,237,.22); }}
@@ -917,6 +1055,14 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       background: linear-gradient(135deg, rgba(74,168,255,.10), rgba(88,242,111,.05));
     }}
     .speed-card p {{ color: var(--muted); line-height: 1.55; }}
+    .ladder-card {{
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 22px;
+      margin-top: 22px;
+      background: linear-gradient(135deg, rgba(88,242,208,.10), rgba(243,180,91,.05));
+    }}
+    .ladder-card .table-wrap {{ margin-top: 18px; }}
     .branch-tree-card {{
       margin-top: 22px;
       border: 1px solid var(--line);
@@ -945,10 +1091,11 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     }}
     .status.done {{ color: #061208; background: var(--good); }}
     .status.running {{ color: #07121a; background: var(--frozen); }}
+    .status.blocked {{ color: #220707; background: var(--bad); }}
     .status.todo {{ color: var(--muted); background: rgba(255,255,255,.08); }}
     table {{ width: 100%; border-collapse: collapse; min-width: 1040px; }}
     th, td {{ text-align: left; padding: 13px 14px; border-bottom: 1px solid rgba(255,255,255,.07); white-space: nowrap; }}
-    th {{ color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .09em; }}
+    th {{ color: var(--muted); font-size: .78rem; text-transform: uppercase; }}
     td {{ font-variant-numeric: tabular-nums; }}
     .good {{ color: var(--good); }}
     .bad {{ color: var(--bad); }}
@@ -982,6 +1129,8 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     </section>
 
     {branch_tree}
+
+    {validation_ladder}
 
     <div class="section-title">
       <h2>Freeze Mini Movies</h2>
@@ -1049,7 +1198,7 @@ def main() -> None:
     args = parser.parse_args()
 
     variants = parse_logs(args.logs)
-    completed = [v for v in variants if v.complete and not v.failed]
+    completed = dedupe_variants([v for v in variants if v.complete and not v.failed])
     completed.sort(key=lambda v: (v.final_bpb if v.final_bpb is not None else float("inf"), v.last_val_bpb or float("inf")))
     healthy = [v for v in completed if v.health_reason() == "ok"]
     rejected = [v for v in completed if v.health_reason() != "ok"]
