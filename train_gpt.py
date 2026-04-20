@@ -607,6 +607,7 @@ class CausalSelfAttention(nn.Module):
         self.proj._zero_init = True
         self.q_gain = nn.Parameter(torch.full((num_heads,), qk_gain_init, dtype=torch.float32))
         self.rotary = Rotary(self.head_dim, base=rope_base)
+        self.query_chunk_size = max(1, int(os.environ.get("STF_ATTN_QUERY_CHUNK_SIZE", "128")))
 
     def forward(self, x: Tensor, query_active: Tensor | None = None) -> Tensor:
         bsz, seqlen, dim = x.shape
@@ -647,31 +648,33 @@ class CausalSelfAttention(nn.Module):
             active_idx = torch.nonzero(query_mask[batch_idx], as_tuple=False).squeeze(-1)
             if active_idx.numel() == 0:
                 continue
-            x_b = x[batch_idx : batch_idx + 1][:, active_idx]
-            q = self.c_q(x_b)
-            q = q.reshape(1, active_idx.numel(), self.num_heads, self.head_dim).transpose(1, 2)
-            q = F.rms_norm(q, (q.size(-1),))
-            q = apply_rotary_emb(q, cos.index_select(2, active_idx), sin.index_select(2, active_idx))
-            q = q * self.q_gain.to(dtype=q.dtype)[None, :, None, None]
-            # The query index is the original token position, so the causal mask is built from
-            # the uncompressed sequence coordinates rather than the compacted active set.
-            causal_mask = key_positions[None, :] <= active_idx[:, None]
             k_b = k[batch_idx : batch_idx + 1]
             v_b = v[batch_idx : batch_idx + 1]
             if self.num_kv_heads != self.num_heads:
                 repeats = self.num_heads // self.num_kv_heads
                 k_b = k_b.repeat_interleave(repeats, dim=1)
                 v_b = v_b.repeat_interleave(repeats, dim=1)
-            # Masked sparse queries are not always accepted by the enabled SDP backends;
-            # do the compact Q x full K/V attention directly for this experimental path.
-            attn_scores = torch.matmul(q, k_b.transpose(-2, -1)) / math.sqrt(self.head_dim)
-            attn_scores = attn_scores.masked_fill(~causal_mask[None, None, :, :], float("-inf"))
-            attn_probs = F.softmax(attn_scores.float(), dim=-1).to(dtype=q.dtype)
-            attn_out = torch.matmul(attn_probs, v_b)
-            attn_out = attn_out.transpose(1, 2).contiguous().reshape(1, active_idx.numel(), dim)
-            # Scatter the active outputs back into the original [B, T, C] layout; inactive rows
-            # stay zero so they do not receive an attention residual update.
-            y[batch_idx, active_idx] = attn_out[0]
+            for start in range(0, active_idx.numel(), self.query_chunk_size):
+                chunk_idx = active_idx[start : start + self.query_chunk_size]
+                x_b = x[batch_idx : batch_idx + 1][:, chunk_idx]
+                q = self.c_q(x_b)
+                q = q.reshape(1, chunk_idx.numel(), self.num_heads, self.head_dim).transpose(1, 2)
+                q = F.rms_norm(q, (q.size(-1),))
+                q = apply_rotary_emb(q, cos.index_select(2, chunk_idx), sin.index_select(2, chunk_idx))
+                q = q * self.q_gain.to(dtype=q.dtype)[None, :, None, None]
+                # The query index is the original token position, so the causal mask is built from
+                # the uncompressed sequence coordinates rather than the compacted active set.
+                causal_mask = key_positions[None, :] <= chunk_idx[:, None]
+                # Masked sparse queries are not always accepted by the enabled SDP backends;
+                # chunked compact Q x full K/V attention keeps this experimental path lower memory.
+                attn_scores = torch.matmul(q, k_b.transpose(-2, -1)) / math.sqrt(self.head_dim)
+                attn_scores = attn_scores.masked_fill(~causal_mask[None, None, :, :], float("-inf"))
+                attn_probs = F.softmax(attn_scores.float(), dim=-1).to(dtype=q.dtype)
+                attn_out = torch.matmul(attn_probs, v_b)
+                attn_out = attn_out.transpose(1, 2).contiguous().reshape(1, chunk_idx.numel(), dim)
+                # Scatter the active outputs back into the original [B, T, C] layout; inactive rows
+                # stay zero so they do not receive an attention residual update.
+                y[batch_idx, chunk_idx] = attn_out[0]
         return self.proj(y)
 
 
