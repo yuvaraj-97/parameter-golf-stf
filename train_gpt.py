@@ -644,37 +644,37 @@ class CausalSelfAttention(nn.Module):
         k = apply_rotary_emb(k, cos, sin)
         y = torch.zeros_like(x)
         key_positions = torch.arange(seqlen, device=x.device)
-        for batch_idx in range(bsz):
-            active_idx = torch.nonzero(query_mask[batch_idx], as_tuple=False).squeeze(-1)
-            if active_idx.numel() == 0:
-                continue
-            k_b = k[batch_idx : batch_idx + 1]
-            v_b = v[batch_idx : batch_idx + 1]
-            if self.num_kv_heads != self.num_heads:
-                repeats = self.num_heads // self.num_kv_heads
-                k_b = k_b.repeat_interleave(repeats, dim=1)
-                v_b = v_b.repeat_interleave(repeats, dim=1)
-            for start in range(0, active_idx.numel(), self.query_chunk_size):
-                chunk_idx = active_idx[start : start + self.query_chunk_size]
-                x_b = x[batch_idx : batch_idx + 1][:, chunk_idx]
-                q = self.c_q(x_b)
-                q = q.reshape(1, chunk_idx.numel(), self.num_heads, self.head_dim).transpose(1, 2)
-                q = F.rms_norm(q, (q.size(-1),))
-                q = apply_rotary_emb(q, cos.index_select(2, chunk_idx), sin.index_select(2, chunk_idx))
-                q = q * self.q_gain.to(dtype=q.dtype)[None, :, None, None]
-                # The query index is the original token position, so the causal mask is built from
-                # the uncompressed sequence coordinates rather than the compacted active set.
-                causal_mask = key_positions[None, :] <= chunk_idx[:, None]
-                # Masked sparse queries are not always accepted by the enabled SDP backends;
-                # chunked compact Q x full K/V attention keeps this experimental path lower memory.
-                attn_scores = torch.matmul(q, k_b.transpose(-2, -1)) / math.sqrt(self.head_dim)
-                attn_scores = attn_scores.masked_fill(~causal_mask[None, None, :, :], float("-inf"))
-                attn_probs = F.softmax(attn_scores.float(), dim=-1).to(dtype=q.dtype)
-                attn_out = torch.matmul(attn_probs, v_b)
-                attn_out = attn_out.transpose(1, 2).contiguous().reshape(1, chunk_idx.numel(), dim)
-                # Scatter the active outputs back into the original [B, T, C] layout; inactive rows
-                # stay zero so they do not receive an attention residual update.
-                y[batch_idx, chunk_idx] = attn_out[0]
+        if self.num_kv_heads != self.num_heads:
+            repeats = self.num_heads // self.num_kv_heads
+            k = k.repeat_interleave(repeats, dim=1)
+            v = v.repeat_interleave(repeats, dim=1)
+
+        active_pairs = torch.nonzero(query_mask, as_tuple=False)
+        for start in range(0, active_pairs.size(0), self.query_chunk_size):
+            pairs = active_pairs[start : start + self.query_chunk_size]
+            batch_idx = pairs[:, 0]
+            token_idx = pairs[:, 1]
+            x_rows = x[batch_idx, token_idx]
+            q = self.c_q(x_rows)
+            q = q.reshape(pairs.size(0), self.num_heads, self.head_dim).transpose(0, 1)
+            q = F.rms_norm(q, (q.size(-1),)).transpose(0, 1)
+            q = apply_rotary_emb(
+                q[:, :, None, :],
+                cos.index_select(2, token_idx).transpose(0, 2),
+                sin.index_select(2, token_idx).transpose(0, 2),
+            ).squeeze(2)
+            q = q * self.q_gain.to(dtype=q.dtype)[None, :, None]
+
+            # Each active query attends to the full K/V sequence from its own batch item.
+            # The causal mask uses original token positions, not compacted active indices.
+            k_rows = k.index_select(0, batch_idx)
+            v_rows = v.index_select(0, batch_idx)
+            causal_mask = key_positions[None, :] <= token_idx[:, None]
+            attn_scores = torch.einsum("nhd,nhtd->nht", q, k_rows) / math.sqrt(self.head_dim)
+            attn_scores = attn_scores.masked_fill(~causal_mask[:, None, :], float("-inf"))
+            attn_probs = F.softmax(attn_scores.float(), dim=-1).to(dtype=q.dtype)
+            attn_out = torch.einsum("nht,nhtd->nhd", attn_probs, v_rows)
+            y[batch_idx, token_idx] = attn_out.reshape(pairs.size(0), dim)
         return self.proj(y)
 
 
