@@ -1,0 +1,308 @@
+[2026-04-20T05:14:57Z] SERIES STARTED
+
+Branches (1): codex/stf-query-sparse-attn
+Formulas (1): relative_l2
+Total variants: 1
+Progress: ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0/1
+Iterations: 500
+GPU: 4x NVIDIA GeForce RTX 4090
+Pod: 4e98a68b09d0
+From https://github.com/yuvaraj-97/parameter-golf-stf
+ * branch            codex/stf-query-sparse-attn -> FETCH_HEAD
+Switched to a new branch 'codex/stf-query-sparse-attn'
+branch 'codex/stf-query-sparse-attn' set up to track 'origin/codex/stf-query-sparse-attn'.
+Already up to date.
+[2026-04-20T05:14:59Z] VARIANT STARTED
+
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 1/1
+Branch: codex/stf-query-sparse-attn (1/1)
+Formula: relative_l2 (1/1)
+Run: 2026-04-20_codex-stf-query-sparse-attn_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run77
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 4e98a68b09d0
+timestamp=2026-04-20T05:14:59Z
+branch=codex/stf-query-sparse-attn
+run_id=2026-04-20_codex-stf-query-sparse-attn_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run77
+score_fn=relative_l2
+nproc_per_node=4
+W0420 05:15:01.106000 24151 torch/distributed/run.py:803] 
+W0420 05:15:01.106000 24151 torch/distributed/run.py:803] *****************************************
+W0420 05:15:01.106000 24151 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0420 05:15:01.106000 24151 torch/distributed/run.py:803] *****************************************
+logs/2026-04-20_codex-stf-query-sparse-attn_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run77.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:soft_freeze stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.045 stf_ema_decay:0.85 stf_min_active_ratio:0.75 stf_score_fn:relative_l2 stf_compute_mode:query_sparse_attn_mlp_active_rows stf_active_selection:topk_budget stf_telemetry:True
+seed:1337
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/workspace/project/train_gpt.py", line 1638, in <module>
+[rank3]:     main()
+[rank3]:   File "/workspace/project/train_gpt.py", line 1489, in main
+[rank3]:     val_loss, val_bpb = eval_val(
+[rank3]:                         ^^^^^^^^^
+[rank3]:   File "/workspace/project/train_gpt.py", line 280, in eval_val
+[rank3]:     batch_loss = model(x, y).detach()
+[rank3]:                  ^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+[rank3]:     return self._call_impl(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+[rank3]:     return forward_call(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/parallel/distributed.py", line 1661, in forward
+[rank3]:     else self._run_ddp_forward(*inputs, **kwargs)
+[rank3]:          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/parallel/distributed.py", line 1487, in _run_ddp_forward
+[rank3]:     return self.module(*inputs, **kwargs)  # type: ignore[index]
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+[rank3]:     return self._call_impl(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+[rank3]:     return forward_call(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/workspace/project/train_gpt.py", line 1191, in forward
+[rank3]:     x = run_block(layer_idx, x, x0)
+[rank3]:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/workspace/project/train_gpt.py", line 1164, in run_block
+[rank3]:     x_attn = block.forward_attn(x, x0, query_active=query_active)
+[rank3]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/workspace/project/train_gpt.py", line 714, in forward_attn
+[rank3]:     attn_out = self.attn(self.attn_norm(x), query_active=query_active)
+[rank3]:                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+[rank3]:     return self._call_impl(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+[rank3]:     return forward_call(*args, **kwargs)
+[rank3]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/workspace/project/train_gpt.py", line 659, in forward
+[rank3]:     attn_out = F.scaled_dot_product_attention(
+[rank3]:                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]: RuntimeError: Invalid backend
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/workspace/project/train_gpt.py", line 1638, in <module>
+[rank2]:     main()
+[rank2]:   File "/workspace/project/train_gpt.py", line 1489, in main
+[rank2]:     val_loss, val_bpb = eval_val(
+[rank2]:                         ^^^^^^^^^
+[rank2]:   File "/workspace/project/train_gpt.py", line 280, in eval_val
+[rank2]:     batch_loss = model(x, y).detach()
+[rank2]:                  ^^^^^^^^^^^
+[rank2]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+[rank2]:     return self._call_impl(*args, **kwargs)
+[rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+[rank2]:     return forward_call(*args, **kwargs)
+[rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/parallel/distributed.py", line 1661, in forward
+[rank2]:     else self._run_ddp_forward(*inputs, **kwargs)
+[rank2]:          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/parallel/distributed.py", line 1487, in _run_ddp_forward
+[rank2]:     return self.module(*inputs, **kwargs)  # type: ignore[index]
+[rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+[rank2]:     return self._call_impl(*args, **kwargs)
+[rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+[rank2]:     return forward_call(*args, **kwargs)
+[rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/workspace/project/train_gpt.py", line 1191, in forward
+[rank2]:     x = run_block(layer_idx, x, x0)
+[rank2]:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/workspace/project/train_gpt.py", line 1164, in run_block
+[rank2]:     x_attn = block.forward_attn(x, x0, query_active=query_active)
+[rank2]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/workspace/project/train_gpt.py", line 714, in forward_attn
+[rank2]:     attn_out = self.attn(self.attn_norm(x), query_active=query_active)
+[rank2]:                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+[rank2]:     return self._call_impl(*args, **kwargs)
+[rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+[rank2]:     return forward_call(*args, **kwargs)
+[rank2]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/workspace/project/train_gpt.py", line 659, in forward
+[rank2]:     attn_out = F.scaled_dot_product_attention(
+[rank2]:                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]: RuntimeError: Invalid backend
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/workspace/project/train_gpt.py", line 1638, in <module>
+[rank0]:     main()
+[rank0]:   File "/workspace/project/train_gpt.py", line 1489, in main
+[rank0]:     val_loss, val_bpb = eval_val(
+[rank0]:                         ^^^^^^^^^
+[rank0]:   File "/workspace/project/train_gpt.py", line 280, in eval_val
+[rank0]:     batch_loss = model(x, y).detach()
+[rank0]:                  ^^^^^^^^^^^
+[rank0]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/parallel/distributed.py", line 1661, in forward
+[rank0]:     else self._run_ddp_forward(*inputs, **kwargs)
+[rank0]:          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/parallel/distributed.py", line 1487, in _run_ddp_forward
+[rank0]:     return self.module(*inputs, **kwargs)  # type: ignore[index]
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/workspace/project/train_gpt.py", line 1191, in forward
+[rank0]:     x = run_block(layer_idx, x, x0)
+[rank0]:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/workspace/project/train_gpt.py", line 1164, in run_block
+[rank0]:     x_attn = block.forward_attn(x, x0, query_active=query_active)
+[rank0]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/workspace/project/train_gpt.py", line 714, in forward_attn
+[rank0]:     attn_out = self.attn(self.attn_norm(x), query_active=query_active)
+[rank0]:                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/workspace/project/train_gpt.py", line 659, in forward
+[rank0]:     attn_out = F.scaled_dot_product_attention(
+[rank0]:                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]: RuntimeError: Invalid backend
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/workspace/project/train_gpt.py", line 1638, in <module>
+[rank1]:     main()
+[rank1]:   File "/workspace/project/train_gpt.py", line 1489, in main
+[rank1]:     val_loss, val_bpb = eval_val(
+[rank1]:                         ^^^^^^^^^
+[rank1]:   File "/workspace/project/train_gpt.py", line 280, in eval_val
+[rank1]:     batch_loss = model(x, y).detach()
+[rank1]:                  ^^^^^^^^^^^
+[rank1]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+[rank1]:     return self._call_impl(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+[rank1]:     return forward_call(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/parallel/distributed.py", line 1661, in forward
+[rank1]:     else self._run_ddp_forward(*inputs, **kwargs)
+[rank1]:          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/parallel/distributed.py", line 1487, in _run_ddp_forward
+[rank1]:     return self.module(*inputs, **kwargs)  # type: ignore[index]
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+[rank1]:     return self._call_impl(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+[rank1]:     return forward_call(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/workspace/project/train_gpt.py", line 1191, in forward
+[rank1]:     x = run_block(layer_idx, x, x0)
+[rank1]:         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/workspace/project/train_gpt.py", line 1164, in run_block
+[rank1]:     x_attn = block.forward_attn(x, x0, query_active=query_active)
+[rank1]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/workspace/project/train_gpt.py", line 714, in forward_attn
+[rank1]:     attn_out = self.attn(self.attn_norm(x), query_active=query_active)
+[rank1]:                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+[rank1]:     return self._call_impl(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+[rank1]:     return forward_call(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/workspace/project/train_gpt.py", line 659, in forward
+[rank1]:     attn_out = F.scaled_dot_product_attention(
+[rank1]:                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]: RuntimeError: Invalid backend
+[rank0]:[W420 05:15:08.598483137 ProcessGroupNCCL.cpp:1524] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+W0420 05:15:08.721000 24151 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 24191 closing signal SIGTERM
+W0420 05:15:08.722000 24151 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 24192 closing signal SIGTERM
+W0420 05:15:08.723000 24151 torch/distributed/elastic/multiprocessing/api.py:908] Sending process 24193 closing signal SIGTERM
+E0420 05:15:08.889000 24151 torch/distributed/elastic/multiprocessing/api.py:882] failed (exitcode: 1) local_rank: 0 (pid: 24190) of binary: /usr/local/bin/python
+Traceback (most recent call last):
+  File "/usr/local/bin/torchrun", line 7, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 357, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/run.py", line 936, in main
+    run(args)
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/run.py", line 927, in run
+    elastic_launch(
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/launcher/api.py", line 156, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/launcher/api.py", line 293, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+train_gpt.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-04-20_05:15:08
+  host      : 4e98a68b09d0
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 24190)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
+[2026-04-20T05:15:09Z] VARIANT FAILED - CONTINUING
+
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 1/1
+Branch: codex/stf-query-sparse-attn (1/1)
+Formula: relative_l2 (1/1)
+Run: 2026-04-20_codex-stf-query-sparse-attn_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run77
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 500
+Pod: 4e98a68b09d0
+
+Exit: 1
+Archive: vast/experiments/2026-04-20-nvidia-geforce-rtx-4090-4gpu/codex/stf-query-sparse-attn/2026-04-20_codex-stf-query-sparse-attn_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run77
+
+Key error:
+ RuntimeError: Invalid backend
+ RuntimeError: Invalid backend
+ RuntimeError: Invalid backend
+ RuntimeError: Invalid backend
+raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+train_gpt.py FAILED
+Root Cause (first observed failure):
+
+Next variant will start shortly.
+[2026-04-20T05:15:09Z] BRANCH ENDED
+
+Branch: codex/stf-query-sparse-attn (1/1)
+Succeeded: 0
+Failed: 1
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 1/1
+Summary: logs/codex-stf-query-sparse-attn_i500_run77_summary.txt
+[2026-04-20T05:15:10Z] sending file logs/codex-stf-query-sparse-attn_i500_run77_summary.txt
+[2026-04-20T05:15:10Z] SERIES DONE
+
+Branches (1): codex/stf-query-sparse-attn
+Formulas (1): relative_l2
+Progress: 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 1/1
+Succeeded: 0
+Failed: 1
+Failed variants: codex/stf-query-sparse-attn/relative_l2
+Iterations: 500
+GPU: 4x NVIDIA GeForce RTX 4090
