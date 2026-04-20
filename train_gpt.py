@@ -656,14 +656,18 @@ class CausalSelfAttention(nn.Module):
             # The query index is the original token position, so the causal mask is built from
             # the uncompressed sequence coordinates rather than the compacted active set.
             causal_mask = key_positions[None, :] <= active_idx[:, None]
-            attn_out = F.scaled_dot_product_attention(
-                q,
-                k[batch_idx : batch_idx + 1],
-                v[batch_idx : batch_idx + 1],
-                attn_mask=causal_mask[None, None, :, :],
-                is_causal=False,
-                enable_gqa=(self.num_kv_heads != self.num_heads),
-            )
+            k_b = k[batch_idx : batch_idx + 1]
+            v_b = v[batch_idx : batch_idx + 1]
+            if self.num_kv_heads != self.num_heads:
+                repeats = self.num_heads // self.num_kv_heads
+                k_b = k_b.repeat_interleave(repeats, dim=1)
+                v_b = v_b.repeat_interleave(repeats, dim=1)
+            # Masked sparse queries are not always accepted by the enabled SDP backends;
+            # do the compact Q x full K/V attention directly for this experimental path.
+            attn_scores = torch.matmul(q, k_b.transpose(-2, -1)) / math.sqrt(self.head_dim)
+            attn_scores = attn_scores.masked_fill(~causal_mask[None, None, :, :], float("-inf"))
+            attn_probs = F.softmax(attn_scores.float(), dim=-1).to(dtype=q.dtype)
+            attn_out = torch.matmul(attn_probs, v_b)
             attn_out = attn_out.transpose(1, 2).contiguous().reshape(1, active_idx.numel(), dim)
             # Scatter the active outputs back into the original [B, T, C] layout; inactive rows
             # stay zero so they do not receive an attention residual update.
