@@ -37,6 +37,38 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 # - vocab size 1024, sequence length 1024, tied embeddings
 # - 524,288 train tokens per step for 20,000 iterations with a ~10 minute cap
 
+
+def parse_active_budget_schedule(raw: str) -> list[tuple[int, float]]:
+    if not raw.strip():
+        return []
+    schedule: list[tuple[int, float]] = []
+    for item in raw.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        try:
+            step_raw, ratio_raw = item.split(":", 1)
+            step = int(step_raw)
+            ratio = float(ratio_raw)
+        except ValueError as exc:
+            raise ValueError(
+                "STF_ACTIVE_BUDGET_SCHEDULE must look like '0:0.75,1000:0.70,3000:0.65'"
+            ) from exc
+        if step < 0:
+            raise ValueError(f"STF_ACTIVE_BUDGET_SCHEDULE step must be >= 0, got {step}")
+        if not 0.0 <= ratio <= 1.0:
+            raise ValueError(f"STF_ACTIVE_BUDGET_SCHEDULE ratio must be in [0, 1], got {ratio}")
+        schedule.append((step, ratio))
+    schedule.sort(key=lambda pair: pair[0])
+    deduped: list[tuple[int, float]] = []
+    for step, ratio in schedule:
+        if deduped and deduped[-1][0] == step:
+            deduped[-1] = (step, ratio)
+        else:
+            deduped.append((step, ratio))
+    return deduped
+
+
 class Hyperparameters:
     # Data paths are shard globs produced by the existing preprocessing pipeline.
     data_path = os.environ.get("DATA_PATH", "./data/datasets/fineweb10B_sp1024")
@@ -105,6 +137,7 @@ class Hyperparameters:
     stf_telemetry = bool(int(os.environ.get("STF_TELEMETRY", "1")))
     stf_compute_mode = os.environ.get("STF_COMPUTE_MODE", "full_block_then_freeze")
     stf_active_selection = os.environ.get("STF_ACTIVE_SELECTION", "threshold_floor")
+    stf_active_budget_schedule = parse_active_budget_schedule(os.environ.get("STF_ACTIVE_BUDGET_SCHEDULE", ""))
     compile_model = bool(int(os.environ.get("COMPILE_MODEL", "0")))
 
 # -----------------------------
@@ -724,6 +757,7 @@ class GPT(nn.Module):
         stf_telemetry: bool,
         stf_compute_mode: str,
         stf_active_selection: str,
+        stf_active_budget_schedule: list[tuple[int, float]],
     ):
         super().__init__()
         if logit_softcap <= 0.0:
@@ -744,6 +778,11 @@ class GPT(nn.Module):
         self.stf_threshold = max(stf_threshold, 0.0)
         self.stf_ema_decay = min(max(stf_ema_decay, 0.0), 0.9999)
         self.stf_min_active_ratio = min(max(stf_min_active_ratio, 0.0), 1.0)
+        self.stf_active_budget_schedule = tuple(
+            (max(int(step), 0), min(max(float(ratio), 0.0), 1.0))
+            for step, ratio in stf_active_budget_schedule
+        )
+        self._stf_step = 0
         self.stf_soft_keep = min(max(stf_soft_keep, 0.0), 1.0)
         self.stf_target_active_ratio = min(max(stf_target_active_ratio, 0.0), 1.0)
         self.stf_budget_kp = max(stf_budget_kp, 0.0)
@@ -803,6 +842,17 @@ class GPT(nn.Module):
         for module in self.modules():
             if isinstance(module, nn.Linear) and getattr(module, "_zero_init", False):
                 nn.init.zeros_(module.weight)
+
+    def set_stf_step(self, step: int) -> None:
+        self._stf_step = max(int(step), 0)
+
+    def current_stf_active_budget(self) -> float:
+        active_budget = self.stf_min_active_ratio
+        for step, ratio in self.stf_active_budget_schedule:
+            if self._stf_step < step:
+                break
+            active_budget = ratio
+        return active_budget
 
     @torch.no_grad()
     def reset_stf_stats(self) -> None:
@@ -900,6 +950,7 @@ class GPT(nn.Module):
         parts = [
             f"stf_stats calls:{int(calls[mask].sum().item())}",
             f"layers:{int(mask.sum().item())}",
+            f"active_budget:{self.current_stf_active_budget():.4f}",
             f"score_mean:{score.mean().item():.6f}",
             f"score_max:{self._stf_score_max[mask].max().item():.6f}",
         ]
@@ -1014,9 +1065,10 @@ class GPT(nn.Module):
                     active = torch.ones_like(active, dtype=torch.bool)
                     force_reactivated = True
 
-            if self.stf_min_active_ratio > 0.0 and not force_reactivated:
+            active_budget = self.current_stf_active_budget()
+            if active_budget > 0.0 and not force_reactivated:
                 token_scores = ema_score.squeeze(-1).reshape(-1)
-                k = min(token_scores.numel(), max(1, int(math.ceil(self.stf_min_active_ratio * token_scores.numel()))))
+                k = min(token_scores.numel(), max(1, int(math.ceil(active_budget * token_scores.numel()))))
                 if k < token_scores.numel():
                     topk_idx = torch.topk(token_scores, k, sorted=False).indices
                     topk_active = torch.zeros_like(token_scores, dtype=torch.bool)
@@ -1245,6 +1297,7 @@ def main() -> None:
         stf_telemetry=args.stf_telemetry,
         stf_compute_mode=args.stf_compute_mode,
         stf_active_selection=args.stf_active_selection,
+        stf_active_budget_schedule=args.stf_active_budget_schedule,
     ).to(device).bfloat16()
     base_model.reset_stf_stats()
     for module in base_model.modules():
@@ -1326,7 +1379,8 @@ def main() -> None:
         f"stf_mode:{args.stf_mode} stf_warmup_layers:{args.stf_warmup_layers} stf_depth_cap:{args.stf_depth_cap} "
         f"stf_threshold:{args.stf_threshold} stf_ema_decay:{args.stf_ema_decay} "
         f"stf_min_active_ratio:{args.stf_min_active_ratio} stf_score_fn:{args.stf_score_fn} "
-        f"stf_active_selection:{args.stf_active_selection} stf_telemetry:{args.stf_telemetry}"
+        f"stf_active_selection:{args.stf_active_selection} "
+        f"stf_active_budget_schedule:{args.stf_active_budget_schedule} stf_telemetry:{args.stf_telemetry}"
     )
     log0(f"seed:{args.seed}")
 
@@ -1393,6 +1447,7 @@ def main() -> None:
     step = 0
     while True:
         last_step = step == args.iterations or (stop_after_step is not None and step >= stop_after_step)
+        base_model.set_stf_step(step)
 
         should_validate = last_step or (args.val_loss_every > 0 and step % args.val_loss_every == 0)
         if should_validate:
@@ -1427,6 +1482,7 @@ def main() -> None:
 
         elapsed_ms = training_time_ms + 1000.0 * (time.perf_counter() - t0)
         scale = lr_mul(step, elapsed_ms)
+        base_model.set_stf_step(step)
         zero_grad_all()
         train_loss = torch.zeros((), device=device)
         for micro_step in range(grad_accum_steps):
@@ -1521,6 +1577,7 @@ def main() -> None:
         quant_blob_disk = f.read()
     quant_state = torch.load(io.BytesIO(zlib.decompress(quant_blob_disk)), map_location="cpu")
     base_model.load_state_dict(dequantize_state_dict_int8(quant_state), strict=True)
+    base_model.set_stf_step(step)
     torch.cuda.synchronize()
     t_qeval = time.perf_counter()
     q_val_loss, q_val_bpb = eval_val(
