@@ -48,6 +48,8 @@
     }
     h1 { font-size: clamp(2.3rem, 6vw, 5.6rem); line-height: .98; margin: 0 0 18px; max-width: 960px; }
     .hero p { color: var(--muted); max-width: 830px; font-size: 1.04rem; line-height: 1.65; }
+    .hero a, .link-row a { color: var(--active); font-weight: 800; text-decoration: none; }
+    .link-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 18px; }
     .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 24px 0 34px; }
     .metric { padding: 18px; border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.035); }
     .metric strong { display: block; font-size: 1.8rem; letter-spacing: -0.04em; }
@@ -136,6 +138,30 @@
       background: linear-gradient(135deg, rgba(88,242,208,.10), rgba(243,180,91,.05));
     }
     .ladder-card .table-wrap { margin-top: 18px; }
+    .compare-card {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 22px;
+      margin-top: 22px;
+      background: linear-gradient(135deg, rgba(243,180,91,.08), rgba(88,242,208,.05));
+    }
+    .compare-controls {
+      display: grid;
+      grid-template-columns: 170px minmax(240px, 420px);
+      gap: 12px;
+      align-items: center;
+      margin: 18px 0;
+    }
+    .compare-controls label { color: var(--muted); font-weight: 800; text-transform: uppercase; font-size: .78rem; }
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(0,0,0,.28);
+      color: var(--text);
+      padding: 10px 12px;
+      font: inherit;
+    }
     .branch-tree-card {
       margin-top: 22px;
       border: 1px solid var(--line);
@@ -153,6 +179,20 @@
       line-height: 1.55;
       font-size: .92rem;
     }
+    .git-graph {
+      margin: 18px 0;
+      padding: 18px;
+      overflow-x: auto;
+      border-radius: 18px;
+      background: rgba(0,0,0,.34);
+      color: #dce8ff;
+      line-height: 1.45;
+      font-size: .84rem;
+    }
+    .branch-inventory { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-top: 18px; }
+    .branch-chip { border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: rgba(255,255,255,.035); }
+    .branch-chip strong { display: block; margin: 8px 0 4px; }
+    .branch-chip small { color: var(--muted); line-height: 1.4; }
     .status {
       display: inline-block;
       padding: 1px 7px;
@@ -163,7 +203,14 @@
       letter-spacing: .06em;
     }
     .status.done { color: #061208; background: var(--good); }
+    .status.validated { color: #061208; background: var(--good); }
     .status.running { color: #07121a; background: var(--frozen); }
+    .status.baseline { color: #1b1304; background: #f3b45b; }
+    .status.impl { color: #07121a; background: var(--frozen); }
+    .status.telemetry { color: #061208; background: #58f2d0; }
+    .status.archive { color: #150d02; background: #d6b66f; }
+    .status.experiment { color: var(--text); background: rgba(255,255,255,.14); }
+    .status.branch { color: var(--muted); background: rgba(255,255,255,.08); }
     .status.blocked { color: #220707; background: var(--bad); }
     .status.todo { color: var(--muted); background: rgba(255,255,255,.08); }
     table { width: 100%; border-collapse: collapse; min-width: 1040px; }
@@ -199,6 +246,11 @@
         <div class="metric warn"><strong>54.2%</strong><span>actual compute skipped</span></div>
       </div>
       <p>Best run: <b>codex/stf-mlp-skip-runner / relative_l2</b> at <b>1.2806 BPB</b>. Learned-gate is shown separately as a gate-open proxy, because a near-1.0 gate means it is mostly <i>not</i> freezing even when the score looks healthy.</p>
+      <div class="link-row">
+        <a href="index.html">Report hub</a>
+        <a href="My_approch/analysis/index.html">Imported analysis bundle</a>
+        <a href="My_approch/stf_branch_tree.html">Standalone branch tree</a>
+      </div>
     </section>
 
     
@@ -206,9 +258,12 @@
       <div>
         <p class="eyebrow">Implementation map</p>
         <h2>Git Branch Tree</h2>
-        <p class="note">Experiment-result branches stay separate from implementation branches. The older off-main static analysis bundle was inspected and folded into this single generated report, so `vast_formula_summary.html` stays the one file to open.</p>
+        <p class="note">Experiment-result branches stay separate from implementation branches. `baseline-repro` is included as the OpenAI direct baseline context, and the full repo branch inventory below is generated from local and remote git refs.</p>
       </div>
       <pre class="branch-tree">main
+├── baseline-repro <span class="status baseline">baseline</span>
+│   └── context: OpenAI direct baseline / control branch
+│
 ├── stf-soft-freeze-telemetry <span class="status done">done</span>
 │   ├── done: 2k cosine, direction, l2, relative_l2
 │   ├── done: full_block_then_freeze telemetry
@@ -236,6 +291,150 @@
 └── codex/stf-kv-reuse-experiment <span class="status todo">todo</span>
     ├── todo: cache/reuse frozen K/V or states
     └── todo: only run if previous tracks succeed</pre>
+      <h3>Actual Git Ref Graph</h3>
+      <p class="note">This graph is generated from git refs, so it shows branch split ancestry rather than just names. It intentionally includes local and remote decorations.</p>
+      <pre class="git-graph">* 27282f1 (HEAD -&gt; main, origin/main, origin/HEAD) report: integrate STF true-skip HTML summary
+| * 9ea6142 (origin/codex/stf-adaptive-mlp-budget, codex/stf-adaptive-mlp-budget) Add adaptive STF active budget schedule
+| | * 4283a79 (origin/codex/stf-query-sparse-attn, codex/stf-query-sparse-attn) Vectorize query-sparse attention chunks
+| |/  
+| * 3bad847 (origin/codex/stf-mlp-skip-runner) Add budgeted STF active selection
+| * 7f32c7b (codex/stf-mlp-skip-runner) Add runner-compatible STF MLP skip branch
+|/  
+| * 8798d5b (origin/codex/stf-true-skip-foundation, origin/codex/stf-mlp-skip, codex/stf-mlp-skip) Fix STF active floor tie handling
+| * 5ab1e4a (codex/stf-true-skip-foundation) Add STF MLP active-row compute mode
+| | * 4ad954b (origin/stf-recurrence-telemetry, origin/stf-recurrence, stf-recurrence-telemetry, stf-recurrence) Record STF compute skip telemetry
+| |/  
+|/|   
+| * 3ef6414 (origin/stf-soft-freeze-telemetry, origin/stf-soft-freeze, stf-soft-freeze-telemetry, stf-soft-freeze) Record STF compute skip telemetry
+|/  
+| * 97c3328 (origin/stf-learned-gate-telemetry, origin/stf-learned-gate, stf-learned-gate-telemetry, stf-learned-gate) Record STF compute skip telemetry
+|/  
+| * 07d3051 (origin/stf-quantization, stf-quantization) Fix rotary cache after inference eval
+|/  
+| * 8a6b3fa (origin/stf-budget-regularization, stf-budget-regularization) Fix rotary cache after inference eval
+|/  
+| * 94c003a (origin/stf-reactivation, stf-reactivation) Fix rotary cache after inference eval
+|/  
+| * 647ac64 (origin/stf-minimal, stf-minimal) Fix rotary cache after inference eval
+|/  
+| * b26a519 (origin/baseline-repro, baseline-repro) logs: add 2026-04-16_baseline-repro_nvidia-geforce-rtx-4090_4gpu_i500_run3 (baseline-repro, nvidia-geforce-rtx-4090, 4gpu)
+|/  
+* a15093a Launch snapshot</pre>
+      <h3>All Repo Branches</h3>
+      <p class="note">This list includes local branches and `origin/*` branches after stripping the remote prefix, so the report keeps every branch in context.</p>
+      
+      <div class="branch-inventory">
+        
+            <div class="branch-chip">
+              <span class="status main">main</span>
+              <strong>main</strong>
+              <small>Current integration branch | no parsed run in this report</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status baseline">baseline</span>
+              <strong>baseline-repro</strong>
+              <small>OpenAI direct baseline context | no parsed run in this report</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status validated">validated</span>
+              <strong>codex/stf-adaptive-mlp-budget</strong>
+              <small>Validated true-skip branch | 3 parsed runs</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status impl">impl</span>
+              <strong>codex/stf-mlp-skip</strong>
+              <small>Implementation branch | no parsed run in this report</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status validated">validated</span>
+              <strong>codex/stf-mlp-skip-runner</strong>
+              <small>Validated true-skip branch | 14 parsed runs</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status blocked">blocked</span>
+              <strong>codex/stf-query-sparse-attn</strong>
+              <small>Implementation branch, blocked in smoke | no parsed run in this report</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status impl">impl</span>
+              <strong>codex/stf-true-skip-foundation</strong>
+              <small>Implementation branch | no parsed run in this report</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status telemetry">telemetry</span>
+              <strong>stf-learned-gate-telemetry</strong>
+              <small>Telemetry result branch | 2 parsed runs</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status telemetry">telemetry</span>
+              <strong>stf-recurrence-telemetry</strong>
+              <small>Telemetry result branch | 2 parsed runs</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status telemetry">telemetry</span>
+              <strong>stf-soft-freeze-telemetry</strong>
+              <small>Telemetry result branch | 4 parsed runs</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status experiment">experiment</span>
+              <strong>stf-budget-regularization</strong>
+              <small>STF experiment branch | 4 parsed runs</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status experiment">experiment</span>
+              <strong>stf-learned-gate</strong>
+              <small>STF experiment branch | 6 parsed runs</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status experiment">experiment</span>
+              <strong>stf-minimal</strong>
+              <small>STF experiment branch | 4 parsed runs</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status archive">archive</span>
+              <strong>stf-quantization</strong>
+              <small>Experiment branch with imported HTML reports | 4 parsed runs</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status experiment">experiment</span>
+              <strong>stf-reactivation</strong>
+              <small>STF experiment branch | 4 parsed runs</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status experiment">experiment</span>
+              <strong>stf-recurrence</strong>
+              <small>STF experiment branch | 4 parsed runs</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status experiment">experiment</span>
+              <strong>stf-soft-freeze</strong>
+              <small>STF experiment branch | 4 parsed runs</small>
+            </div>
+            
+            <div class="branch-chip">
+              <span class="status branch">branch</span>
+              <strong>origin</strong>
+              <small>Repository branch | no parsed run in this report</small>
+            </div>
+            
+      </div>
+    
     </section>
     
 
@@ -252,6 +451,27 @@
           <tbody><tr><td>Fixed MLP skip, active 0.75</td><td>2,000</td><td>1.3494</td><td>1.3477</td><td>457.2ms</td><td>20.8%</td><td>79.2%</td><td class="neutral">-</td><td class="neutral">-</td><td>Reference run</td></tr><tr><td>Fixed MLP skip, active 0.75</td><td>5,000</td><td>1.3077</td><td>1.3032</td><td>498.4ms</td><td>20.8%</td><td>79.2%</td><td class="neutral">-</td><td class="neutral">-</td><td>Reference run</td></tr><tr><td>Fixed MLP skip, active 0.75</td><td>10,000</td><td>1.2806</td><td>1.2733</td><td>456.6ms</td><td>20.8%</td><td>79.2%</td><td class="neutral">-</td><td class="neutral">-</td><td>Best quality reference</td></tr><tr><td>Adaptive MLP budget, 0.75 -&gt; 0.70 -&gt; 0.65</td><td>500</td><td>1.5664</td><td>1.5500</td><td>453.7ms</td><td>29.2%</td><td>70.8%</td><td class="neutral">-</td><td class="neutral">-</td><td>Useful budget smoke</td></tr><tr><td>Adaptive MLP budget, 0.75 -&gt; 0.70 -&gt; 0.65</td><td>2,000</td><td>1.3537</td><td>1.3517</td><td>442.2ms</td><td>29.2%</td><td>70.8%</td><td class="bad">0.0042</td><td class="good">3.3%</td><td>Useful budget smoke</td></tr><tr><td>Adaptive MLP budget, 0.75 -&gt; 0.70 -&gt; 0.65</td><td>10,000</td><td>1.2846</td><td>1.2774</td><td>441.1ms</td><td>29.2%</td><td>70.8%</td><td class="bad">0.0041</td><td class="good">3.4%</td><td>Best speed-quality tradeoff so far</td></tr></tbody>
         </table>
       </div>
+    </div>
+    
+
+    
+    <div class="compare-card">
+      <div class="compare-copy">
+        <p class="eyebrow">Branch comparison</p>
+        <h2>Compare Against Any Branch</h2>
+        <p class="note">Default baseline is the best branch by final BPB in the current parsed logs. You can switch the comparison branch below. `baseline-repro` remains visible in the branch inventory as the OpenAI direct baseline context; it only appears in this selector when matching parsed metrics are available.</p>
+      </div>
+      <div class="compare-controls">
+        <label for="branchBaselineSelect">Compare against</label>
+        <select id="branchBaselineSelect"><option value="codex/stf-mlp-skip-runner" selected>codex/stf-mlp-skip-runner</option><option value="codex/stf-adaptive-mlp-budget" >codex/stf-adaptive-mlp-budget</option><option value="stf-learned-gate" >stf-learned-gate</option><option value="stf-learned-gate-telemetry" >stf-learned-gate-telemetry</option><option value="stf-soft-freeze-telemetry" >stf-soft-freeze-telemetry</option><option value="stf-recurrence-telemetry" >stf-recurrence-telemetry</option><option value="stf-soft-freeze" >stf-soft-freeze</option><option value="stf-recurrence" >stf-recurrence</option><option value="stf-reactivation" >stf-reactivation</option><option value="stf-budget-regularization" >stf-budget-regularization</option><option value="stf-minimal" >stf-minimal</option><option value="stf-quantization" >stf-quantization</option></select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Branch</th><th>Best Formula</th><th>Iterations</th><th>Final BPB</th><th>BPB vs Selected</th><th>Avg Iter</th><th>Speed vs Selected</th><th>Actual Skip</th><th>Computed</th></tr></thead>
+          <tbody id="branchCompareRows"></tbody>
+        </table>
+      </div>
+      <script type="application/json" id="branchCompareData">[{"branch":"codex/stf-mlp-skip-runner","formula":"relative_l2","steps":10000,"final_bpb":1.28057292,"last_val_bpb":1.2733,"step_ms":456.6,"actual_skip":0.2083,"computed":0.7917},{"branch":"codex/stf-adaptive-mlp-budget","formula":"relative_l2","steps":10000,"final_bpb":1.28463622,"last_val_bpb":1.2774,"step_ms":441.14,"actual_skip":0.2917,"computed":0.7083},{"branch":"stf-learned-gate","formula":"direction","steps":2000,"final_bpb":1.33302229,"last_val_bpb":1.3312,"step_ms":598.35,"actual_skip":null,"computed":null},{"branch":"stf-learned-gate-telemetry","formula":"direction","steps":2000,"final_bpb":1.33302958,"last_val_bpb":1.3313,"step_ms":598.69,"actual_skip":0.0,"computed":1.0},{"branch":"stf-soft-freeze-telemetry","formula":"direction","steps":2000,"final_bpb":1.33893484,"last_val_bpb":1.3373,"step_ms":509.53,"actual_skip":0.0,"computed":1.0},{"branch":"stf-recurrence-telemetry","formula":"direction","steps":2000,"final_bpb":1.36647891,"last_val_bpb":1.3649,"step_ms":252.46,"actual_skip":0.0,"computed":1.0},{"branch":"stf-soft-freeze","formula":"direction","steps":500,"final_bpb":1.57393264,"last_val_bpb":1.557,"step_ms":509.69,"actual_skip":null,"computed":null},{"branch":"stf-recurrence","formula":"direction","steps":500,"final_bpb":1.59801598,"last_val_bpb":1.5867,"step_ms":267.98,"actual_skip":null,"computed":null},{"branch":"stf-reactivation","formula":"cosine","steps":500,"final_bpb":1.60754194,"last_val_bpb":1.5907,"step_ms":496.65,"actual_skip":null,"computed":null},{"branch":"stf-budget-regularization","formula":"cosine","steps":500,"final_bpb":1.60801359,"last_val_bpb":1.5907,"step_ms":502.71,"actual_skip":null,"computed":null},{"branch":"stf-minimal","formula":"cosine","steps":500,"final_bpb":1.60901155,"last_val_bpb":1.5911,"step_ms":484.83,"actual_skip":null,"computed":null},{"branch":"stf-quantization","formula":"l2","steps":500,"final_bpb":1.89045223,"last_val_bpb":1.8669,"step_ms":495.69,"actual_skip":null,"computed":null}]</script>
     </div>
     
 
@@ -961,5 +1181,42 @@
       </table>
     </div>
   </main>
+  <script>
+    (function() {
+      const dataEl = document.getElementById("branchCompareData");
+      const select = document.getElementById("branchBaselineSelect");
+      const body = document.getElementById("branchCompareRows");
+      if (!dataEl || !select || !body) return;
+      const rows = JSON.parse(dataEl.textContent || "[]");
+      const fmt = (value, digits = 4) => Number.isFinite(value) ? value.toFixed(digits) : "-";
+      const pctValue = (value) => Number.isFinite(value) ? (value * 100).toFixed(1) + "%" : "-";
+      function render() {
+        const baseline = rows.find((row) => row.branch === select.value) || rows[0];
+        body.innerHTML = rows.map((row) => {
+          const bpbDelta = Number.isFinite(row.final_bpb) && Number.isFinite(baseline.final_bpb)
+            ? row.final_bpb - baseline.final_bpb
+            : null;
+          const speedDelta = Number.isFinite(row.step_ms) && Number.isFinite(baseline.step_ms)
+            ? (baseline.step_ms - row.step_ms) / baseline.step_ms
+            : null;
+          const bpbClass = Number.isFinite(bpbDelta) ? (bpbDelta <= 0 ? "good" : "bad") : "neutral";
+          const speedClass = Number.isFinite(speedDelta) ? (speedDelta >= 0 ? "good" : "bad") : "neutral";
+          return `<tr>
+            <td>${row.branch}</td>
+            <td>${row.formula}</td>
+            <td>${row.steps || "-"}</td>
+            <td>${fmt(row.final_bpb)}</td>
+            <td class="${bpbClass}">${fmt(bpbDelta)}</td>
+            <td>${fmt(row.step_ms, 1)}ms</td>
+            <td class="${speedClass}">${pctValue(speedDelta)}</td>
+            <td>${pctValue(row.actual_skip)}</td>
+            <td>${pctValue(row.computed)}</td>
+          </tr>`;
+        }).join("");
+      }
+      select.addEventListener("change", render);
+      render();
+    })();
+  </script>
 </body>
 </html>

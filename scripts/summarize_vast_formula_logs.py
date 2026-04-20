@@ -5,8 +5,10 @@ from __future__ import annotations
 
 import argparse
 import html
+import json
 import math
 import re
+import subprocess
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -577,6 +579,169 @@ def render_validation_ladder(completed: list[Variant]) -> str:
     """
 
 
+def clean_branch_name(raw: str) -> str | None:
+    branch = raw.strip()
+    if not branch or branch == "origin/HEAD":
+        return None
+    if branch.startswith("origin/"):
+        branch = branch.removeprefix("origin/")
+    return branch
+
+
+def repo_branch_names() -> list[str]:
+    try:
+        result = subprocess.run(
+            ["git", "for-each-ref", "--format=%(refname:short)", "refs/heads", "refs/remotes/origin"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return []
+    branches = {name for line in result.stdout.splitlines() if (name := clean_branch_name(line))}
+    return sorted(branches, key=branch_sort_key)
+
+
+def repo_git_graph() -> str:
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "log",
+                "--graph",
+                "--decorate",
+                "--oneline",
+                "--all",
+                "--simplify-by-decoration",
+                "--date-order",
+                "--max-count=160",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return "git graph unavailable"
+    return result.stdout.strip() or "git graph unavailable"
+
+
+def branch_sort_key(branch: str) -> tuple[int, str]:
+    if branch == "main":
+        return (0, branch)
+    if branch == "baseline-repro":
+        return (1, branch)
+    if branch.startswith("codex/"):
+        return (2, branch)
+    if branch.endswith("-telemetry"):
+        return (3, branch)
+    if branch.startswith("stf-"):
+        return (4, branch)
+    return (5, branch)
+
+
+def branch_status(branch: str) -> tuple[str, str]:
+    if branch == "main":
+        return ("main", "Current integration branch")
+    if branch == "baseline-repro":
+        return ("baseline", "OpenAI direct baseline context")
+    if branch == "codex/stf-query-sparse-attn":
+        return ("blocked", "Implementation branch, blocked in smoke")
+    if branch in {"codex/stf-mlp-skip-runner", "codex/stf-adaptive-mlp-budget"}:
+        return ("validated", "Validated true-skip branch")
+    if branch.startswith("codex/"):
+        return ("impl", "Implementation branch")
+    if branch.endswith("-telemetry"):
+        return ("telemetry", "Telemetry result branch")
+    if branch == "stf-quantization":
+        return ("archive", "Experiment branch with imported HTML reports")
+    if branch.startswith("stf-"):
+        return ("experiment", "STF experiment branch")
+    return ("branch", "Repository branch")
+
+
+def render_branch_inventory(completed: list[Variant]) -> str:
+    branches = repo_branch_names()
+    if not branches:
+        branches = sorted({"main", "baseline-repro", *(v.branch for v in completed)}, key=branch_sort_key)
+    completed_by_branch = defaultdict(int)
+    for variant in completed:
+        completed_by_branch[variant.branch] += 1
+
+    cards = []
+    for branch in branches:
+        status, description = branch_status(branch)
+        count = completed_by_branch.get(branch, 0)
+        metric_text = f"{count} parsed run{'s' if count != 1 else ''}" if count else "no parsed run in this report"
+        cards.append(
+            f"""
+            <div class="branch-chip">
+              <span class="status {html.escape(status)}">{html.escape(status)}</span>
+              <strong>{html.escape(branch)}</strong>
+              <small>{html.escape(description)} | {html.escape(metric_text)}</small>
+            </div>
+            """
+        )
+
+    return f"""
+      <div class="branch-inventory">
+        {''.join(cards)}
+      </div>
+    """
+
+
+def render_branch_compare_picker(completed: list[Variant]) -> str:
+    best_by_branch: dict[str, Variant] = {}
+    for variant in completed:
+        current = best_by_branch.get(variant.branch)
+        if current is None or (variant.final_bpb or float("inf")) < (current.final_bpb or float("inf")):
+            best_by_branch[variant.branch] = variant
+    if not best_by_branch:
+        return ""
+
+    records = []
+    for branch, variant in sorted(best_by_branch.items(), key=lambda item: item[1].final_bpb or float("inf")):
+        records.append(
+            {
+                "branch": branch,
+                "formula": variant.score_fn,
+                "steps": variant_steps(variant),
+                "final_bpb": variant.final_bpb,
+                "last_val_bpb": variant.last_val_bpb,
+                "step_ms": variant.last_step_avg_ms,
+                "actual_skip": variant.stats.get("actual_skip_ratio"),
+                "computed": variant.stats.get("computed_token_ratio"),
+            }
+        )
+    default_branch = records[0]["branch"]
+    payload = html.escape(json.dumps(records, separators=(",", ":")), quote=False)
+
+    options = "".join(
+        f'<option value="{html.escape(record["branch"])}" {"selected" if record["branch"] == default_branch else ""}>{html.escape(record["branch"])}</option>'
+        for record in records
+    )
+
+    return f"""
+    <div class="compare-card">
+      <div class="compare-copy">
+        <p class="eyebrow">Branch comparison</p>
+        <h2>Compare Against Any Branch</h2>
+        <p class="note">Default baseline is the best branch by final BPB in the current parsed logs. You can switch the comparison branch below. `baseline-repro` remains visible in the branch inventory as the OpenAI direct baseline context; it only appears in this selector when matching parsed metrics are available.</p>
+      </div>
+      <div class="compare-controls">
+        <label for="branchBaselineSelect">Compare against</label>
+        <select id="branchBaselineSelect">{options}</select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Branch</th><th>Best Formula</th><th>Iterations</th><th>Final BPB</th><th>BPB vs Selected</th><th>Avg Iter</th><th>Speed vs Selected</th><th>Actual Skip</th><th>Computed</th></tr></thead>
+          <tbody id="branchCompareRows"></tbody>
+        </table>
+      </div>
+      <script type="application/json" id="branchCompareData">{payload}</script>
+    </div>
+    """
+
+
 def render_branch_tree(completed: list[Variant]) -> str:
     soft_done = sorted({v.score_fn for v in completed if v.branch == "stf-soft-freeze-telemetry"})
     soft_done_text = ", ".join(soft_done) if soft_done else "waiting for completed telemetry logs"
@@ -589,9 +754,12 @@ def render_branch_tree(completed: list[Variant]) -> str:
       <div>
         <p class="eyebrow">Implementation map</p>
         <h2>Git Branch Tree</h2>
-        <p class="note">Experiment-result branches stay separate from implementation branches. The older off-main static analysis bundle was inspected and folded into this single generated report, so `vast_formula_summary.html` stays the one file to open.</p>
+        <p class="note">Experiment-result branches stay separate from implementation branches. `baseline-repro` is included as the OpenAI direct baseline context, and the full repo branch inventory below is generated from local and remote git refs.</p>
       </div>
       <pre class="branch-tree">main
+├── baseline-repro <span class="status baseline">baseline</span>
+│   └── context: OpenAI direct baseline / control branch
+│
 ├── stf-soft-freeze-telemetry <span class="status done">done</span>
 │   ├── done: 2k {html.escape(soft_done_text)}
 │   ├── done: full_block_then_freeze telemetry
@@ -619,6 +787,12 @@ def render_branch_tree(completed: list[Variant]) -> str:
 └── codex/stf-kv-reuse-experiment <span class="status todo">todo</span>
     ├── todo: cache/reuse frozen K/V or states
     └── todo: only run if previous tracks succeed</pre>
+      <h3>Actual Git Ref Graph</h3>
+      <p class="note">This graph is generated from git refs, so it shows branch split ancestry rather than just names. It intentionally includes local and remote decorations.</p>
+      <pre class="git-graph">{html.escape(repo_git_graph())}</pre>
+      <h3>All Repo Branches</h3>
+      <p class="note">This list includes local branches and `origin/*` branches after stripping the remote prefix, so the report keeps every branch in context.</p>
+      {render_branch_inventory(completed)}
     </section>
     """
 
@@ -910,6 +1084,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     speed_reality = render_speed_reality(completed)
     branch_tree = render_branch_tree(completed)
     validation_ladder = render_validation_ladder(completed)
+    branch_compare = render_branch_compare_picker(completed)
     movie_cards = []
     for variant in visual_rows[:8]:
         movie_cards.append(
@@ -975,6 +1150,8 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     }}
     h1 {{ font-size: clamp(2.3rem, 6vw, 5.6rem); line-height: .98; margin: 0 0 18px; max-width: 960px; }}
     .hero p {{ color: var(--muted); max-width: 830px; font-size: 1.04rem; line-height: 1.65; }}
+    .hero a, .link-row a {{ color: var(--active); font-weight: 800; text-decoration: none; }}
+    .link-row {{ display: flex; flex-wrap: wrap; gap: 14px; margin-top: 18px; }}
     .metrics {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 24px 0 34px; }}
     .metric {{ padding: 18px; border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.035); }}
     .metric strong {{ display: block; font-size: 1.8rem; letter-spacing: -0.04em; }}
@@ -1063,6 +1240,30 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       background: linear-gradient(135deg, rgba(88,242,208,.10), rgba(243,180,91,.05));
     }}
     .ladder-card .table-wrap {{ margin-top: 18px; }}
+    .compare-card {{
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 22px;
+      margin-top: 22px;
+      background: linear-gradient(135deg, rgba(243,180,91,.08), rgba(88,242,208,.05));
+    }}
+    .compare-controls {{
+      display: grid;
+      grid-template-columns: 170px minmax(240px, 420px);
+      gap: 12px;
+      align-items: center;
+      margin: 18px 0;
+    }}
+    .compare-controls label {{ color: var(--muted); font-weight: 800; text-transform: uppercase; font-size: .78rem; }}
+    select {{
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(0,0,0,.28);
+      color: var(--text);
+      padding: 10px 12px;
+      font: inherit;
+    }}
     .branch-tree-card {{
       margin-top: 22px;
       border: 1px solid var(--line);
@@ -1080,6 +1281,20 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       line-height: 1.55;
       font-size: .92rem;
     }}
+    .git-graph {{
+      margin: 18px 0;
+      padding: 18px;
+      overflow-x: auto;
+      border-radius: 18px;
+      background: rgba(0,0,0,.34);
+      color: #dce8ff;
+      line-height: 1.45;
+      font-size: .84rem;
+    }}
+    .branch-inventory {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-top: 18px; }}
+    .branch-chip {{ border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: rgba(255,255,255,.035); }}
+    .branch-chip strong {{ display: block; margin: 8px 0 4px; }}
+    .branch-chip small {{ color: var(--muted); line-height: 1.4; }}
     .status {{
       display: inline-block;
       padding: 1px 7px;
@@ -1090,7 +1305,14 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       letter-spacing: .06em;
     }}
     .status.done {{ color: #061208; background: var(--good); }}
+    .status.validated {{ color: #061208; background: var(--good); }}
     .status.running {{ color: #07121a; background: var(--frozen); }}
+    .status.baseline {{ color: #1b1304; background: #f3b45b; }}
+    .status.impl {{ color: #07121a; background: var(--frozen); }}
+    .status.telemetry {{ color: #061208; background: #58f2d0; }}
+    .status.archive {{ color: #150d02; background: #d6b66f; }}
+    .status.experiment {{ color: var(--text); background: rgba(255,255,255,.14); }}
+    .status.branch {{ color: var(--muted); background: rgba(255,255,255,.08); }}
     .status.blocked {{ color: #220707; background: var(--bad); }}
     .status.todo {{ color: var(--muted); background: rgba(255,255,255,.08); }}
     table {{ width: 100%; border-collapse: collapse; min-width: 1040px; }}
@@ -1126,11 +1348,18 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
         <div class="metric warn"><strong>{pct(max_actual_skip)}</strong><span>actual compute skipped</span></div>
       </div>
       <p>{'Best run: <b>' + html.escape(best.branch) + ' / ' + html.escape(best.score_fn) + '</b> at <b>' + fmt(best.final_bpb) + ' BPB</b>.' if best else ''} Learned-gate is shown separately as a gate-open proxy, because a near-1.0 gate means it is mostly <i>not</i> freezing even when the score looks healthy.</p>
+      <div class="link-row">
+        <a href="index.html">Report hub</a>
+        <a href="My_approch/analysis/index.html">Imported analysis bundle</a>
+        <a href="My_approch/stf_branch_tree.html">Standalone branch tree</a>
+      </div>
     </section>
 
     {branch_tree}
 
     {validation_ladder}
+
+    {branch_compare}
 
     <div class="section-title">
       <h2>Freeze Mini Movies</h2>
@@ -1179,6 +1408,43 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       </table>
     </div>
   </main>
+  <script>
+    (function() {{
+      const dataEl = document.getElementById("branchCompareData");
+      const select = document.getElementById("branchBaselineSelect");
+      const body = document.getElementById("branchCompareRows");
+      if (!dataEl || !select || !body) return;
+      const rows = JSON.parse(dataEl.textContent || "[]");
+      const fmt = (value, digits = 4) => Number.isFinite(value) ? value.toFixed(digits) : "-";
+      const pctValue = (value) => Number.isFinite(value) ? (value * 100).toFixed(1) + "%" : "-";
+      function render() {{
+        const baseline = rows.find((row) => row.branch === select.value) || rows[0];
+        body.innerHTML = rows.map((row) => {{
+          const bpbDelta = Number.isFinite(row.final_bpb) && Number.isFinite(baseline.final_bpb)
+            ? row.final_bpb - baseline.final_bpb
+            : null;
+          const speedDelta = Number.isFinite(row.step_ms) && Number.isFinite(baseline.step_ms)
+            ? (baseline.step_ms - row.step_ms) / baseline.step_ms
+            : null;
+          const bpbClass = Number.isFinite(bpbDelta) ? (bpbDelta <= 0 ? "good" : "bad") : "neutral";
+          const speedClass = Number.isFinite(speedDelta) ? (speedDelta >= 0 ? "good" : "bad") : "neutral";
+          return `<tr>
+            <td>${{row.branch}}</td>
+            <td>${{row.formula}}</td>
+            <td>${{row.steps || "-"}}</td>
+            <td>${{fmt(row.final_bpb)}}</td>
+            <td class="${{bpbClass}}">${{fmt(bpbDelta)}}</td>
+            <td>${{fmt(row.step_ms, 1)}}ms</td>
+            <td class="${{speedClass}}">${{pctValue(speedDelta)}}</td>
+            <td>${{pctValue(row.actual_skip)}}</td>
+            <td>${{pctValue(row.computed)}}</td>
+          </tr>`;
+        }}).join("");
+      }}
+      select.addEventListener("change", render);
+      render();
+    }})();
+  </script>
 </body>
 </html>
 """

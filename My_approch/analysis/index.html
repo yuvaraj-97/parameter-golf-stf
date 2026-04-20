@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>STF Analysis Index</title>
+  <style>
+    body { margin:0; min-height:100vh; background:radial-gradient(circle at 10% -10%, #1f4c58 0, transparent 28rem), linear-gradient(160deg,#05070b,#111827); color:#eef4ff; font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; }
+    main { max-width:900px; margin:auto; padding:52px 22px; }
+    h1 { font-size:clamp(2.4rem,6vw,5rem); letter-spacing:-.06em; line-height:.92; margin:0 0 18px; }
+    p { color:#91a0b8; line-height:1.6; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin:22px 0; }
+    a { display:block; border:1px solid #263448; border-radius:18px; background:#0b111a; color:#58d7e8; padding:16px; text-decoration:none; font-weight:800; }
+    a.primary { background:#58d7e8; color:#081018; border-color:#58d7e8; }
+    .controls { display:grid; grid-template-columns:160px 1fr auto; gap:10px; align-items:center; border:1px solid #263448; border-radius:20px; background:#0b111a; padding:14px; margin:22px 0; }
+    label { color:#91a0b8; font-weight:800; text-transform:uppercase; letter-spacing:.08em; font-size:.8rem; }
+    select, input { width:100%; border:1px solid #263448; border-radius:12px; background:#05070b; color:#eef4ff; padding:11px 12px; font-size:1rem; }
+    button { border:1px solid #58d7e8; border-radius:12px; background:#58d7e8; color:#081018; padding:11px 14px; font-size:1rem; font-weight:900; cursor:pointer; }
+    code { background:#0b111a; border:1px solid #263448; border-radius:6px; padding:1px 6px; color:#dce8ff; }
+    @media(max-width:760px) { .controls { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>STF Analysis</h1>
+  <p><a class="primary" href="../../index.html">Back to main report hub</a></p>
+  <p>Latest generated report: <code>stf_5000_shards80_branch_compare.html</code></p>
+  <div class="controls">
+    <label for="iterationSelect">Iteration</label>
+    <select id="iterationSelect"><option value="2000" >2k</option><option value="5000" selected>5k</option><option value="10000" >10k</option><option value="20000" >20k</option></select>
+    <button id="loadIteration" type="button">Load / generate</button>
+    <label for="shardSelect">Shards</label>
+    <select id="shardSelect"><option value="preferred" >Prefer 80 shards / highest available</option><option value="80" selected>Exactly 80 shards</option><option value="1" >Exactly 1 shard</option></select>
+    <span>Prefer 80 handles the 5k duplicate-run case.</span>
+    <label for="customIterations">Custom</label>
+    <input id="customIterations" inputmode="numeric" pattern="[0-9]*" placeholder="optional, e.g. 50000">
+    <button id="loadCustomIteration" type="button">Use custom</button>
+  </div>
+  <p id="status">When opened through <code>python scripts/serve_stf_analysis.py</code>, this page can run the report generator for missing iteration data. In plain file mode it will show the command to run.</p>
+  <div class="grid">
+    <a class="primary" href="stf_5000_shards80_branch_compare.html">Open latest</a>
+    <a href="stf_2000_branch_compare.html">2000 iterations</a>
+    <a href="stf_5000_branch_compare.html">5000 iterations</a>
+    <a href="stf_5000_shards80_branch_compare.html">5000 iterations, 80 shards</a>
+    <a href="stf_5000_shards1_branch_compare.html">5000 iterations, 1 shard</a>
+    <a href="stf_2k_report.html">2k alias</a>
+    <a href="../../vast_formula_summary.html">Current true-skip summary</a>
+    <a href="../stf_branch_tree.html">Standalone branch tree</a>
+  </div>
+  <p>Generated: 2026-04-16 20:58:26</p>
+  <p>Refresh command: <code>python scripts/generate_stf_analysis.py 5000 80</code></p>
+</main>
+<script>
+function selectedIteration() {
+  const custom = document.getElementById('customIterations').value.trim();
+  return custom || document.getElementById('iterationSelect').value;
+}
+function selectedShard() { return document.getElementById('shardSelect').value || 'preferred'; }
+function reportName(iter, shard) {
+  return shard === 'preferred' ? `stf_${iter}_branch_compare.html` : `stf_${iter}_shards${shard}_branch_compare.html`;
+}
+function setStatus(html) { document.getElementById('status').innerHTML = html; }
+async function loadIteration() {
+  const iter = selectedIteration();
+  const shard = selectedShard();
+  if(!/^\d+$/.test(iter)) { setStatus('Iteration must be numeric.'); return; }
+  const target = reportName(iter, shard);
+  const command = `python scripts/generate_stf_analysis.py ${iter} ${shard}`;
+  const serverMode = location.protocol === 'http:' || location.protocol === 'https:';
+  if(!serverMode) {
+    setStatus(`Static file mode cannot execute Python. Run <code>${command}</code>, then open <a href="${target}">${target}</a>.`);
+    return;
+  }
+  setStatus(`Generating/loading <code>${iter}</code> with shard mode <code>${shard}</code> from branch logs...`);
+  try {
+    const res = await fetch(`/api/report?iterations=${encodeURIComponent(iter)}&shards=${encodeURIComponent(shard)}`);
+    const body = await res.json().catch(() => ({}));
+    if(!res.ok || !body.ok) {
+      setStatus(`Generation failed. Run <code>${command}</code>. ${body.error || ''}`);
+      return;
+    }
+    window.location.href = target;
+  } catch (err) {
+    setStatus(`Could not reach the local analysis server. Run <code>python scripts/serve_stf_analysis.py</code> or run <code>${command}</code> manually.`);
+  }
+}
+document.getElementById('loadIteration').onclick = loadIteration;
+document.getElementById('loadCustomIteration').onclick = loadIteration;
+</script>
+</body>
+</html>

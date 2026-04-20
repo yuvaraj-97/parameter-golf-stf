@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>STF Report Hub</title>
+  <style>
+    :root {
+      --bg: #050806;
+      --panel: rgba(14, 22, 18, 0.88);
+      --panel-2: rgba(22, 30, 25, 0.72);
+      --text: #eef8ed;
+      --muted: #9fb2a5;
+      --line: rgba(188, 255, 214, 0.16);
+      --active: #58f2d0;
+      --accent: #f3b45b;
+    }
+    * { box-sizing: border-box; letter-spacing: 0; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(88, 242, 208, 0.18), transparent 28rem),
+        radial-gradient(circle at 90% 12%, rgba(243, 180, 91, 0.12), transparent 26rem),
+        linear-gradient(135deg, #020302, var(--bg) 52%, #0d100a);
+      font-family: Avenir Next, Avenir, Optima, Candara, sans-serif;
+    }
+    main { width: min(1120px, calc(100vw - 32px)); margin: 0 auto; padding: 46px 0 72px; }
+    .hero, .panel {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--panel);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.36);
+    }
+    .hero { padding: 34px; }
+    .panel { padding: 22px; margin-top: 18px; }
+    h1 { margin: 0 0 14px; font-size: clamp(2.4rem, 6vw, 5.2rem); line-height: 1; }
+    h2 { margin: 0 0 10px; font-size: clamp(1.5rem, 3vw, 2.4rem); }
+    p { color: var(--muted); line-height: 1.58; max-width: 780px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+    .card {
+      display: block;
+      min-height: 150px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel-2);
+      color: var(--text);
+      text-decoration: none;
+    }
+    .card:hover { border-color: rgba(88, 242, 208, 0.58); background: rgba(35, 48, 40, 0.80); }
+    .card strong { display: block; margin-bottom: 8px; color: var(--active); font-size: 1.06rem; }
+    .card span { display: block; color: var(--muted); line-height: 1.5; }
+    .primary { background: linear-gradient(135deg, rgba(88, 242, 208, 0.16), rgba(243, 180, 91, 0.06)); }
+    .tag {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 5px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    code { color: var(--text); background: rgba(255,255,255,.06); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+    ul { color: var(--muted); line-height: 1.7; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .hero { padding: 24px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <span class="tag">STF reports</span>
+      <h1>Report Hub</h1>
+      <p>This is the main entry point for the STF analysis pages now present on <code>main</code>. The current true-skip report is first; the older branch-comparison pages imported from <code>stf-quantization</code> are linked below as archived supporting views.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Current Report</h2>
+      <div class="grid">
+        <a class="card primary" href="vast_formula_summary.html">
+          <strong>Integrated STF True-Skip Summary</strong>
+          <span>Current report with branch tree, validation ladder, compute reality table, MLP true-skip results, adaptive budget results, and query-sparse status.</span>
+        </a>
+        <a class="card" href="My_approch/stf_branch_tree.html">
+          <strong>Interactive STF Branch Tree</strong>
+          <span>Older standalone branch-tree explorer showing conceptual axes and possible compound branches.</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Imported Analysis Bundle</h2>
+      <p>These pages came from <code>stf-quantization</code> with their JSON/CSV support files and generator scripts.</p>
+      <div class="grid">
+        <a class="card" href="My_approch/analysis/index.html">
+          <strong>Legacy Analysis Index</strong>
+          <span>Original bundle index for the imported branch-comparison reports.</span>
+        </a>
+        <a class="card" href="My_approch/analysis/stf_2k_report.html">
+          <strong>2k Report Alias</strong>
+          <span>Static report generated from archived 2k branch logs.</span>
+        </a>
+        <a class="card" href="My_approch/analysis/stf_2000_branch_compare.html">
+          <strong>2000 Iteration Branch Compare</strong>
+          <span>Branch comparison report with supporting CSV/JSON files.</span>
+        </a>
+        <a class="card" href="My_approch/analysis/stf_5000_branch_compare.html">
+          <strong>5000 Iteration Branch Compare</strong>
+          <span>Older 5k branch-comparison view.</span>
+        </a>
+        <a class="card" href="My_approch/analysis/stf_5000_shards80_branch_compare.html">
+          <strong>5000 Iterations, 80 Shards</strong>
+          <span>Latest page in the imported bundle.</span>
+        </a>
+        <a class="card" href="My_approch/analysis/stf_5000_shards1_branch_compare.html">
+          <strong>5000 Iterations, 1 Shard</strong>
+          <span>Companion page for the one-shard 5k comparison.</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Refresh Tools</h2>
+      <ul>
+        <li><code>scripts/summarize_vast_formula_logs.py</code> regenerates <code>vast_formula_summary.html</code>.</li>
+        <li><code>scripts/generate_stf_analysis.py</code> regenerates the imported branch-comparison pages.</li>
+        <li><code>scripts/serve_stf_analysis.py</code> serves the legacy analysis bundle with on-demand generation.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,1107 @@
+{
+  "iterations": "2000",
+  "shardFilter": "preferred",
+  "records": [
+    {
+      "branch": "baseline-repro",
+      "status": "ok",
+      "path": "runpod/experiments/2026-04-15-nvidia-geforce-rtx-4090-4gpu/baseline-repro/2026-04-15_baseline-repro_nvidia-geforce-rtx-4090_4gpu_i2000_run1/train.log",
+      "mode": "baseline",
+      "compile_model": "",
+      "train_batch_tokens": 524288,
+      "train_shards": 1,
+      "model_params": 17059912,
+      "val_points": 11,
+      "best_step": 2000,
+      "best_val_bpb": 1.3393,
+      "final_step": 2000,
+      "final_val_bpb": 1.3393,
+      "roundtrip_val_bpb": 1.34055375,
+      "int8_zlib_model_bytes": 15003848,
+      "int8_payload_bytes": 17178912,
+      "int8_raw_torch_bytes": 17224025,
+      "int8_payload_ratio": 3.91,
+      "code_bytes": 47968,
+      "total_submission_int8_zlib_bytes": 15051816,
+      "artifact_margin_bytes": 948184,
+      "step_avg_ms": 234.28,
+      "telemetry_samples": 204,
+      "gpu_util_avg": 76.33333333333333,
+      "gpu_util_p10": 0.0,
+      "gpu_util_p50": 100.0,
+      "gpu_util_p90": 100.0,
+      "gpu_util_lt80_frac": 0.23529411764705882,
+      "power_avg_w": 317.3144117647059,
+      "temp_avg_c": 56.96568627450981,
+      "mem_avg_gb": 9.943282781862745,
+      "mem_peak_gb": 10.7646484375,
+      "mem_total_gb": 23.98828125,
+      "family": "control",
+      "decision": "none",
+      "frozen_path": "none",
+      "control": "none",
+      "summary": "Control branch. No STF routing. Use this to judge whether STF helps at the same hardware and budget."
+    },
+    {
+      "branch": "stf-minimal",
+      "status": "ok",
+      "path": "runpod/experiments/2026-04-15-nvidia-geforce-rtx-4090-4gpu/stf-minimal/2026-04-15_stf-minimal_nvidia-geforce-rtx-4090_4gpu_i2000_run1/train.log",
+      "mode": "{args.stf_mode}",
+      "compile_model": "{args.compile_model}\")",
+      "train_batch_tokens": 524288,
+      "train_shards": 1,
+      "model_params": 17059912,
+      "val_points": 11,
+      "best_step": 2000,
+      "best_val_bpb": 1.4215,
+      "final_step": 2000,
+      "final_val_bpb": 1.4215,
+      "roundtrip_val_bpb": 1.42296163,
+      "int8_zlib_model_bytes": 15102490,
+      "int8_payload_bytes": 17178912,
+      "int8_raw_torch_bytes": 17224025,
+      "int8_payload_ratio": 3.91,
+      "code_bytes": 54543,
+      "total_submission_int8_zlib_bytes": 15157033,
+      "artifact_margin_bytes": 842967,
+      "step_avg_ms": 482.75,
+      "telemetry_samples": 320,
+      "gpu_util_avg": 93.646875,
+      "gpu_util_p10": 93.0,
+      "gpu_util_p50": 97.0,
+      "gpu_util_p90": 100.0,
+      "gpu_util_lt80_frac": 0.034375,
+      "power_avg_w": 327.7911875,
+      "temp_avg_c": 60.765625,
+      "mem_avg_gb": 14.82545166015625,
+      "mem_peak_gb": 15.2294921875,
+      "mem_total_gb": 23.98828125,
+      "family": "decision",
+      "decision": "hard threshold",
+      "frozen_path": "previous state",
+      "control": "min active guardrail",
+      "summary": "Plain STF: freeze low-change tokens and carry the previous hidden state forward."
+    },
+    {
+      "branch": "stf-learned-gate",
+      "status": "ok",
+      "path": "runpod/experiments/2026-04-15-nvidia-geforce-rtx-4090-4gpu/stf-learned-gate/2026-04-15_stf-learned-gate_nvidia-geforce-rtx-4090_4gpu_i2000_run1/train.log",
+      "mode": "learned_gate",
+      "compile_model": "False",
+      "train_batch_tokens": 524288,
+      "train_shards": 1,
+      "model_params": 17059930,
+      "val_points": 11,
+      "best_step": 2000,
+      "best_val_bpb": 1.3435,
+      "final_step": 2000,
+      "final_val_bpb": 1.3435,
+      "roundtrip_val_bpb": 1.34478872,
+      "int8_zlib_model_bytes": 14988516,
+      "int8_payload_bytes": 17178948,
+      "int8_raw_torch_bytes": 17224661,
+      "int8_payload_ratio": 3.91,
+      "code_bytes": 54830,
+      "total_submission_int8_zlib_bytes": 15043346,
+      "artifact_margin_bytes": 956654,
+      "step_avg_ms": 497.23,
+      "telemetry_samples": 320,
+      "gpu_util_avg": 96.990625,
+      "gpu_util_p10": 99.0,
+      "gpu_util_p50": 100.0,
+      "gpu_util_p90": 100.0,
+      "gpu_util_lt80_frac": 0.025,
+      "power_avg_w": 341.50931249999996,
+      "temp_avg_c": 61.528125,
+      "mem_avg_gb": 15.48255615234375,
+      "mem_peak_gb": 15.9189453125,
+      "mem_total_gb": 23.98828125,
+      "family": "decision",
+      "decision": "learned sigmoid gate",
+      "frozen_path": "continuous old/new blend",
+      "control": "min active guardrail",
+      "summary": "Learns the gate shape per layer instead of relying only on a fixed threshold."
+    },
+    {
+      "branch": "stf-soft-freeze",
+      "status": "ok",
+      "path": "runpod/experiments/2026-04-15-nvidia-geforce-rtx-4090-4gpu/stf-soft-freeze/2026-04-15_stf-soft-freeze_nvidia-geforce-rtx-4090_4gpu_i2000_run1/train.log",
+      "mode": "soft_freeze",
+      "compile_model": "False",
+      "train_batch_tokens": 524288,
+      "train_shards": 1,
+      "model_params": 17059912,
+      "val_points": 11,
+      "best_step": 2000,
+      "best_val_bpb": 1.3563,
+      "final_step": 2000,
+      "final_val_bpb": 1.3563,
+      "roundtrip_val_bpb": 1.3576042,
+      "int8_zlib_model_bytes": 14990670,
+      "int8_payload_bytes": 17178912,
+      "int8_raw_torch_bytes": 17224025,
+      "int8_payload_ratio": 3.91,
+      "code_bytes": 54829,
+      "total_submission_int8_zlib_bytes": 15045499,
+      "artifact_margin_bytes": 954501,
+      "step_avg_ms": 495.2,
+      "telemetry_samples": 328,
+      "gpu_util_avg": 93.63414634146342,
+      "gpu_util_p10": 94.0,
+      "gpu_util_p50": 97.0,
+      "gpu_util_p90": 100.0,
+      "gpu_util_lt80_frac": 0.039634146341463415,
+      "power_avg_w": 331.4378353658537,
+      "temp_avg_c": 61.38414634146341,
+      "mem_avg_gb": 14.864210175304878,
+      "mem_peak_gb": 15.2919921875,
+      "mem_total_gb": 23.98828125,
+      "family": "frozen path",
+      "decision": "hard threshold",
+      "frozen_path": "soft keep of new state",
+      "control": "min active guardrail",
+      "summary": "Keeps a fraction of the newly computed state for frozen tokens, reducing hard-freeze brittleness."
+    },
+    {
+      "branch": "stf-reactivation",
+      "status": "ok",
+      "path": "runpod/experiments/2026-04-15-nvidia-geforce-rtx-4090-4gpu/stf-reactivation/2026-04-15_stf-reactivation_nvidia-geforce-rtx-4090_4gpu_i2000_run1/train.log",
+      "mode": "reactivation",
+      "compile_model": "False",
+      "train_batch_tokens": 524288,
+      "train_shards": 1,
+      "model_params": 17059912,
+      "val_points": 11,
+      "best_step": 2000,
+      "best_val_bpb": 1.4216,
+      "final_step": 2000,
+      "final_val_bpb": 1.4216,
+      "roundtrip_val_bpb": 1.42282458,
+      "int8_zlib_model_bytes": 15110872,
+      "int8_payload_bytes": 17178912,
+      "int8_raw_torch_bytes": 17224025,
+      "int8_payload_ratio": 3.91,
+      "code_bytes": 54830,
+      "total_submission_int8_zlib_bytes": 15165702,
+      "artifact_margin_bytes": 834298,
+      "step_avg_ms": 477.62,
+      "telemetry_samples": 312,
+      "gpu_util_avg": 94.0576923076923,
+      "gpu_util_p10": 94.0,
+      "gpu_util_p50": 98.0,
+      "gpu_util_p90": 100.0,
+      "gpu_util_lt80_frac": 0.038461538461538464,
+      "power_avg_w": 333.63711538461536,
+      "temp_avg_c": 61.62820512820513,
+      "mem_avg_gb": 14.801000350560898,
+      "mem_peak_gb": 15.2294921875,
+      "mem_total_gb": 23.98828125,
+      "family": "control",
+      "decision": "hard threshold",
+      "frozen_path": "previous state",
+      "control": "periodic reopen",
+      "summary": "Periodically forces tokens active again so early freeze decisions are not permanent."
+    },
+    {
+      "branch": "stf-budget-regularization",
+      "status": "ok",
+      "path": "runpod/experiments/2026-04-15-nvidia-geforce-rtx-4090-4gpu/stf-budget-regularization/2026-04-15_stf-budget-regularization_nvidia-geforce-rtx-4090_4gpu_i2000_run1/train.log",
+      "mode": "budget_regularization",
+      "compile_model": "False",
+      "train_batch_tokens": 524288,
+      "train_shards": 1,
+      "model_params": 17059912,
+      "val_points": 11,
+      "best_step": 2000,
+      "best_val_bpb": 1.422,
+      "final_step": 2000,
+      "final_val_bpb": 1.422,
+      "roundtrip_val_bpb": 1.42356717,
+      "int8_zlib_model_bytes": 15107510,
+      "int8_payload_bytes": 17178912,
+      "int8_raw_torch_bytes": 17224025,
+      "int8_payload_ratio": 3.91,
+      "code_bytes": 54839,
+      "total_submission_int8_zlib_bytes": 15162349,
+      "artifact_margin_bytes": 837651,
+      "step_avg_ms": 480.29,
+      "telemetry_samples": 316,
+      "gpu_util_avg": 94.7879746835443,
+      "gpu_util_p10": 93.0,
+      "gpu_util_p50": 97.0,
+      "gpu_util_p90": 100.0,
+      "gpu_util_lt80_frac": 0.02531645569620253,
+      "power_avg_w": 333.5873734177215,
+      "temp_avg_c": 61.639240506329116,
+      "mem_avg_gb": 14.80585566653481,
+      "mem_peak_gb": 15.2294921875,
+      "mem_total_gb": 23.98828125,
+      "family": "control",
+      "decision": "adaptive threshold",
+      "frozen_path": "previous state",
+      "control": "target active budget",
+      "summary": "Adjusts threshold pressure to stay near a target active-token ratio."
+    },
+    {
+      "branch": "stf-recurrence",
+      "status": "ok",
+      "path": "runpod/experiments/2026-04-15-nvidia-geforce-rtx-4090-4gpu/stf-recurrence/2026-04-15_stf-recurrence_nvidia-geforce-rtx-4090_4gpu_i2000_run1/train.log",
+      "mode": "recurrence",
+      "compile_model": "False",
+      "train_batch_tokens": 262144,
+      "train_shards": 1,
+      "model_params": 17059912,
+      "val_points": 11,
+      "best_step": 2000,
+      "best_val_bpb": 1.3617,
+      "final_step": 2000,
+      "final_val_bpb": 1.3617,
+      "roundtrip_val_bpb": 1.36290791,
+      "int8_zlib_model_bytes": 14947256,
+      "int8_payload_bytes": 17178912,
+      "int8_raw_torch_bytes": 17224025,
+      "int8_payload_ratio": 3.91,
+      "code_bytes": 54846,
+      "total_submission_int8_zlib_bytes": 15002102,
+      "artifact_margin_bytes": 997898,
+      "step_avg_ms": 256.62,
+      "telemetry_samples": 204,
+      "gpu_util_avg": 89.93627450980392,
+      "gpu_util_p10": 91.0,
+      "gpu_util_p50": 96.0,
+      "gpu_util_p90": 98.0,
+      "gpu_util_lt80_frac": 0.058823529411764705,
+      "power_avg_w": 314.7419117647059,
+      "temp_avg_c": 61.15196078431372,
+      "mem_avg_gb": 7.800111060049019,
+      "mem_peak_gb": 8.1904296875,
+      "mem_total_gb": 23.98828125,
+      "family": "frozen path",
+      "decision": "hard threshold",
+      "frozen_path": "recurrent old/new blend",
+      "control": "min active guardrail",
+      "summary": "Uses a recurrence-like blend for frozen tokens instead of a pure old-state carry."
+    },
+    {
+      "branch": "stf-quantization",
+      "status": "ok",
+      "path": "runpod/experiments/2026-04-15-nvidia-geforce-rtx-4090-4gpu/stf-quantization/2026-04-15_stf-quantization_nvidia-geforce-rtx-4090_4gpu_i2000_run1/train.log",
+      "mode": "quantization",
+      "compile_model": "False",
+      "train_batch_tokens": 524288,
+      "train_shards": 1,
+      "model_params": 17059912,
+      "val_points": 11,
+      "best_step": 2000,
+      "best_val_bpb": 1.6983,
+      "final_step": 2000,
+      "final_val_bpb": 1.6983,
+      "roundtrip_val_bpb": 1.69914461,
+      "int8_zlib_model_bytes": 14990607,
+      "int8_payload_bytes": 17178912,
+      "int8_raw_torch_bytes": 17224025,
+      "int8_payload_ratio": 3.91,
+      "code_bytes": 54830,
+      "total_submission_int8_zlib_bytes": 15045437,
+      "artifact_margin_bytes": 954563,
+      "step_avg_ms": 488.12,
+      "telemetry_samples": 320,
+      "gpu_util_avg": 95.140625,
+      "gpu_util_p10": 94.0,
+      "gpu_util_p50": 97.0,
+      "gpu_util_p90": 100.0,
+      "gpu_util_lt80_frac": 0.025,
+      "power_avg_w": 334.67296875,
+      "temp_avg_c": 61.7,
+      "mem_avg_gb": 14.88651123046875,
+      "mem_peak_gb": 15.2919921875,
+      "mem_total_gb": 23.98828125,
+      "family": "frozen path",
+      "decision": "hard threshold",
+      "frozen_path": "quantized previous state",
+      "control": "min active guardrail",
+      "summary": "Tests whether frozen tokens can carry a cheaper quantized state."
+    }
+  ],
+  "curves": {
+    "baseline-repro": [
+      {
+        "step": 0,
+        "total": 2000,
+        "val_loss": 6.9357,
+        "val_bpb": 4.1077,
+        "train_time_ms": 0.0,
+        "step_avg_ms": 0.04
+      },
+      {
+        "step": 200,
+        "total": 2000,
+        "val_loss": 2.8281,
+        "val_bpb": 1.675,
+        "train_time_ms": 46508.0,
+        "step_avg_ms": 232.54
+      },
+      {
+        "step": 400,
+        "total": 2000,
+        "val_loss": 2.5616,
+        "val_bpb": 1.5171,
+        "train_time_ms": 93373.0,
+        "step_avg_ms": 233.43
+      },
+      {
+        "step": 600,
+        "total": 2000,
+        "val_loss": 2.4497,
+        "val_bpb": 1.4508,
+        "train_time_ms": 140296.0,
+        "step_avg_ms": 233.83
+      },
+      {
+        "step": 800,
+        "total": 2000,
+        "val_loss": 2.3838,
+        "val_bpb": 1.4118,
+        "train_time_ms": 187168.0,
+        "step_avg_ms": 233.96
+      },
+      {
+        "step": 1000,
+        "total": 2000,
+        "val_loss": 2.3397,
+        "val_bpb": 1.3857,
+        "train_time_ms": 234025.0,
+        "step_avg_ms": 234.02
+      },
+      {
+        "step": 1200,
+        "total": 2000,
+        "val_loss": 2.3129,
+        "val_bpb": 1.3698,
+        "train_time_ms": 280975.0,
+        "step_avg_ms": 234.15
+      },
+      {
+        "step": 1400,
+        "total": 2000,
+        "val_loss": 2.2966,
+        "val_bpb": 1.3602,
+        "train_time_ms": 327862.0,
+        "step_avg_ms": 234.19
+      },
+      {
+        "step": 1600,
+        "total": 2000,
+        "val_loss": 2.2822,
+        "val_bpb": 1.3516,
+        "train_time_ms": 374754.0,
+        "step_avg_ms": 234.22
+      },
+      {
+        "step": 1800,
+        "total": 2000,
+        "val_loss": 2.2718,
+        "val_bpb": 1.3455,
+        "train_time_ms": 421631.0,
+        "step_avg_ms": 234.24
+      },
+      {
+        "step": 2000,
+        "total": 2000,
+        "val_loss": 2.2613,
+        "val_bpb": 1.3393,
+        "train_time_ms": 468556.0,
+        "step_avg_ms": 234.28
+      }
+    ],
+    "stf-minimal": [
+      {
+        "step": 0,
+        "total": 2000,
+        "val_loss": 6.9357,
+        "val_bpb": 4.1077,
+        "train_time_ms": 0.0,
+        "step_avg_ms": 0.03
+      },
+      {
+        "step": 200,
+        "total": 2000,
+        "val_loss": 2.9361,
+        "val_bpb": 1.7389,
+        "train_time_ms": 97065.0,
+        "step_avg_ms": 485.32
+      },
+      {
+        "step": 400,
+        "total": 2000,
+        "val_loss": 2.7035,
+        "val_bpb": 1.6012,
+        "train_time_ms": 193643.0,
+        "step_avg_ms": 484.11
+      },
+      {
+        "step": 600,
+        "total": 2000,
+        "val_loss": 2.6073,
+        "val_bpb": 1.5442,
+        "train_time_ms": 290631.0,
+        "step_avg_ms": 484.39
+      },
+      {
+        "step": 800,
+        "total": 2000,
+        "val_loss": 2.545,
+        "val_bpb": 1.5073,
+        "train_time_ms": 387155.0,
+        "step_avg_ms": 483.94
+      },
+      {
+        "step": 1000,
+        "total": 2000,
+        "val_loss": 2.4944,
+        "val_bpb": 1.4773,
+        "train_time_ms": 483541.0,
+        "step_avg_ms": 483.54
+      },
+      {
+        "step": 1200,
+        "total": 2000,
+        "val_loss": 2.4621,
+        "val_bpb": 1.4582,
+        "train_time_ms": 579921.0,
+        "step_avg_ms": 483.27
+      },
+      {
+        "step": 1400,
+        "total": 2000,
+        "val_loss": 2.4422,
+        "val_bpb": 1.4464,
+        "train_time_ms": 676739.0,
+        "step_avg_ms": 483.39
+      },
+      {
+        "step": 1600,
+        "total": 2000,
+        "val_loss": 2.4249,
+        "val_bpb": 1.4362,
+        "train_time_ms": 773220.0,
+        "step_avg_ms": 483.26
+      },
+      {
+        "step": 1800,
+        "total": 2000,
+        "val_loss": 2.4124,
+        "val_bpb": 1.4287,
+        "train_time_ms": 869598.0,
+        "step_avg_ms": 483.11
+      },
+      {
+        "step": 2000,
+        "total": 2000,
+        "val_loss": 2.4002,
+        "val_bpb": 1.4215,
+        "train_time_ms": 965500.0,
+        "step_avg_ms": 482.75
+      }
+    ],
+    "stf-learned-gate": [
+      {
+        "step": 0,
+        "total": 2000,
+        "val_loss": 6.9357,
+        "val_bpb": 4.1077,
+        "train_time_ms": 0.0,
+        "step_avg_ms": 0.04
+      },
+      {
+        "step": 200,
+        "total": 2000,
+        "val_loss": 2.9217,
+        "val_bpb": 1.7304,
+        "train_time_ms": 99491.0,
+        "step_avg_ms": 497.45
+      },
+      {
+        "step": 400,
+        "total": 2000,
+        "val_loss": 2.6031,
+        "val_bpb": 1.5417,
+        "train_time_ms": 199040.0,
+        "step_avg_ms": 497.6
+      },
+      {
+        "step": 600,
+        "total": 2000,
+        "val_loss": 2.4788,
+        "val_bpb": 1.4681,
+        "train_time_ms": 298498.0,
+        "step_avg_ms": 497.5
+      },
+      {
+        "step": 800,
+        "total": 2000,
+        "val_loss": 2.4121,
+        "val_bpb": 1.4286,
+        "train_time_ms": 397874.0,
+        "step_avg_ms": 497.34
+      },
+      {
+        "step": 1000,
+        "total": 2000,
+        "val_loss": 2.3597,
+        "val_bpb": 1.3976,
+        "train_time_ms": 497232.0,
+        "step_avg_ms": 497.23
+      },
+      {
+        "step": 1200,
+        "total": 2000,
+        "val_loss": 2.3308,
+        "val_bpb": 1.3804,
+        "train_time_ms": 596696.0,
+        "step_avg_ms": 497.25
+      },
+      {
+        "step": 1400,
+        "total": 2000,
+        "val_loss": 2.3097,
+        "val_bpb": 1.368,
+        "train_time_ms": 696146.0,
+        "step_avg_ms": 497.25
+      },
+      {
+        "step": 1600,
+        "total": 2000,
+        "val_loss": 2.2924,
+        "val_bpb": 1.3577,
+        "train_time_ms": 795557.0,
+        "step_avg_ms": 497.22
+      },
+      {
+        "step": 1800,
+        "total": 2000,
+        "val_loss": 2.2798,
+        "val_bpb": 1.3503,
+        "train_time_ms": 894974.0,
+        "step_avg_ms": 497.21
+      },
+      {
+        "step": 2000,
+        "total": 2000,
+        "val_loss": 2.2684,
+        "val_bpb": 1.3435,
+        "train_time_ms": 994452.0,
+        "step_avg_ms": 497.23
+      }
+    ],
+    "stf-soft-freeze": [
+      {
+        "step": 0,
+        "total": 2000,
+        "val_loss": 6.9357,
+        "val_bpb": 4.1077,
+        "train_time_ms": 0.0,
+        "step_avg_ms": 0.05
+      },
+      {
+        "step": 200,
+        "total": 2000,
+        "val_loss": 2.9068,
+        "val_bpb": 1.7216,
+        "train_time_ms": 99699.0,
+        "step_avg_ms": 498.5
+      },
+      {
+        "step": 400,
+        "total": 2000,
+        "val_loss": 2.6267,
+        "val_bpb": 1.5557,
+        "train_time_ms": 199934.0,
+        "step_avg_ms": 499.83
+      },
+      {
+        "step": 600,
+        "total": 2000,
+        "val_loss": 2.5058,
+        "val_bpb": 1.4841,
+        "train_time_ms": 299088.0,
+        "step_avg_ms": 498.48
+      },
+      {
+        "step": 800,
+        "total": 2000,
+        "val_loss": 2.4343,
+        "val_bpb": 1.4418,
+        "train_time_ms": 398012.0,
+        "step_avg_ms": 497.52
+      },
+      {
+        "step": 1000,
+        "total": 2000,
+        "val_loss": 2.3849,
+        "val_bpb": 1.4125,
+        "train_time_ms": 496833.0,
+        "step_avg_ms": 496.83
+      },
+      {
+        "step": 1200,
+        "total": 2000,
+        "val_loss": 2.3532,
+        "val_bpb": 1.3937,
+        "train_time_ms": 595512.0,
+        "step_avg_ms": 496.26
+      },
+      {
+        "step": 1400,
+        "total": 2000,
+        "val_loss": 2.3337,
+        "val_bpb": 1.3821,
+        "train_time_ms": 694329.0,
+        "step_avg_ms": 495.95
+      },
+      {
+        "step": 1600,
+        "total": 2000,
+        "val_loss": 2.3157,
+        "val_bpb": 1.3715,
+        "train_time_ms": 792780.0,
+        "step_avg_ms": 495.49
+      },
+      {
+        "step": 1800,
+        "total": 2000,
+        "val_loss": 2.3018,
+        "val_bpb": 1.3632,
+        "train_time_ms": 891504.0,
+        "step_avg_ms": 495.28
+      },
+      {
+        "step": 2000,
+        "total": 2000,
+        "val_loss": 2.2901,
+        "val_bpb": 1.3563,
+        "train_time_ms": 990393.0,
+        "step_avg_ms": 495.2
+      }
+    ],
+    "stf-reactivation": [
+      {
+        "step": 0,
+        "total": 2000,
+        "val_loss": 6.9357,
+        "val_bpb": 4.1077,
+        "train_time_ms": 0.0,
+        "step_avg_ms": 0.04
+      },
+      {
+        "step": 200,
+        "total": 2000,
+        "val_loss": 2.937,
+        "val_bpb": 1.7395,
+        "train_time_ms": 95615.0,
+        "step_avg_ms": 478.08
+      },
+      {
+        "step": 400,
+        "total": 2000,
+        "val_loss": 2.7028,
+        "val_bpb": 1.6007,
+        "train_time_ms": 191204.0,
+        "step_avg_ms": 478.01
+      },
+      {
+        "step": 600,
+        "total": 2000,
+        "val_loss": 2.6096,
+        "val_bpb": 1.5456,
+        "train_time_ms": 286673.0,
+        "step_avg_ms": 477.79
+      },
+      {
+        "step": 800,
+        "total": 2000,
+        "val_loss": 2.5504,
+        "val_bpb": 1.5105,
+        "train_time_ms": 382074.0,
+        "step_avg_ms": 477.59
+      },
+      {
+        "step": 1000,
+        "total": 2000,
+        "val_loss": 2.5012,
+        "val_bpb": 1.4813,
+        "train_time_ms": 477554.0,
+        "step_avg_ms": 477.55
+      },
+      {
+        "step": 1200,
+        "total": 2000,
+        "val_loss": 2.4665,
+        "val_bpb": 1.4608,
+        "train_time_ms": 573052.0,
+        "step_avg_ms": 477.54
+      },
+      {
+        "step": 1400,
+        "total": 2000,
+        "val_loss": 2.4452,
+        "val_bpb": 1.4482,
+        "train_time_ms": 668709.0,
+        "step_avg_ms": 477.65
+      },
+      {
+        "step": 1600,
+        "total": 2000,
+        "val_loss": 2.4262,
+        "val_bpb": 1.437,
+        "train_time_ms": 764152.0,
+        "step_avg_ms": 477.6
+      },
+      {
+        "step": 1800,
+        "total": 2000,
+        "val_loss": 2.4123,
+        "val_bpb": 1.4287,
+        "train_time_ms": 859675.0,
+        "step_avg_ms": 477.6
+      },
+      {
+        "step": 2000,
+        "total": 2000,
+        "val_loss": 2.4003,
+        "val_bpb": 1.4216,
+        "train_time_ms": 955242.0,
+        "step_avg_ms": 477.62
+      }
+    ],
+    "stf-budget-regularization": [
+      {
+        "step": 0,
+        "total": 2000,
+        "val_loss": 6.9357,
+        "val_bpb": 4.1077,
+        "train_time_ms": 0.0,
+        "step_avg_ms": 0.05
+      },
+      {
+        "step": 200,
+        "total": 2000,
+        "val_loss": 2.933,
+        "val_bpb": 1.7371,
+        "train_time_ms": 96279.0,
+        "step_avg_ms": 481.4
+      },
+      {
+        "step": 400,
+        "total": 2000,
+        "val_loss": 2.7019,
+        "val_bpb": 1.6002,
+        "train_time_ms": 192377.0,
+        "step_avg_ms": 480.94
+      },
+      {
+        "step": 600,
+        "total": 2000,
+        "val_loss": 2.6095,
+        "val_bpb": 1.5455,
+        "train_time_ms": 288431.0,
+        "step_avg_ms": 480.72
+      },
+      {
+        "step": 800,
+        "total": 2000,
+        "val_loss": 2.5487,
+        "val_bpb": 1.5095,
+        "train_time_ms": 384439.0,
+        "step_avg_ms": 480.55
+      },
+      {
+        "step": 1000,
+        "total": 2000,
+        "val_loss": 2.4996,
+        "val_bpb": 1.4804,
+        "train_time_ms": 480442.0,
+        "step_avg_ms": 480.44
+      },
+      {
+        "step": 1200,
+        "total": 2000,
+        "val_loss": 2.4661,
+        "val_bpb": 1.4605,
+        "train_time_ms": 576515.0,
+        "step_avg_ms": 480.43
+      },
+      {
+        "step": 1400,
+        "total": 2000,
+        "val_loss": 2.4444,
+        "val_bpb": 1.4477,
+        "train_time_ms": 672504.0,
+        "step_avg_ms": 480.36
+      },
+      {
+        "step": 1600,
+        "total": 2000,
+        "val_loss": 2.4255,
+        "val_bpb": 1.4365,
+        "train_time_ms": 768508.0,
+        "step_avg_ms": 480.32
+      },
+      {
+        "step": 1800,
+        "total": 2000,
+        "val_loss": 2.4135,
+        "val_bpb": 1.4294,
+        "train_time_ms": 864541.0,
+        "step_avg_ms": 480.3
+      },
+      {
+        "step": 2000,
+        "total": 2000,
+        "val_loss": 2.4009,
+        "val_bpb": 1.422,
+        "train_time_ms": 960587.0,
+        "step_avg_ms": 480.29
+      }
+    ],
+    "stf-recurrence": [
+      {
+        "step": 0,
+        "total": 2000,
+        "val_loss": 6.9357,
+        "val_bpb": 4.1077,
+        "train_time_ms": 0.0,
+        "step_avg_ms": 0.03
+      },
+      {
+        "step": 200,
+        "total": 2000,
+        "val_loss": 3.0236,
+        "val_bpb": 1.7907,
+        "train_time_ms": 50230.0,
+        "step_avg_ms": 251.15
+      },
+      {
+        "step": 400,
+        "total": 2000,
+        "val_loss": 2.7066,
+        "val_bpb": 1.603,
+        "train_time_ms": 101470.0,
+        "step_avg_ms": 253.68
+      },
+      {
+        "step": 600,
+        "total": 2000,
+        "val_loss": 2.5776,
+        "val_bpb": 1.5266,
+        "train_time_ms": 153018.0,
+        "step_avg_ms": 255.03
+      },
+      {
+        "step": 800,
+        "total": 2000,
+        "val_loss": 2.4968,
+        "val_bpb": 1.4787,
+        "train_time_ms": 204684.0,
+        "step_avg_ms": 255.85
+      },
+      {
+        "step": 1000,
+        "total": 2000,
+        "val_loss": 2.437,
+        "val_bpb": 1.4433,
+        "train_time_ms": 256913.0,
+        "step_avg_ms": 256.91
+      },
+      {
+        "step": 1200,
+        "total": 2000,
+        "val_loss": 2.3928,
+        "val_bpb": 1.4172,
+        "train_time_ms": 308929.0,
+        "step_avg_ms": 257.44
+      },
+      {
+        "step": 1400,
+        "total": 2000,
+        "val_loss": 2.36,
+        "val_bpb": 1.3977,
+        "train_time_ms": 360761.0,
+        "step_avg_ms": 257.69
+      },
+      {
+        "step": 1600,
+        "total": 2000,
+        "val_loss": 2.3363,
+        "val_bpb": 1.3837,
+        "train_time_ms": 411718.0,
+        "step_avg_ms": 257.32
+      },
+      {
+        "step": 1800,
+        "total": 2000,
+        "val_loss": 2.3149,
+        "val_bpb": 1.371,
+        "train_time_ms": 462531.0,
+        "step_avg_ms": 256.96
+      },
+      {
+        "step": 2000,
+        "total": 2000,
+        "val_loss": 2.2992,
+        "val_bpb": 1.3617,
+        "train_time_ms": 513237.0,
+        "step_avg_ms": 256.62
+      }
+    ],
+    "stf-quantization": [
+      {
+        "step": 0,
+        "total": 2000,
+        "val_loss": 6.9357,
+        "val_bpb": 4.1077,
+        "train_time_ms": 0.0,
+        "step_avg_ms": 0.04
+      },
+      {
+        "step": 200,
+        "total": 2000,
+        "val_loss": 3.5035,
+        "val_bpb": 2.075,
+        "train_time_ms": 97671.0,
+        "step_avg_ms": 488.35
+      },
+      {
+        "step": 400,
+        "total": 2000,
+        "val_loss": 3.2043,
+        "val_bpb": 1.8978,
+        "train_time_ms": 195285.0,
+        "step_avg_ms": 488.21
+      },
+      {
+        "step": 600,
+        "total": 2000,
+        "val_loss": 3.1156,
+        "val_bpb": 1.8452,
+        "train_time_ms": 292734.0,
+        "step_avg_ms": 487.89
+      },
+      {
+        "step": 800,
+        "total": 2000,
+        "val_loss": 3.046,
+        "val_bpb": 1.804,
+        "train_time_ms": 390189.0,
+        "step_avg_ms": 487.74
+      },
+      {
+        "step": 1000,
+        "total": 2000,
+        "val_loss": 2.9861,
+        "val_bpb": 1.7686,
+        "train_time_ms": 487815.0,
+        "step_avg_ms": 487.81
+      },
+      {
+        "step": 1200,
+        "total": 2000,
+        "val_loss": 2.9552,
+        "val_bpb": 1.7502,
+        "train_time_ms": 585287.0,
+        "step_avg_ms": 487.74
+      },
+      {
+        "step": 1400,
+        "total": 2000,
+        "val_loss": 2.9282,
+        "val_bpb": 1.7343,
+        "train_time_ms": 683086.0,
+        "step_avg_ms": 487.92
+      },
+      {
+        "step": 1600,
+        "total": 2000,
+        "val_loss": 2.9071,
+        "val_bpb": 1.7217,
+        "train_time_ms": 780815.0,
+        "step_avg_ms": 488.01
+      },
+      {
+        "step": 1800,
+        "total": 2000,
+        "val_loss": 2.8886,
+        "val_bpb": 1.7108,
+        "train_time_ms": 878471.0,
+        "step_avg_ms": 488.04
+      },
+      {
+        "step": 2000,
+        "total": 2000,
+        "val_loss": 2.8675,
+        "val_bpb": 1.6983,
+        "train_time_ms": 976236.0,
+        "step_avg_ms": 488.12
+      }
+    ]
+  },
+  "missing": [],
+  "branchModel": {
+    "baseline-repro": {
+      "family": "control",
+      "decision": "none",
+      "frozen_path": "none",
+      "control": "none",
+      "summary": "Control branch. No STF routing. Use this to judge whether STF helps at the same hardware and budget."
+    },
+    "stf-minimal": {
+      "family": "decision",
+      "decision": "hard threshold",
+      "frozen_path": "previous state",
+      "control": "min active guardrail",
+      "summary": "Plain STF: freeze low-change tokens and carry the previous hidden state forward."
+    },
+    "stf-learned-gate": {
+      "family": "decision",
+      "decision": "learned sigmoid gate",
+      "frozen_path": "continuous old/new blend",
+      "control": "min active guardrail",
+      "summary": "Learns the gate shape per layer instead of relying only on a fixed threshold."
+    },
+    "stf-soft-freeze": {
+      "family": "frozen path",
+      "decision": "hard threshold",
+      "frozen_path": "soft keep of new state",
+      "control": "min active guardrail",
+      "summary": "Keeps a fraction of the newly computed state for frozen tokens, reducing hard-freeze brittleness."
+    },
+    "stf-reactivation": {
+      "family": "control",
+      "decision": "hard threshold",
+      "frozen_path": "previous state",
+      "control": "periodic reopen",
+      "summary": "Periodically forces tokens active again so early freeze decisions are not permanent."
+    },
+    "stf-budget-regularization": {
+      "family": "control",
+      "decision": "adaptive threshold",
+      "frozen_path": "previous state",
+      "control": "target active budget",
+      "summary": "Adjusts threshold pressure to stay near a target active-token ratio."
+    },
+    "stf-recurrence": {
+      "family": "frozen path",
+      "decision": "hard threshold",
+      "frozen_path": "recurrent old/new blend",
+      "control": "min active guardrail",
+      "summary": "Uses a recurrence-like blend for frozen tokens instead of a pure old-state carry."
+    },
+    "stf-quantization": {
+      "family": "frozen path",
+      "decision": "hard threshold",
+      "frozen_path": "quantized previous state",
+      "control": "min active guardrail",
+      "summary": "Tests whether frozen tokens can carry a cheaper quantized state."
+    }
+  }
+}
