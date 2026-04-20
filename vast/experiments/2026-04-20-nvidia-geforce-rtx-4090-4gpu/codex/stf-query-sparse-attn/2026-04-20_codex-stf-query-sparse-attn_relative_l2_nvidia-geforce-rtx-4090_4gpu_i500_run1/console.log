@@ -1,0 +1,22 @@
+timestamp=2026-04-20T06:41:37Z
+branch=codex/stf-query-sparse-attn
+run_id=2026-04-20_codex-stf-query-sparse-attn_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1
+score_fn=relative_l2
+nproc_per_node=4
+W0420 06:41:39.305000 3029 torch/distributed/run.py:803] 
+W0420 06:41:39.305000 3029 torch/distributed/run.py:803] *****************************************
+W0420 06:41:39.305000 3029 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0420 06:41:39.305000 3029 torch/distributed/run.py:803] *****************************************
+logs/2026-04-20_codex-stf-query-sparse-attn_relative_l2_nvidia-geforce-rtx-4090_4gpu_i500_run1.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=./data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=./data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:17059912
+world_size:4 grad_accum_steps:2
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.05 head_lr:0.0 matrix_lr:0.04 scalar_lr:0.04
+train_batch_tokens:524288 train_seq_len:1024 iterations:500 warmup_steps:0 max_wallclock_seconds:0.000
+compile_model:False
+stf_mode:soft_freeze stf_warmup_layers:3 stf_depth_cap:0 stf_threshold:0.045 stf_ema_decay:0.85 stf_min_active_ratio:0.75 stf_score_fn:relative_l2 stf_compute_mode:query_sparse_attn_mlp_active_rows stf_active_selection:topk_budget stf_telemetry:True
+seed:1337
