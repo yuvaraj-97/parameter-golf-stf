@@ -1,0 +1,67 @@
+[2026-04-20T04:40:23Z] SERIES STARTED
+
+Branches (1): codex/stf-mlp-skip-runner
+Formulas (1): relative_l2
+Total variants: 1
+Progress: ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0/1
+Iterations: 10000
+GPU: 4x NVIDIA GeForce RTX 4090
+Pod: 5d1e95863b8e
+From https://github.com/yuvaraj-97/parameter-golf-stf
+ * branch            codex/stf-mlp-skip-runner -> FETCH_HEAD
+error: Your local changes to the following files would be overwritten by checkout:
+	vast/experiments/2026-04-20-nvidia-geforce-rtx-4090-4gpu/codex/stf-mlp-skip-runner/2026-04-20_codex-stf-mlp-skip-runner_relative_l2_nvidia-geforce-rtx-4090_4gpu_i2000_run1/README.md
+	vast/experiments/2026-04-20-nvidia-geforce-rtx-4090-4gpu/codex/stf-mlp-skip-runner/2026-04-20_codex-stf-mlp-skip-runner_relative_l2_nvidia-geforce-rtx-4090_4gpu_i2000_run1/train.log
+Please commit your changes or stash them before you switch branches.
+Aborting
+[2026-04-20T04:40:24Z] STOPPED
+
+Reason: Vast STF formula series crashed
+Exit: 1
+
+Progress: ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0/1
+Branch: codex/stf-mlp-skip-runner (1/1)
+Formula: not set (0/1)
+Run: not assigned
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 10000
+Pod: 5d1e95863b8e
+
+Key error:
+No console summary available.
+
+Action: attend to the pod. (1/3)
+[2026-04-20T04:40:29Z] STOPPED
+
+Reason: Vast STF formula series crashed
+Exit: 1
+
+Progress: ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0/1
+Branch: codex/stf-mlp-skip-runner (1/1)
+Formula: not set (0/1)
+Run: not assigned
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 10000
+Pod: 5d1e95863b8e
+
+Key error:
+No console summary available.
+
+Action: attend to the pod. (2/3)
+[2026-04-20T04:40:35Z] STOPPED
+
+Reason: Vast STF formula series crashed
+Exit: 1
+
+Progress: ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ 0/1
+Branch: codex/stf-mlp-skip-runner (1/1)
+Formula: not set (0/1)
+Run: not assigned
+GPU: 4x NVIDIA GeForce RTX 4090
+Iterations: 10000
+Pod: 5d1e95863b8e
+
+Key error:
+No console summary available.
+
+Action: attend to the pod. (3/3)
