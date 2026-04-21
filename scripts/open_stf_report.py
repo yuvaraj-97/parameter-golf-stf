@@ -15,8 +15,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def server_url(host: str, port: int) -> str:
-    return f"http://{host}:{port}/index.html"
+def server_url(host: str, port: int, page: str = "vast_formula_summary.html") -> str:
+    return f"http://{host}:{port}/{page}"
 
 
 def server_is_ready(host: str, port: int) -> bool:
@@ -50,15 +50,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--page", default="vast_formula_summary.html", choices=["vast_formula_summary.html", "index.html"])
     parser.add_argument("--no-open", action="store_true", help="start/check the server without opening a browser")
     args = parser.parse_args()
 
     if not server_is_ready(args.host, args.port):
         start_server(args.host, args.port)
         if not wait_until_ready(args.host, args.port):
-            raise SystemExit(f"Could not start report server at {server_url(args.host, args.port)}")
+            raise SystemExit(f"Could not start report server at {server_url(args.host, args.port, args.page)}")
 
-    url = server_url(args.host, args.port)
+    url = server_url(args.host, args.port, args.page)
     if not args.no_open:
         webbrowser.open(url)
     print(url)

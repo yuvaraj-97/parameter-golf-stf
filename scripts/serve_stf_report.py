@@ -23,14 +23,31 @@ def report_inputs() -> list[str]:
 
 
 def refresh_report() -> subprocess.CompletedProcess[str]:
-    command = [
-        sys.executable,
-        "scripts/summarize_vast_formula_logs.py",
-        *report_inputs(),
-        "--html",
-        "index.html",
-    ]
-    return subprocess.run(command, cwd=ROOT, text=True, capture_output=True, check=False)
+    inputs = report_inputs()
+    combined_stdout: list[str] = []
+    combined_stderr: list[str] = []
+    returncode = 0
+    for output in ("index.html", "vast_formula_summary.html"):
+        command = [
+            sys.executable,
+            "scripts/summarize_vast_formula_logs.py",
+            *inputs,
+            "--html",
+            output,
+        ]
+        result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True, check=False)
+        combined_stdout.append(result.stdout)
+        combined_stderr.append(result.stderr)
+        if result.returncode != 0:
+            returncode = result.returncode
+            break
+
+    return subprocess.CompletedProcess(
+        args="refresh STF reports",
+        returncode=returncode,
+        stdout="\n".join(combined_stdout),
+        stderr="\n".join(combined_stderr),
+    )
 
 
 class ReportHandler(SimpleHTTPRequestHandler):
@@ -68,7 +85,8 @@ def main() -> None:
     args = parser.parse_args()
 
     server = ThreadingHTTPServer((args.host, args.port), ReportHandler)
-    print(f"Serving STF report at http://{args.host}:{args.port}/index.html")
+    print(f"Serving STF report at http://{args.host}:{args.port}/vast_formula_summary.html")
+    print(f"Mirror page is also available at http://{args.host}:{args.port}/index.html")
     print("Use the floating Refresh data button to regenerate index.html.")
     server.serve_forever()
 

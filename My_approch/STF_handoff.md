@@ -160,3 +160,4 @@ Second restoration pass:
 - The ambiguous white marker in the outcome map remains removed; the bars alone encode quality, learning, and wall-clock.
 - `scripts/serve_stf_report.py` now returns CORS headers so a `file://` page can still call `http://127.0.0.1:8765/refresh` if the local server is already running. A browser still cannot start Python by itself; `scripts/open_stf_report.py` remains the one-command launcher that starts/reuses the server.
 - The navigation footer is a fixed bottom-center floating dock with section links plus a refresh button. The refresh button posts to the Python-backed server endpoint and then reloads the page.
+- `vast_formula_summary.html` and `index.html` are now generated as matching dashboard pages. The refresh backend regenerates both, because users may open either filename. The launcher defaults to `vast_formula_summary.html`.
