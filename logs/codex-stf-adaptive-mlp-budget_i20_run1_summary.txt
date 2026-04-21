@@ -1,0 +1,1 @@
+codex/stf-adaptive-mlp-budget	relative_l2	OK	final_int8_zlib_roundtrip_exact val_loss:5.80943972 val_bpb:3.44067743	vast/experiments/2026-04-21-nvidia-h100-80gb-hbm3-8gpu/codex/stf-adaptive-mlp-budget/2026-04-21_codex-stf-adaptive-mlp-budget_relative_l2_nvidia-h100-80gb-hbm3_8gpu_i20_run1
