@@ -15,10 +15,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def report_inputs() -> list[str]:
-    patterns = ["vast*.log", "vast/experiments/**/console.log"]
+    patterns = ["vast*.log", "logs/*.txt", "vast/experiments/**/console.log"]
     paths: list[str] = []
     for pattern in patterns:
-        paths.extend(glob.glob(str(ROOT / pattern), recursive=True))
+        for path in glob.glob(str(ROOT / pattern), recursive=True):
+            name = Path(path).name
+            if name.endswith(".console.txt") or "summary" in name:
+                continue
+            paths.append(path)
     return sorted(str(Path(path).relative_to(ROOT)) for path in paths)
 
 

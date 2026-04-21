@@ -118,14 +118,31 @@ def get_variant(variants: dict[tuple[str, str, str], Variant], source: str, bran
     return variants[key]
 
 
+def infer_run_metadata(path: Path) -> tuple[str, str, str]:
+    stem = path.name.removesuffix(".console.txt").removesuffix(".txt").removesuffix(".log")
+    score_names = ("relative_l2", "direction", "cosine", "l2")
+    for score_fn in score_names:
+        marker = f"_{score_fn}_"
+        if marker not in stem:
+            continue
+        prefix, rest = stem.split(marker, 1)
+        branch_part = prefix
+        if re.match(r"^\d{4}-\d{2}-\d{2}_", branch_part):
+            branch_part = branch_part.split("_", 1)[1]
+        branch = branch_part
+        if branch.startswith("codex-"):
+            branch = "codex/" + branch.removeprefix("codex-")
+        run_id = f"{prefix}_{score_fn}_{rest}"
+        return branch, score_fn, run_id
+    return "", "", ""
+
+
 def parse_logs(paths: list[Path]) -> list[Variant]:
     variants: dict[tuple[str, str, str], Variant] = {}
 
     for path in paths:
         source = str(path)
-        current_branch = ""
-        current_score_fn = ""
-        current_run_id = ""
+        current_branch, current_score_fn, current_run_id = infer_run_metadata(path)
         with path.open("r", encoding="utf-8", errors="replace") as handle:
             for raw in handle:
                 line = raw.strip()
@@ -273,10 +290,20 @@ def print_table(title: str, rows: list[Variant]) -> None:
     print()
 
 
+def best_variant(current: Variant | None, candidate: Variant) -> Variant:
+    if current is None:
+        return candidate
+    current_bpb = current.final_bpb if current.final_bpb is not None else float("inf")
+    candidate_bpb = candidate.final_bpb if candidate.final_bpb is not None else float("inf")
+    if candidate_bpb != current_bpb:
+        return candidate if candidate_bpb < current_bpb else current
+    return candidate if variant_steps(candidate) > variant_steps(current) else current
+
+
 def print_baseline_comparison(rows: list[Variant], baseline: str) -> None:
     by_branch: dict[str, dict[str, Variant]] = defaultdict(dict)
     for variant in rows:
-        by_branch[variant.branch][variant.score_fn] = variant
+        by_branch[variant.branch][variant.score_fn] = best_variant(by_branch[variant.branch].get(variant.score_fn), variant)
 
     print(f"Best completed formula compared with baseline '{baseline}'")
     print("branch | best_formula | best_bpb | baseline_bpb | delta_bpb | relative")
@@ -909,6 +936,13 @@ def render_branch_tree(completed: list[Variant]) -> str:
 def discover_run_log_paths() -> list[Path]:
     paths: set[Path] = set()
     paths.update(Path(".").glob("vast*.log"))
+    logs_root = Path("logs")
+    if logs_root.exists():
+        paths.update(
+            path
+            for path in logs_root.glob("*.txt")
+            if not path.name.endswith(".console.txt") and "summary" not in path.name
+        )
     vast_root = Path("vast") / "experiments"
     if vast_root.exists():
         paths.update(vast_root.rglob("console.log"))
@@ -923,6 +957,9 @@ def run_group_key(path: Path) -> str:
 
 
 def branch_from_path(path: Path) -> str:
+    inferred_branch, _, _ = infer_run_metadata(path)
+    if inferred_branch:
+        return inferred_branch
     parts = path.parts
     if len(parts) >= 4 and parts[0] == "vast" and parts[1] == "experiments":
         if len(parts) >= 6 and parts[3] == "codex":
@@ -935,11 +972,13 @@ def branch_from_path(path: Path) -> str:
 
 
 def parse_run_log_summary(path: Path) -> dict[str, object]:
+    inferred_branch, inferred_score_fn, inferred_run_id = infer_run_metadata(path)
     summary: dict[str, object] = {
         "path": str(path),
         "group": run_group_key(path),
-        "branch": branch_from_path(path),
-        "score_fn": "-",
+        "branch": inferred_branch or branch_from_path(path),
+        "score_fn": inferred_score_fn or "-",
+        "run_id": inferred_run_id,
         "last_val_step": None,
         "max_steps": None,
         "best_val_bpb": None,
@@ -955,6 +994,8 @@ def parse_run_log_summary(path: Path) -> dict[str, object]:
                     summary["branch"] = line.split("=", 1)[-1].split(":", 1)[-1].strip()
                 if line.startswith("score_fn=") or line.startswith("- STF score function:"):
                     summary["score_fn"] = line.split("=", 1)[-1].split(":", 1)[-1].strip()
+                if line.startswith("run_id="):
+                    summary["run_id"] = line.split("=", 1)[1].strip()
                 val_match = VAL_RE.search(line)
                 if val_match:
                     step = int(val_match.group(1))
@@ -990,23 +1031,40 @@ def render_all_run_inventory() -> str:
     parsed_sources = {variant.source for variant in parsed_variants}
     parsed_groups = {run_group_key(Path(source)) for source in parsed_sources}
     rows_by_key: dict[tuple[object, ...], dict[str, object]] = {}
+
+    def merge_row(row_key: tuple[object, ...], row: dict[str, object]) -> None:
+        existing = rows_by_key.get(row_key)
+        if existing is None:
+            rows_by_key[row_key] = row
+            return
+        existing_status = str(existing.get("status") or "seen")
+        row_status = str(row.get("status") or "seen")
+        priority = {"completed": 4, "partial": 3, "failed": 2, "seen": 1, "unreadable": 0}
+        existing.setdefault("files", []).extend(row.get("files", []))
+        existing.setdefault("groups", []).extend(row.get("groups", []))
+        if priority.get(row_status, 0) > priority.get(existing_status, 0):
+            files = existing.get("files", [])
+            groups = existing.get("groups", [])
+            existing.clear()
+            existing.update(row)
+            existing["files"] = files
+            existing["groups"] = groups
+
     for variant in parsed_variants:
         source_path = Path(variant.source)
         best_val_bpb = min((bpb for _, bpb in variant.val_history), default=None)
         row_key = (
-            variant.branch,
+            variant.run_id or variant.branch,
             variant.score_fn,
-            variant.last_val_step,
-            variant_steps(variant),
-            round(best_val_bpb, 6) if best_val_bpb is not None else None,
-            round(variant.final_bpb, 6) if variant.final_bpb is not None else None,
+            variant.max_steps or variant_steps(variant),
         )
-        existing = rows_by_key.get(row_key)
-        if existing is None:
-            rows_by_key[row_key] = {
+        merge_row(
+            row_key,
+            {
                 "group": run_group_key(source_path),
                 "branch": variant.branch,
                 "score_fn": variant.score_fn,
+                "run_id": variant.run_id,
                 "last_val_step": variant.last_val_step,
                 "max_steps": variant_steps(variant),
                 "best_val_bpb": best_val_bpb,
@@ -1015,30 +1073,19 @@ def render_all_run_inventory() -> str:
                 "status": "failed" if variant.failed else "completed" if variant.complete else "partial" if variant.last_val_bpb is not None else "seen",
                 "files": [source_path.name],
                 "groups": [run_group_key(source_path)],
-            }
-        else:
-            existing.setdefault("files", []).append(source_path.name)
-            existing.setdefault("groups", []).append(run_group_key(source_path))
+            },
+        )
     generic_paths = [path for path in paths if str(path) not in parsed_sources and run_group_key(path) not in parsed_groups]
     for path in generic_paths:
         summary = parse_run_log_summary(path)
         row_key = (
-            summary.get("branch"),
+            summary.get("run_id") or summary.get("branch"),
             summary.get("score_fn"),
-            summary.get("last_val_step"),
             summary.get("max_steps"),
-            round(float(summary["best_val_bpb"]), 6) if isinstance(summary.get("best_val_bpb"), float) else None,
-            round(float(summary["final_bpb"]), 6) if isinstance(summary.get("final_bpb"), float) else None,
-            summary.get("status"),
         )
-        existing = rows_by_key.get(row_key)
-        if existing is None:
-            summary["files"] = [path.name]
-            summary["groups"] = [run_group_key(path)]
-            rows_by_key[row_key] = summary
-        else:
-            existing.setdefault("files", []).append(path.name)
-            existing.setdefault("groups", []).append(run_group_key(path))
+        summary["files"] = [path.name]
+        summary["groups"] = [run_group_key(path)]
+        merge_row(row_key, summary)
     rows = list(rows_by_key.values())
     rows.sort(key=lambda item: (str(item.get("branch")), str(item.get("group")), str(item.get("score_fn"))))
     completed = sum(1 for row in rows if row.get("status") == "completed")
@@ -1082,7 +1129,7 @@ def render_all_run_inventory() -> str:
     <section class="compare-card" id="all-run-inventory">
       <p class="eyebrow">Across-branch artifact audit</p>
       <h2>All Discovered Run Logs</h2>
-      <p class="note">This ledger includes owned STF/Vast artifacts: top-level Vast logs and archived Vast experiment console/train logs. The separate non-STF records archive is intentionally excluded.</p>
+      <p class="note">This ledger includes owned STF/Vast artifacts: top-level Vast logs, saved logs/*.txt run logs, and archived Vast experiment console/train logs. The separate non-STF records archive is intentionally excluded.</p>
       <div class="metrics">
         <div class="metric"><strong>{len(rows)}</strong><span>run groups discovered</span></div>
         <div class="metric"><strong>{branches}</strong><span>branches or run families</span></div>
@@ -1292,7 +1339,10 @@ def render_freeze_animation(variant: Variant, width: int = 460, height: int = 25
 
 def write_html_report(rows: list[Variant], selected: list[Variant], output: Path, baseline: str) -> None:
     completed = [v for v in rows if v.complete and not v.failed]
-    baseline_by_branch = {v.branch: v for v in completed if v.score_fn == baseline}
+    baseline_by_branch: dict[str, Variant] = {}
+    for variant in completed:
+        if variant.score_fn == baseline:
+            baseline_by_branch[variant.branch] = best_variant(baseline_by_branch.get(variant.branch), variant)
     branch_count = len({v.branch for v in completed})
     formula_count = len({v.score_fn for v in completed})
     active_values = [v.active_proxy() for v in completed if v.active_proxy() is not None]
