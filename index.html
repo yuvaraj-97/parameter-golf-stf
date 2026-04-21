@@ -58,10 +58,12 @@
       bottom: 18px;
       transform: translateX(-50%);
       z-index: 30;
-      width: min(1760px, calc(100vw - 24px));
+      width: max-content;
+      max-width: calc(100vw - 24px);
       display: flex;
       flex-wrap: wrap;
       align-items: center;
+      justify-content: center;
       gap: 10px;
       padding: 12px;
       border: 1px solid var(--line);
@@ -82,8 +84,8 @@
       text-decoration: none;
       cursor: pointer;
     }
-    .floating-nav button { margin-left: auto; color: #061208; background: var(--active); }
-    .floating-status { color: var(--muted); font-size: .86rem; min-width: 150px; }
+    .floating-nav button { color: #061208; background: var(--active); }
+    .floating-status { color: var(--muted); font-size: .86rem; min-width: 150px; text-align: center; }
     .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin: 24px 0 34px; }
     .metric { padding: 18px; border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.035); }
     .metric strong { display: block; font-size: 1.8rem; letter-spacing: -0.04em; }
@@ -198,6 +200,16 @@
     }
     .branch-chart-wrap { border: 1px solid var(--line); border-radius: 24px; background: rgba(0,0,0,.25); overflow-x: auto; margin: 18px 0; }
     .branch-chart { width: 100%; min-width: 920px; display: block; }
+    .branch-overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 14px; margin: 18px 0 24px; }
+    .branch-overview-card { border: 1px solid var(--line); border-radius: 18px; padding: 14px; background: rgba(255,255,255,.035); }
+    .branch-overview-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .branch-overview-head strong { overflow-wrap: anywhere; }
+    .branch-overview-card p { color: var(--muted); line-height: 1.45; min-height: 3.9em; }
+    .branch-mini { width: 100%; display: block; margin: 6px 0 10px; }
+    .branch-mini rect { fill: rgba(0,0,0,.18); stroke: rgba(255,255,255,.08); }
+    .branch-mini line { stroke: rgba(255,255,255,.16); }
+    .branch-mini polyline { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .branch-mini text { fill: var(--muted); text-anchor: middle; font-size: 13px; font-weight: 800; }
     .branch-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 18px 0; }
     .branch-detail { border: 1px solid var(--line); border-radius: 18px; padding: 16px; background: rgba(255,255,255,.035); }
     .branch-delta { margin: -4px 0 18px; }
@@ -291,7 +303,6 @@
       main { width: min(100vw - 20px, 1760px); padding-top: 20px; }
       .hero { padding: 24px; border-radius: 24px; }
       .floating-nav { bottom: 8px; border-radius: 16px; }
-      .floating-nav button { margin-left: 0; }
       .metrics { grid-template-columns: repeat(2, 1fr); }
       .viz-card { grid-template-columns: 1fr; }
       .movie-grid { grid-template-columns: 1fr; }
@@ -308,7 +319,7 @@
 <body>
   <main id="top">
     <section class="hero">
-      <p class="eyebrow">Unified STF report, Vast logs + imported branch-comparison data</p>
+      <p class="eyebrow">Unified STF report from discovered Vast logs only</p>
       <h1>MLP true-skip is validated; adaptive budget is the speed tradeoff.</h1>
       <p>The fixed <code>mlp_active_rows</code> run gives the best quality reference, while the adaptive 0.75 -> 0.70 -> 0.65 budget raises actual skip to about 29% with a small 10k BPB cost. Attention remains dense, so this report separates logical freeze, real skipped compute, and wall-clock speed.</p>
     <div class="metrics">
@@ -322,7 +333,6 @@
       <div class="link-row">
         <a href="#branch-tree">Branch tree</a>
         <a href="#validation-ladder">Validation ladder</a>
-        <a href="#legacy-coverage">Legacy coverage</a>
         <a href="#all-run-inventory">All runs</a>
         <a href="#branch-explorer">Branch explorer</a>
         <a href="#reality-check">Reality table</a>
@@ -369,7 +379,7 @@
     └── todo: only run if previous tracks succeed</pre>
       <h3>Actual Git Ref Graph</h3>
       <p class="note">This graph is generated from git refs, so it shows branch split ancestry rather than just names. It intentionally includes local and remote decorations.</p>
-      <pre class="git-graph">* 31e00d7 (HEAD -&gt; main) report: restore unified STF HTML dashboard
+      <pre class="git-graph">* e44c8d3 (HEAD -&gt; main) report: restore navigation and layout fixes
 | * 94070e7 (origin/codex/h100-credit-evidence-report, codex/h100-credit-evidence-report) Merge branch &#x27;main&#x27; into codex/h100-credit-evidence-report
 |/  
 * 4dac816 (origin/main, origin/HEAD) chore: remove failed top-level H100 logs
@@ -540,15 +550,6 @@
     
 
     
-    <section class="compare-card" id="legacy-coverage">
-      <p class="eyebrow">Imported branch-comparison bundle</p>
-      <h2>Legacy Iteration Coverage</h2>
-      <p class="note">The older branch-comparison JSON bundle is embedded here as coverage context, while the detailed static pages remain in My_approch/analysis.</p>
-      <div class="branch-inventory"><article class="branch-chip"><span class="status archive">legacy</span><strong>stf_2000_branch_compare_data.json</strong><small>2000 iterations | 8/8 ok rows</small></article><article class="branch-chip"><span class="status archive">legacy</span><strong>stf_5000_branch_compare_data.json</strong><small>5000 iterations | 5/8 ok rows</small></article><article class="branch-chip"><span class="status archive">legacy</span><strong>stf_5000_shards1_branch_compare_data.json</strong><small>5000 iterations | 5/8 ok rows</small></article><article class="branch-chip"><span class="status archive">legacy</span><strong>stf_5000_shards80_branch_compare_data.json</strong><small>5000 iterations | 3/8 ok rows</small></article></div>
-    </section>
-    
-
-    
     <section class="compare-card" id="all-run-inventory">
       <p class="eyebrow">Across-branch artifact audit</p>
       <h2>All Discovered Run Logs</h2>
@@ -571,8 +572,189 @@
       <div class="compare-copy">
         <p class="eyebrow">Branch graph and two-way comparison</p>
         <h2>Branch Explorer</h2>
-        <p class="note">Pick any two branches. The chart draws every validation curve available for those branches, and the panels summarize what each branch was trying to prove plus its best metrics.</p>
+        <p class="note">Every branch gets a mini validation graph below. Pick any two branches in the selectors to compare their curves, stats, description, and run table directly.</p>
       </div>
+      <div class="branch-overview-grid">
+            <article class="branch-overview-card">
+              <div class="branch-overview-head">
+                <span class="status validated">validated</span>
+                <strong>codex/stf-mlp-skip-runner</strong>
+              </div>
+              <svg class="branch-mini" viewBox="0 0 320 120" role="img" aria-label="Branch validation curve"><rect x="20" y="14" width="280" height="82" rx="12" /><line x1="20" y1="96" x2="300" y2="96" /><line x1="20" y1="14" x2="20" y2="96" /><polyline points="20.0,14.0 22.8,69.7 25.6,80.2 28.4,85.0 31.2,87.2 34.0,88.3" stroke="#58f2d0" /><polyline points="20.0,14.0 22.8,69.6 25.6,80.2 28.4,85.0 31.2,87.0 34.0,88.1" stroke="#b8ff72" /><polyline points="20.0,14.0 22.8,69.8 25.6,80.5 28.4,84.9 31.2,86.8 34.0,87.9" stroke="#f3b45b" /><polyline points="20.0,14.0 22.8,69.6 25.6,80.4 28.4,84.8 31.2,86.7 34.0,87.8" stroke="#4aa8ff" /></svg>
+              <p>Validated true-skip MLP path. Gathers active token rows through the MLP and scatters them back so logical freezing becomes real MLP compute savings.</p>
+              <div class="branch-stats">
+                <span class="branch-stat"><strong>1.2806</strong><span>best final BPB</span></span>
+                <span class="branch-stat"><strong>10000</strong><span>best run steps</span></span>
+                <span class="branch-stat"><strong>14</strong><span>completed variants</span></span>
+                <span class="branch-stat"><strong>54.2%</strong><span>max actual skip</span></span>
+              </div>
+            </article>
+            
+            <article class="branch-overview-card">
+              <div class="branch-overview-head">
+                <span class="status validated">validated</span>
+                <strong>codex/stf-adaptive-mlp-budget</strong>
+              </div>
+              <svg class="branch-mini" viewBox="0 0 320 120" role="img" aria-label="Branch validation curve"><rect x="20" y="14" width="280" height="82" rx="12" /><line x1="20" y1="96" x2="300" y2="96" /><line x1="20" y1="14" x2="20" y2="96" /><polyline points="20.0,14.0 20.3,30.4 20.6,34.0" stroke="#58f2d0" /><polyline points="20.0,14.0 22.8,69.8 25.6,80.4 28.4,85.0 31.2,87.0 34.0,88.1" stroke="#b8ff72" /><polyline points="20.0,14.0 34.0,87.6 48.0,91.3 62.0,92.9 76.0,93.8" stroke="#f3b45b" /><polyline points="20.0,14.0 34.0,87.6 48.0,91.1 62.0,92.4 76.0,93.0 90.0,93.5 104.0,93.8 118.0,94.0 132.0,94.2 146.0,94.4 160.0,94.5 174.0,94.6 188.0,94.7 202.0,94.8 216.0,94.9 230.0,95.0 244.0,95.1 258.0,95.1 272.0,95.3 286.0,95.7 300.0,96.0" stroke="#4aa8ff" /></svg>
+              <p>Validated adaptive active-budget schedule. Trades a small 10k BPB cost for higher actual skip than the fixed active-0.75 runner.</p>
+              <div class="branch-stats">
+                <span class="branch-stat"><strong>1.2846</strong><span>best final BPB</span></span>
+                <span class="branch-stat"><strong>10000</strong><span>best run steps</span></span>
+                <span class="branch-stat"><strong>4</strong><span>completed variants</span></span>
+                <span class="branch-stat"><strong>29.2%</strong><span>max actual skip</span></span>
+              </div>
+            </article>
+            
+            <article class="branch-overview-card">
+              <div class="branch-overview-head">
+                <span class="status experiment">experiment</span>
+                <strong>stf-learned-gate</strong>
+              </div>
+              <svg class="branch-mini" viewBox="0 0 320 120" role="img" aria-label="Branch validation curve"><rect x="20" y="14" width="280" height="82" rx="12" /><line x1="20" y1="96" x2="300" y2="96" /><line x1="20" y1="14" x2="20" y2="96" /><polyline points="20.0,14.0 27.0,60.4 34.0,70.7 41.0,76.6 48.0,81.7 55.0,84.7 62.0,86.5 69.0,87.9 76.0,88.7 83.0,89.5 90.0,89.9" stroke="#58f2d0" /><polyline points="20.0,14.0 27.0,60.3 34.0,70.7 41.0,76.7 48.0,81.7 55.0,84.7 62.0,86.6 69.0,87.8 76.0,88.7 83.0,89.5 90.0,89.9" stroke="#b8ff72" /><polyline points="20.0,14.0 27.0,60.0 34.0,70.3 41.0,76.2 48.0,81.3 55.0,84.4 62.0,86.3 69.0,87.7 76.0,88.6 83.0,89.3 90.0,89.7" stroke="#f3b45b" /><polyline points="20.0,14.0 27.0,60.0 34.0,70.0 41.0,76.1 48.0,81.2 55.0,84.3 62.0,86.1 69.0,87.4 76.0,88.3 83.0,89.1 90.0,89.4" stroke="#4aa8ff" /></svg>
+              <p>Learns a continuous gate instead of only using a fixed threshold. Good quality in some runs, but gate-open proxy can mean little true freezing.</p>
+              <div class="branch-stats">
+                <span class="branch-stat"><strong>1.3330</strong><span>best final BPB</span></span>
+                <span class="branch-stat"><strong>2000</strong><span>best run steps</span></span>
+                <span class="branch-stat"><strong>6</strong><span>completed variants</span></span>
+                <span class="branch-stat"><strong>-</strong><span>max actual skip</span></span>
+              </div>
+            </article>
+            
+            <article class="branch-overview-card">
+              <div class="branch-overview-head">
+                <span class="status telemetry">telemetry</span>
+                <strong>stf-learned-gate-telemetry</strong>
+              </div>
+              <svg class="branch-mini" viewBox="0 0 320 120" role="img" aria-label="Branch validation curve"><rect x="20" y="14" width="280" height="82" rx="12" /><line x1="20" y1="96" x2="300" y2="96" /><line x1="20" y1="14" x2="20" y2="96" /><polyline points="20.0,14.0 48.0,79.3 76.0,87.4 104.0,90.4 132.0,92.1 160.0,93.3 188.0,94.2 216.0,94.8 244.0,95.2 272.0,95.7 300.0,96.0" stroke="#58f2d0" /><polyline points="20.0,14.0 48.0,79.8 76.0,87.7 104.0,90.5 132.0,92.0 160.0,93.2 188.0,94.0 216.0,94.6 244.0,95.1 272.0,95.6 300.0,95.9" stroke="#b8ff72" /></svg>
+              <p>Telemetry variant of learned-gate that separates logical gates from actual skipped work.</p>
+              <div class="branch-stats">
+                <span class="branch-stat"><strong>1.3330</strong><span>best final BPB</span></span>
+                <span class="branch-stat"><strong>2000</strong><span>best run steps</span></span>
+                <span class="branch-stat"><strong>2</strong><span>completed variants</span></span>
+                <span class="branch-stat"><strong>0.0%</strong><span>max actual skip</span></span>
+              </div>
+            </article>
+            
+            <article class="branch-overview-card">
+              <div class="branch-overview-head">
+                <span class="status telemetry">telemetry</span>
+                <strong>stf-soft-freeze-telemetry</strong>
+              </div>
+              <svg class="branch-mini" viewBox="0 0 320 120" role="img" aria-label="Branch validation curve"><rect x="20" y="14" width="280" height="82" rx="12" /><line x1="20" y1="96" x2="300" y2="96" /><line x1="20" y1="14" x2="20" y2="96" /><polyline points="20.0,14.0 48.0,78.7 76.0,87.7 104.0,90.6 132.0,92.2 160.0,93.4 188.0,94.2 216.0,94.8 244.0,95.3 272.0,95.7 300.0,96.0" stroke="#58f2d0" /><polyline points="20.0,14.0 48.0,79.5 76.0,87.4 104.0,90.3 132.0,92.0 160.0,93.2 188.0,94.0 216.0,94.6 244.0,95.1 272.0,95.5 300.0,95.8" stroke="#b8ff72" /><polyline points="20.0,14.0 48.0,78.8 76.0,87.3 104.0,90.3 132.0,91.9 160.0,93.1 188.0,93.9 216.0,94.6 244.0,95.0 272.0,95.5 300.0,95.8" stroke="#f3b45b" /><polyline points="20.0,14.0 48.0,79.5 76.0,87.4 104.0,90.1 132.0,91.7 160.0,93.0 188.0,93.8 216.0,94.4 244.0,94.9 272.0,95.4 300.0,95.7" stroke="#4aa8ff" /></svg>
+              <p>Telemetry variant of soft-freeze. Shows high logical freeze while full-block-then-freeze still skips 0% actual compute.</p>
+              <div class="branch-stats">
+                <span class="branch-stat"><strong>1.3389</strong><span>best final BPB</span></span>
+                <span class="branch-stat"><strong>2000</strong><span>best run steps</span></span>
+                <span class="branch-stat"><strong>4</strong><span>completed variants</span></span>
+                <span class="branch-stat"><strong>0.0%</strong><span>max actual skip</span></span>
+              </div>
+            </article>
+            
+            <article class="branch-overview-card">
+              <div class="branch-overview-head">
+                <span class="status telemetry">telemetry</span>
+                <strong>stf-recurrence-telemetry</strong>
+              </div>
+              <svg class="branch-mini" viewBox="0 0 320 120" role="img" aria-label="Branch validation curve"><rect x="20" y="14" width="280" height="82" rx="12" /><line x1="20" y1="96" x2="300" y2="96" /><line x1="20" y1="14" x2="20" y2="96" /><polyline points="20.0,14.0 48.0,78.8 76.0,86.5 104.0,89.9 132.0,91.6 160.0,93.0 188.0,93.8 216.0,94.6 244.0,95.1 272.0,95.7 300.0,96.0" stroke="#58f2d0" /><polyline points="20.0,14.0 48.0,78.6 76.0,86.7 104.0,89.9 132.0,91.5 160.0,92.8 188.0,93.7 216.0,94.4 244.0,95.0 272.0,95.5 300.0,95.8" stroke="#b8ff72" /></svg>
+              <p>Telemetry recurrence variant showing compute reality for recurrent frozen-state paths.</p>
+              <div class="branch-stats">
+                <span class="branch-stat"><strong>1.3665</strong><span>best final BPB</span></span>
+                <span class="branch-stat"><strong>2000</strong><span>best run steps</span></span>
+                <span class="branch-stat"><strong>2</strong><span>completed variants</span></span>
+                <span class="branch-stat"><strong>0.0%</strong><span>max actual skip</span></span>
+              </div>
+            </article>
+            
+            <article class="branch-overview-card">
+              <div class="branch-overview-head">
+                <span class="status experiment">experiment</span>
+                <strong>stf-soft-freeze</strong>
+              </div>
+              <svg class="branch-mini" viewBox="0 0 320 120" role="img" aria-label="Branch validation curve"><rect x="20" y="14" width="280" height="82" rx="12" /><line x1="20" y1="96" x2="300" y2="96" /><line x1="20" y1="14" x2="20" y2="96" /><polyline points="20.0,14.0 48.0,63.9 76.0,74.8 104.0,81.0 132.0,86.2 160.0,90.0 188.0,92.2 216.0,93.7 244.0,94.7 272.0,95.6 300.0,96.0" stroke="#58f2d0" /><polyline points="20.0,14.0 48.0,64.0 76.0,74.8 104.0,80.9 132.0,86.1 160.0,89.9 188.0,92.1 216.0,93.6 244.0,94.5 272.0,95.4 300.0,95.8" stroke="#b8ff72" /><polyline points="20.0,14.0 48.0,64.0 76.0,75.0 104.0,81.0 132.0,86.2 160.0,89.9 188.0,92.0 216.0,93.5 244.0,94.4 272.0,95.2 300.0,95.6" stroke="#f3b45b" /><polyline points="20.0,14.0 48.0,64.0 76.0,74.8 104.0,81.0 132.0,86.0 160.0,89.9 188.0,92.0 216.0,93.5 244.0,94.4 272.0,95.2 300.0,95.6" stroke="#4aa8ff" /></svg>
+              <p>STF experiment branch</p>
+              <div class="branch-stats">
+                <span class="branch-stat"><strong>1.5739</strong><span>best final BPB</span></span>
+                <span class="branch-stat"><strong>500</strong><span>best run steps</span></span>
+                <span class="branch-stat"><strong>4</strong><span>completed variants</span></span>
+                <span class="branch-stat"><strong>-</strong><span>max actual skip</span></span>
+              </div>
+            </article>
+            
+            <article class="branch-overview-card">
+              <div class="branch-overview-head">
+                <span class="status experiment">experiment</span>
+                <strong>stf-recurrence</strong>
+              </div>
+              <svg class="branch-mini" viewBox="0 0 320 120" role="img" aria-label="Branch validation curve"><rect x="20" y="14" width="280" height="82" rx="12" /><line x1="20" y1="96" x2="300" y2="96" /><line x1="20" y1="14" x2="20" y2="96" /><polyline points="20.0,14.0 48.0,63.9 76.0,74.8 104.0,80.9 132.0,85.2 160.0,89.5 188.0,91.9 216.0,93.5 244.0,94.6 272.0,95.5 300.0,96.0" stroke="#58f2d0" /><polyline points="20.0,14.0 48.0,63.8 76.0,74.6 104.0,80.9 132.0,86.2 160.0,89.9 188.0,92.0 216.0,93.5 244.0,94.5 272.0,95.4 300.0,95.9" stroke="#b8ff72" /><polyline points="20.0,14.0 48.0,63.8 76.0,74.9 104.0,81.0 132.0,85.9 160.0,89.8 188.0,91.9 216.0,93.4 244.0,94.5 272.0,95.4 300.0,95.8" stroke="#f3b45b" /><polyline points="20.0,14.0 48.0,63.9 76.0,74.7 104.0,80.8 132.0,85.1 160.0,89.3 188.0,91.7 216.0,93.3 244.0,94.4 272.0,95.3 300.0,95.8" stroke="#4aa8ff" /></svg>
+              <p>STF experiment branch</p>
+              <div class="branch-stats">
+                <span class="branch-stat"><strong>1.5980</strong><span>best final BPB</span></span>
+                <span class="branch-stat"><strong>500</strong><span>best run steps</span></span>
+                <span class="branch-stat"><strong>4</strong><span>completed variants</span></span>
+                <span class="branch-stat"><strong>-</strong><span>max actual skip</span></span>
+              </div>
+            </article>
+            
+            <article class="branch-overview-card">
+              <div class="branch-overview-head">
+                <span class="status experiment">experiment</span>
+                <strong>stf-reactivation</strong>
+              </div>
+              <svg class="branch-mini" viewBox="0 0 320 120" role="img" aria-label="Branch validation curve"><rect x="20" y="14" width="280" height="82" rx="12" /><line x1="20" y1="96" x2="300" y2="96" /><line x1="20" y1="14" x2="20" y2="96" /><polyline points="20.0,14.0 48.0,64.4 76.0,75.3 104.0,81.6 132.0,86.8 160.0,90.6 188.0,92.6 216.0,94.0 244.0,94.9 272.0,95.6 300.0,96.0" stroke="#58f2d0" /><polyline points="20.0,14.0 48.0,64.6 76.0,75.4 104.0,81.5 132.0,86.1 160.0,90.2 188.0,92.4 216.0,93.8 244.0,94.7 272.0,95.5 300.0,95.9" stroke="#b8ff72" /><polyline points="20.0,14.0 48.0,64.4 76.0,75.6 104.0,81.7 132.0,86.7 160.0,90.3 188.0,92.4 216.0,93.8 244.0,94.6 272.0,95.4 300.0,95.8" stroke="#f3b45b" /><polyline points="20.0,14.0 48.0,64.1 76.0,74.8 104.0,81.0 132.0,86.3 160.0,89.8 188.0,91.8 216.0,93.2 244.0,94.1 272.0,94.9 300.0,95.3" stroke="#4aa8ff" /></svg>
+              <p>STF experiment branch</p>
+              <div class="branch-stats">
+                <span class="branch-stat"><strong>1.6075</strong><span>best final BPB</span></span>
+                <span class="branch-stat"><strong>500</strong><span>best run steps</span></span>
+                <span class="branch-stat"><strong>4</strong><span>completed variants</span></span>
+                <span class="branch-stat"><strong>-</strong><span>max actual skip</span></span>
+              </div>
+            </article>
+            
+            <article class="branch-overview-card">
+              <div class="branch-overview-head">
+                <span class="status experiment">experiment</span>
+                <strong>stf-budget-regularization</strong>
+              </div>
+              <svg class="branch-mini" viewBox="0 0 320 120" role="img" aria-label="Branch validation curve"><rect x="20" y="14" width="280" height="82" rx="12" /><line x1="20" y1="96" x2="300" y2="96" /><line x1="20" y1="14" x2="20" y2="96" /><polyline points="20.0,14.0 48.0,64.4 76.0,75.4 104.0,81.6 132.0,86.8 160.0,90.6 188.0,92.6 216.0,94.0 244.0,94.8 272.0,95.6 300.0,96.0" stroke="#58f2d0" /><polyline points="20.0,14.0 48.0,64.5 76.0,75.3 104.0,81.5 132.0,86.1 160.0,90.2 188.0,92.4 216.0,93.8 244.0,94.7 272.0,95.5 300.0,95.9" stroke="#b8ff72" /><polyline points="20.0,14.0 48.0,64.5 76.0,75.6 104.0,81.7 132.0,86.6 160.0,90.3 188.0,92.4 216.0,93.7 244.0,94.6 272.0,95.4 300.0,95.8" stroke="#f3b45b" /><polyline points="20.0,14.0 48.0,64.1 76.0,74.9 104.0,81.1 132.0,86.3 160.0,89.8 188.0,91.8 216.0,93.2 244.0,94.1 272.0,94.9 300.0,95.3" stroke="#4aa8ff" /></svg>
+              <p>STF experiment branch</p>
+              <div class="branch-stats">
+                <span class="branch-stat"><strong>1.6080</strong><span>best final BPB</span></span>
+                <span class="branch-stat"><strong>500</strong><span>best run steps</span></span>
+                <span class="branch-stat"><strong>4</strong><span>completed variants</span></span>
+                <span class="branch-stat"><strong>-</strong><span>max actual skip</span></span>
+              </div>
+            </article>
+            
+            <article class="branch-overview-card">
+              <div class="branch-overview-head">
+                <span class="status experiment">experiment</span>
+                <strong>stf-minimal</strong>
+              </div>
+              <svg class="branch-mini" viewBox="0 0 320 120" role="img" aria-label="Branch validation curve"><rect x="20" y="14" width="280" height="82" rx="12" /><line x1="20" y1="96" x2="300" y2="96" /><line x1="20" y1="14" x2="20" y2="96" /><polyline points="20.0,14.0 48.0,64.4 76.0,75.3 104.0,81.6 132.0,86.9 160.0,90.6 188.0,92.6 216.0,94.0 244.0,94.9 272.0,95.6 300.0,96.0" stroke="#58f2d0" /><polyline points="20.0,14.0 48.0,64.6 76.0,75.4 104.0,81.5 132.0,86.1 160.0,90.2 188.0,92.4 216.0,93.8 244.0,94.7 272.0,95.5 300.0,95.9" stroke="#b8ff72" /><polyline points="20.0,14.0 48.0,64.5 76.0,75.6 104.0,81.7 132.0,86.7 160.0,90.3 188.0,92.4 216.0,93.8 244.0,94.7 272.0,95.4 300.0,95.8" stroke="#f3b45b" /><polyline points="20.0,14.0 48.0,64.2 76.0,74.9 104.0,81.1 132.0,86.3 160.0,89.8 188.0,91.8 216.0,93.2 244.0,94.1 272.0,94.9 300.0,95.3" stroke="#4aa8ff" /></svg>
+              <p>STF experiment branch</p>
+              <div class="branch-stats">
+                <span class="branch-stat"><strong>1.6090</strong><span>best final BPB</span></span>
+                <span class="branch-stat"><strong>500</strong><span>best run steps</span></span>
+                <span class="branch-stat"><strong>4</strong><span>completed variants</span></span>
+                <span class="branch-stat"><strong>-</strong><span>max actual skip</span></span>
+              </div>
+            </article>
+            
+            <article class="branch-overview-card">
+              <div class="branch-overview-head">
+                <span class="status archive">archive</span>
+                <strong>stf-quantization</strong>
+              </div>
+              <svg class="branch-mini" viewBox="0 0 320 120" role="img" aria-label="Branch validation curve"><rect x="20" y="14" width="280" height="82" rx="12" /><line x1="20" y1="96" x2="300" y2="96" /><line x1="20" y1="14" x2="20" y2="96" /><polyline points="20.0,14.0 48.0,53.7 76.0,65.3 104.0,72.4 132.0,78.5 160.0,84.8 188.0,90.1 216.0,92.8 244.0,94.3 272.0,95.4 300.0,96.0" stroke="#58f2d0" /><polyline points="20.0,14.0 48.0,54.4 76.0,62.4 104.0,72.4 132.0,79.0 160.0,83.4 188.0,86.5 216.0,89.8 244.0,92.4 272.0,93.9 300.0,94.6" stroke="#b8ff72" /><polyline points="20.0,14.0 48.0,59.7 76.0,67.1 104.0,75.1 132.0,81.9 160.0,86.7 188.0,89.1 216.0,90.9 244.0,92.2 272.0,93.3 300.0,93.8" stroke="#f3b45b" /><polyline points="20.0,14.0 48.0,44.7 76.0,56.3 104.0,65.3 132.0,73.0 160.0,78.8 188.0,82.9 216.0,87.2 244.0,89.9 272.0,91.9 300.0,92.8" stroke="#4aa8ff" /></svg>
+              <p>Experiment branch with imported HTML reports</p>
+              <div class="branch-stats">
+                <span class="branch-stat"><strong>1.8905</strong><span>best final BPB</span></span>
+                <span class="branch-stat"><strong>500</strong><span>best run steps</span></span>
+                <span class="branch-stat"><strong>4</strong><span>completed variants</span></span>
+                <span class="branch-stat"><strong>-</strong><span>max actual skip</span></span>
+              </div>
+            </article>
+            </div>
       <div class="compare-controls two">
         <label for="branchASelect">Branch A</label>
         <select id="branchASelect"><option value="codex/stf-mlp-skip-runner">codex/stf-mlp-skip-runner</option><option value="codex/stf-adaptive-mlp-budget">codex/stf-adaptive-mlp-budget</option><option value="stf-learned-gate">stf-learned-gate</option><option value="stf-learned-gate-telemetry">stf-learned-gate-telemetry</option><option value="stf-soft-freeze-telemetry">stf-soft-freeze-telemetry</option><option value="stf-recurrence-telemetry">stf-recurrence-telemetry</option><option value="stf-soft-freeze">stf-soft-freeze</option><option value="stf-recurrence">stf-recurrence</option><option value="stf-reactivation">stf-reactivation</option><option value="stf-budget-regularization">stf-budget-regularization</option><option value="stf-minimal">stf-minimal</option><option value="stf-quantization">stf-quantization</option></select>
@@ -683,7 +865,7 @@
       <p class="note">This is the “single image” view: each row combines three things people care about without needing model-training jargon. Longer bars are better: lower validation BPB, lower training loss, and lower wall-clock iteration time. Wall-clock speed is not proof of token compute skipping; the compute columns below answer that.</p>
     </div>
     <div class="outcome-card">
-      <svg class="outcome-viz" viewBox="0 0 1280 672" role="img" aria-label="Quality learning speed comparison"><text x="24" y="34" class="outcome-title">One-glance outcome map</text><text x="24" y="58" class="outcome-subtitle">Longer bars are better. Quality = lower validation BPB, learning = lower train loss, wall-clock = lower average iteration time.</text><text x="420" y="70" class="axis-label">quality</text><text x="712.3199999999999" y="70" class="axis-label">learning</text><text x="988.4" y="70" class="axis-label">wall-clock</text><text x="24" y="100" class="row-label">codex/stf-mlp-skip-runner / relative_l2</text><text x="24" y="118" class="row-detail">BPB 1.2806 | loss 2.1044 | 456.6 ms</text><rect x="420" y="82" width="812" height="30" rx="15" class="outcome-track" /><rect x="420" y="82" width="259.8" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="696.08" y="82" width="243.6" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="955.9200000000001" y="82" width="219.7" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="146" class="row-label">codex/stf-adaptive-mlp-budget / relative_l2</text><text x="24" y="164" class="row-detail">BPB 1.2846 | loss 2.1125 | 441.1 ms</text><rect x="420" y="128" width="812" height="30" rx="15" class="outcome-track" /><rect x="420" y="128" width="244.6" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="696.08" y="128" width="232.0" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="955.9200000000001" y="128" width="243.6" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="192" class="row-label">codex/stf-mlp-skip-runner / relative_l2</text><text x="24" y="210" class="row-detail">BPB 1.3077 | loss 2.1243 | 498.4 ms</text><rect x="420" y="174" width="812" height="30" rx="15" class="outcome-track" /><rect x="420" y="174" width="158.3" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="696.08" y="174" width="215.1" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="955.9200000000001" y="174" width="155.0" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="238" class="row-label">stf-learned-gate / direction</text><text x="24" y="256" class="row-detail">BPB 1.3330 | loss 2.2452 | 598.4 ms</text><rect x="420" y="220" width="812" height="30" rx="15" class="outcome-track" /><rect x="420" y="220" width="63.7" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="696.08" y="220" width="42.1" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="955.9200000000001" y="220" width="0.5" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="284" class="row-label">stf-learned-gate-telemetry / direction</text><text x="24" y="302" class="row-detail">BPB 1.3330 | loss 2.2470 | 598.7 ms</text><rect x="420" y="266" width="812" height="30" rx="15" class="outcome-track" /><rect x="420" y="266" width="63.7" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="696.08" y="266" width="39.5" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="955.9200000000001" y="266" width="0.0" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="330" class="row-label">stf-learned-gate-telemetry / cosine</text><text x="24" y="348" class="row-detail">BPB 1.3376 | loss 2.2524 | 593.1 ms</text><rect x="420" y="312" width="812" height="30" rx="15" class="outcome-track" /><rect x="420" y="312" width="46.7" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="696.08" y="312" width="31.8" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="955.9200000000001" y="312" width="8.6" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="376" class="row-label">stf-learned-gate / cosine</text><text x="24" y="394" class="row-detail">BPB 1.3381 | loss 2.2535 | 593.3 ms</text><rect x="420" y="358" width="812" height="30" rx="15" class="outcome-track" /><rect x="420" y="358" width="44.7" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="696.08" y="358" width="30.2" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="955.9200000000001" y="358" width="8.4" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="422" class="row-label">stf-soft-freeze-telemetry / direction</text><text x="24" y="440" class="row-detail">BPB 1.3389 | loss 2.2552 | 509.5 ms</text><rect x="420" y="404" width="812" height="30" rx="15" class="outcome-track" /><rect x="420" y="404" width="41.6" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="696.08" y="404" width="27.8" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="955.9200000000001" y="404" width="137.9" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="468" class="row-label">stf-soft-freeze-telemetry / l2</text><text x="24" y="486" class="row-detail">BPB 1.3448 | loss 2.2636 | 497.9 ms</text><rect x="420" y="450" width="812" height="30" rx="15" class="outcome-track" /><rect x="420" y="450" width="19.8" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="696.08" y="450" width="15.7" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="955.9200000000001" y="450" width="155.9" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="514" class="row-label">stf-soft-freeze-telemetry / cosine</text><text x="24" y="532" class="row-detail">BPB 1.3457 | loss 2.2635 | 513.3 ms</text><rect x="420" y="496" width="812" height="30" rx="15" class="outcome-track" /><rect x="420" y="496" width="16.5" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="696.08" y="496" width="15.9" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="955.9200000000001" y="496" width="132.1" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="560" class="row-label">codex/stf-mlp-skip-runner / relative_l2</text><text x="24" y="578" class="row-detail">BPB 1.3494 | loss 2.2746 | 457.2 ms</text><rect x="420" y="542" width="812" height="30" rx="15" class="outcome-track" /><rect x="420" y="542" width="2.3" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="696.08" y="542" width="0.0" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="955.9200000000001" y="542" width="218.8" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="606" class="row-label">stf-soft-freeze-telemetry / relative_l2</text><text x="24" y="624" class="row-detail">BPB 1.3501 | loss 2.2744 | 495.2 ms</text><rect x="420" y="588" width="812" height="30" rx="15" class="outcome-track" /><rect x="420" y="588" width="0.0" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="696.08" y="588" width="0.3" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="955.9200000000001" y="588" width="160.1" height="30" rx="15" fill="#f3b45b" opacity=".78" /></svg>
+      <svg class="outcome-viz" viewBox="0 0 1600 672" role="img" aria-label="Quality learning speed comparison"><text x="24" y="34" class="outcome-title">One-glance outcome map</text><text x="24" y="58" class="outcome-subtitle">Longer bars are better. Quality = lower validation BPB, learning = lower train loss, wall-clock = lower average iteration time.</text><text x="560" y="70" class="axis-label">quality</text><text x="917.12" y="70" class="axis-label">learning</text><text x="1254.4" y="70" class="axis-label">wall-clock</text><text x="24" y="100" class="row-label">codex/stf-mlp-skip-runner / relative_l2</text><text x="24" y="118" class="row-detail">BPB 1.2806 | loss 2.1044 | 456.6 ms</text><rect x="560" y="82" width="992" height="30" rx="15" class="outcome-track" /><rect x="560" y="82" width="317.4" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="897.28" y="82" width="297.6" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="1214.72" y="82" width="268.4" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="146" class="row-label">codex/stf-adaptive-mlp-budget / relative_l2</text><text x="24" y="164" class="row-detail">BPB 1.2846 | loss 2.1125 | 441.1 ms</text><rect x="560" y="128" width="992" height="30" rx="15" class="outcome-track" /><rect x="560" y="128" width="298.9" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="897.28" y="128" width="283.4" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="1214.72" y="128" width="297.6" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="192" class="row-label">codex/stf-mlp-skip-runner / relative_l2</text><text x="24" y="210" class="row-detail">BPB 1.3077 | loss 2.1243 | 498.4 ms</text><rect x="560" y="174" width="992" height="30" rx="15" class="outcome-track" /><rect x="560" y="174" width="193.4" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="897.28" y="174" width="262.8" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="1214.72" y="174" width="189.4" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="238" class="row-label">stf-learned-gate / direction</text><text x="24" y="256" class="row-detail">BPB 1.3330 | loss 2.2452 | 598.4 ms</text><rect x="560" y="220" width="992" height="30" rx="15" class="outcome-track" /><rect x="560" y="220" width="77.9" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="897.28" y="220" width="51.4" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="1214.72" y="220" width="0.6" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="284" class="row-label">stf-learned-gate-telemetry / direction</text><text x="24" y="302" class="row-detail">BPB 1.3330 | loss 2.2470 | 598.7 ms</text><rect x="560" y="266" width="992" height="30" rx="15" class="outcome-track" /><rect x="560" y="266" width="77.8" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="897.28" y="266" width="48.3" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="1214.72" y="266" width="0.0" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="330" class="row-label">stf-learned-gate-telemetry / cosine</text><text x="24" y="348" class="row-detail">BPB 1.3376 | loss 2.2524 | 593.1 ms</text><rect x="560" y="312" width="992" height="30" rx="15" class="outcome-track" /><rect x="560" y="312" width="57.1" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="897.28" y="312" width="38.8" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="1214.72" y="312" width="10.5" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="376" class="row-label">stf-learned-gate / cosine</text><text x="24" y="394" class="row-detail">BPB 1.3381 | loss 2.2535 | 593.3 ms</text><rect x="560" y="358" width="992" height="30" rx="15" class="outcome-track" /><rect x="560" y="358" width="54.6" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="897.28" y="358" width="36.9" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="1214.72" y="358" width="10.3" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="422" class="row-label">stf-soft-freeze-telemetry / direction</text><text x="24" y="440" class="row-detail">BPB 1.3389 | loss 2.2552 | 509.5 ms</text><rect x="560" y="404" width="992" height="30" rx="15" class="outcome-track" /><rect x="560" y="404" width="50.9" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="897.28" y="404" width="33.9" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="1214.72" y="404" width="168.4" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="468" class="row-label">stf-soft-freeze-telemetry / l2</text><text x="24" y="486" class="row-detail">BPB 1.3448 | loss 2.2636 | 497.9 ms</text><rect x="560" y="450" width="992" height="30" rx="15" class="outcome-track" /><rect x="560" y="450" width="24.1" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="897.28" y="450" width="19.2" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="1214.72" y="450" width="190.5" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="514" class="row-label">stf-soft-freeze-telemetry / cosine</text><text x="24" y="532" class="row-detail">BPB 1.3457 | loss 2.2635 | 513.3 ms</text><rect x="560" y="496" width="992" height="30" rx="15" class="outcome-track" /><rect x="560" y="496" width="20.2" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="897.28" y="496" width="19.4" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="1214.72" y="496" width="161.4" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="560" class="row-label">codex/stf-mlp-skip-runner / relative_l2</text><text x="24" y="578" class="row-detail">BPB 1.3494 | loss 2.2746 | 457.2 ms</text><rect x="560" y="542" width="992" height="30" rx="15" class="outcome-track" /><rect x="560" y="542" width="2.9" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="897.28" y="542" width="0.0" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="1214.72" y="542" width="267.3" height="30" rx="15" fill="#f3b45b" opacity=".78" /><text x="24" y="606" class="row-label">stf-soft-freeze-telemetry / relative_l2</text><text x="24" y="624" class="row-detail">BPB 1.3501 | loss 2.2744 | 495.2 ms</text><rect x="560" y="588" width="992" height="30" rx="15" class="outcome-track" /><rect x="560" y="588" width="0.0" height="30" rx="15" fill="#58f2d0" opacity=".82" /><rect x="897.28" y="588" width="0.3" height="30" rx="15" fill="#b8ff72" opacity=".78" /><rect x="1214.72" y="588" width="195.6" height="30" rx="15" fill="#f3b45b" opacity=".78" /></svg>
     </div>
 
     <div class="section-title">
@@ -736,12 +918,11 @@
     <a href="#top">Top</a>
     <a href="#branch-tree">Branch tree</a>
     <a href="#validation-ladder">Validation ladder</a>
-    <a href="#legacy-coverage">Legacy coverage</a>
     <a href="#all-run-inventory">All runs</a>
     <a href="#branch-explorer">Branch explorer</a>
     <a href="#reality-check">Reality table</a>
     <button type="button" id="refreshReportButton" title="Runs the Python summarizer through the local report server">Refresh data</button>
-    <span class="floating-status" id="refreshReportStatus">server refresh runs Python</span>
+    <span class="floating-status" id="refreshReportStatus">runs Python via server</span>
   </nav>
   <script>
     (function() {
@@ -749,19 +930,20 @@
       const status = document.getElementById("refreshReportStatus");
       if (!button || !status) return;
       button.addEventListener("click", async () => {
-        if (window.location.protocol === "file:") {
-          status.textContent = "Run python3 scripts/open_stf_report.py";
-          return;
-        }
         button.disabled = true;
         status.textContent = "Refreshing...";
         try {
-          const response = await fetch("/refresh", { method: "POST" });
+          const refreshUrl = window.location.protocol === "file:"
+            ? "http://127.0.0.1:8765/refresh"
+            : "/refresh";
+          const response = await fetch(refreshUrl, { method: "POST" });
           if (!response.ok) throw new Error(await response.text());
           status.textContent = "Updated, reloading...";
           window.location.reload();
         } catch (error) {
-          status.textContent = "Refresh failed";
+          status.textContent = window.location.protocol === "file:"
+            ? "Start once: python3 scripts/open_stf_report.py"
+            : "Refresh failed";
           console.error(error);
         } finally {
           button.disabled = false;

@@ -152,3 +152,11 @@ Follow-up correction after visual review:
 - The all-runs ledger now starts closed so the page remains navigable; it can still be expanded on demand.
 - The report canvas and floating nav were widened to use large desktop screens before tables need horizontal scrolling.
 - The bottom nav includes a `Top` link and the refresh status now makes clear that the server-backed refresh runs the Python summarizer. Opening the page from `file://` cannot start Python directly; use `python3 scripts/open_stf_report.py` once, then the in-page refresh button can regenerate data through the local server.
+
+Second restoration pass:
+- Removed the old imported legacy-coverage bundle from the root report. The root HTML now states that it is built from discovered Vast logs only, and the generated page no longer includes legacy imported branch-comparison records.
+- Added per-branch mini validation graphs in the Branch Explorer so every branch has its own graph, while the Branch A/B selectors still provide direct two-branch comparison.
+- Widened the one-glance outcome SVG to 1600px and moved bars farther right so branch labels do not overlap the bars.
+- The ambiguous white marker in the outcome map remains removed; the bars alone encode quality, learning, and wall-clock.
+- `scripts/serve_stf_report.py` now returns CORS headers so a `file://` page can still call `http://127.0.0.1:8765/refresh` if the local server is already running. A browser still cannot start Python by itself; `scripts/open_stf_report.py` remains the one-command launcher that starts/reuses the server.
+- The navigation footer is a fixed bottom-center floating dock with section links plus a refresh button. The refresh button posts to the Python-backed server endpoint and then reloads the page.

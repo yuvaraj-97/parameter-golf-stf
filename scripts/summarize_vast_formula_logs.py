@@ -354,7 +354,13 @@ def norm_good(value: float | None, low: float, high: float) -> float:
     return max(0.0, min(1.0, (high - value) / (high - low)))
 
 
-def render_outcome_dashboard(rows: list[Variant], width: int = 1280) -> str:
+def ellipsize(text: str, limit: int) -> str:
+    if len(text) <= limit:
+        return text
+    return text[: max(0, limit - 1)].rstrip() + "…"
+
+
+def render_outcome_dashboard(rows: list[Variant], width: int = 1600) -> str:
     rows = rows[:12]
     if not rows:
         return ""
@@ -370,7 +376,7 @@ def render_outcome_dashboard(rows: list[Variant], width: int = 1280) -> str:
     speed_low, speed_high = min(speed_values), max(speed_values)
     row_h = 46
     top = 82
-    left = 420
+    left = 560
     bar_w = width - left - 48
     height = top + row_h * len(rows) + 38
     colors = {"quality": "#58f2d0", "learning": "#b8ff72", "speed": "#f3b45b"}
@@ -388,10 +394,10 @@ def render_outcome_dashboard(rows: list[Variant], width: int = 1280) -> str:
         quality = norm_good(variant.final_bpb, bpb_low, bpb_high)
         learning = norm_good(variant.last_train_loss, loss_low, loss_high)
         speed = norm_good(variant.last_step_avg_ms, speed_low, speed_high)
-        label = f"{variant.branch} / {variant.score_fn}"
+        label = ellipsize(f"{variant.branch} / {variant.score_fn}", 52)
         parts.extend(
             [
-                f'<text x="24" y="{y + 18}" class="row-label">{html.escape(label[:46])}</text>',
+                f'<text x="24" y="{y + 18}" class="row-label">{html.escape(label)}</text>',
                 f'<text x="24" y="{y + 36}" class="row-detail">BPB {fmt(variant.final_bpb)} | loss {fmt(variant.last_train_loss)} | {fmt(variant.last_step_avg_ms, 1)} ms</text>',
                 f'<rect x="{left}" y="{y}" width="{bar_w}" height="30" rx="15" class="outcome-track" />',
                 f'<rect x="{left}" y="{y}" width="{bar_w * quality * 0.32:.1f}" height="30" rx="15" fill="{colors["quality"]}" opacity=".82" />',
@@ -746,6 +752,64 @@ def render_branch_compare_picker(completed: list[Variant]) -> str:
         )
     payload = html.escape(json.dumps(records, separators=(",", ":")), quote=False)
 
+    overview_cards = []
+    for index, record in enumerate(records):
+        histories = [
+            variant["history"]
+            for variant in record["variants"]
+            if variant.get("history")
+        ]
+        points = [point for history in histories for point in history]
+        steps = [point["step"] for point in points]
+        bpbs = [point["bpb"] for point in points]
+        lines = []
+        if steps and bpbs:
+            min_step, max_step = min(steps), max(steps)
+            min_bpb, max_bpb = min(bpbs), max(bpbs)
+            plot_w, plot_h = 280, 82
+            for line_idx, history in enumerate(histories[:4]):
+                coords = []
+                for point in history:
+                    x = 20 + (0 if max_step == min_step else (point["step"] - min_step) / (max_step - min_step) * plot_w)
+                    y = 14 + (0 if max_bpb == min_bpb else (max_bpb - point["bpb"]) / (max_bpb - min_bpb) * plot_h)
+                    coords.append(f"{x:.1f},{y:.1f}")
+                color = ["#58f2d0", "#b8ff72", "#f3b45b", "#4aa8ff"][line_idx % 4]
+                lines.append(f'<polyline points="{" ".join(coords)}" stroke="{color}" />')
+        mini_lines = "".join(lines) if lines else '<text x="160" y="62">No curve</text>'
+        mini_svg = (
+            '<svg class="branch-mini" viewBox="0 0 320 120" role="img" aria-label="Branch validation curve">'
+            '<rect x="20" y="14" width="280" height="82" rx="12" />'
+            '<line x1="20" y1="96" x2="300" y2="96" />'
+            '<line x1="20" y1="14" x2="20" y2="96" />'
+            f"{mini_lines}"
+            "</svg>"
+        )
+        best_final = fmt(record.get("best_final_bpb") if isinstance(record.get("best_final_bpb"), float) else None)
+        actual_skip_values = [
+            variant.get("actual_skip")
+            for variant in record["variants"]
+            if isinstance(variant.get("actual_skip"), (int, float))
+        ]
+        max_actual_skip = max(actual_skip_values) if actual_skip_values else None
+        overview_cards.append(
+            f"""
+            <article class="branch-overview-card">
+              <div class="branch-overview-head">
+                <span class="status {html.escape(str(record["status"]))}">{html.escape(str(record["status"]))}</span>
+                <strong>{html.escape(record["branch"])}</strong>
+              </div>
+              {mini_svg}
+              <p>{html.escape(record["description"])}</p>
+              <div class="branch-stats">
+                <span class="branch-stat"><strong>{best_final}</strong><span>best final BPB</span></span>
+                <span class="branch-stat"><strong>{fmt(record.get("best_steps") if isinstance(record.get("best_steps"), int) else None)}</strong><span>best run steps</span></span>
+                <span class="branch-stat"><strong>{len(record["variants"])}</strong><span>completed variants</span></span>
+                <span class="branch-stat"><strong>{pct(max_actual_skip)}</strong><span>max actual skip</span></span>
+              </div>
+            </article>
+            """
+        )
+
     options = "".join(
         f'<option value="{html.escape(record["branch"])}">{html.escape(record["branch"])}</option>'
         for record in records
@@ -758,8 +822,9 @@ def render_branch_compare_picker(completed: list[Variant]) -> str:
       <div class="compare-copy">
         <p class="eyebrow">Branch graph and two-way comparison</p>
         <h2>Branch Explorer</h2>
-        <p class="note">Pick any two branches. The chart draws every validation curve available for those branches, and the panels summarize what each branch was trying to prove plus its best metrics.</p>
+        <p class="note">Every branch gets a mini validation graph below. Pick any two branches in the selectors to compare their curves, stats, description, and run table directly.</p>
       </div>
+      <div class="branch-overview-grid">{''.join(overview_cards)}</div>
       <div class="compare-controls two">
         <label for="branchASelect">Branch A</label>
         <select id="branchASelect">{options}</select>
@@ -1028,32 +1093,6 @@ def render_all_run_inventory() -> str:
         <summary>Show all discovered runs</summary>
         <div class="run-ledger">{''.join(cards)}</div>
       </details>
-    </section>
-    """
-
-
-def render_legacy_analysis_coverage() -> str:
-    root = Path("My_approch") / "analysis"
-    reports = sorted(root.glob("*_branch_compare_data.json")) if root.exists() else []
-    if not reports:
-        return ""
-    cards = []
-    for path in reports:
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        records = data.get("records", [])
-        ok = sum(1 for row in records if isinstance(row, dict) and row.get("status") == "ok")
-        cards.append(
-            f"<article class=\"branch-chip\"><span class=\"status archive\">legacy</span><strong>{html.escape(path.name)}</strong><small>{html.escape(str(data.get('iterations', '-')))} iterations | {ok}/{len(records)} ok rows</small></article>"
-        )
-    return f"""
-    <section class="compare-card" id="legacy-coverage">
-      <p class="eyebrow">Imported branch-comparison bundle</p>
-      <h2>Legacy Iteration Coverage</h2>
-      <p class="note">The older branch-comparison JSON bundle is embedded here as coverage context, while the detailed static pages remain in My_approch/analysis.</p>
-      <div class="branch-inventory">{''.join(cards)}</div>
     </section>
     """
 
@@ -1327,7 +1366,6 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     branch_tree = render_branch_tree(completed)
     validation_ladder = render_validation_ladder(completed)
     branch_compare = render_branch_compare_picker(completed)
-    legacy_coverage = render_legacy_analysis_coverage()
     all_run_inventory = render_all_run_inventory()
     movie_cards = []
     for variant in visual_rows[:8]:
@@ -1404,10 +1442,12 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       bottom: 18px;
       transform: translateX(-50%);
       z-index: 30;
-      width: min(1760px, calc(100vw - 24px));
+      width: max-content;
+      max-width: calc(100vw - 24px);
       display: flex;
       flex-wrap: wrap;
       align-items: center;
+      justify-content: center;
       gap: 10px;
       padding: 12px;
       border: 1px solid var(--line);
@@ -1428,8 +1468,8 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       text-decoration: none;
       cursor: pointer;
     }}
-    .floating-nav button {{ margin-left: auto; color: #061208; background: var(--active); }}
-    .floating-status {{ color: var(--muted); font-size: .86rem; min-width: 150px; }}
+    .floating-nav button {{ color: #061208; background: var(--active); }}
+    .floating-status {{ color: var(--muted); font-size: .86rem; min-width: 150px; text-align: center; }}
     .metrics {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin: 24px 0 34px; }}
     .metric {{ padding: 18px; border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.035); }}
     .metric strong {{ display: block; font-size: 1.8rem; letter-spacing: -0.04em; }}
@@ -1544,6 +1584,16 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     }}
     .branch-chart-wrap {{ border: 1px solid var(--line); border-radius: 24px; background: rgba(0,0,0,.25); overflow-x: auto; margin: 18px 0; }}
     .branch-chart {{ width: 100%; min-width: 920px; display: block; }}
+    .branch-overview-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 14px; margin: 18px 0 24px; }}
+    .branch-overview-card {{ border: 1px solid var(--line); border-radius: 18px; padding: 14px; background: rgba(255,255,255,.035); }}
+    .branch-overview-head {{ display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }}
+    .branch-overview-head strong {{ overflow-wrap: anywhere; }}
+    .branch-overview-card p {{ color: var(--muted); line-height: 1.45; min-height: 3.9em; }}
+    .branch-mini {{ width: 100%; display: block; margin: 6px 0 10px; }}
+    .branch-mini rect {{ fill: rgba(0,0,0,.18); stroke: rgba(255,255,255,.08); }}
+    .branch-mini line {{ stroke: rgba(255,255,255,.16); }}
+    .branch-mini polyline {{ fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }}
+    .branch-mini text {{ fill: var(--muted); text-anchor: middle; font-size: 13px; font-weight: 800; }}
     .branch-panels {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 18px 0; }}
     .branch-detail {{ border: 1px solid var(--line); border-radius: 18px; padding: 16px; background: rgba(255,255,255,.035); }}
     .branch-delta {{ margin: -4px 0 18px; }}
@@ -1637,7 +1687,6 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       main {{ width: min(100vw - 20px, 1760px); padding-top: 20px; }}
       .hero {{ padding: 24px; border-radius: 24px; }}
       .floating-nav {{ bottom: 8px; border-radius: 16px; }}
-      .floating-nav button {{ margin-left: 0; }}
       .metrics {{ grid-template-columns: repeat(2, 1fr); }}
       .viz-card {{ grid-template-columns: 1fr; }}
       .movie-grid {{ grid-template-columns: 1fr; }}
@@ -1654,7 +1703,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
 <body>
   <main id="top">
     <section class="hero">
-      <p class="eyebrow">Unified STF report, Vast logs + imported branch-comparison data</p>
+      <p class="eyebrow">Unified STF report from discovered Vast logs only</p>
       <h1>{hero_title}</h1>
       <p>{hero_body}</p>
     <div class="metrics">
@@ -1668,7 +1717,6 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       <div class="link-row">
         <a href="#branch-tree">Branch tree</a>
         <a href="#validation-ladder">Validation ladder</a>
-        <a href="#legacy-coverage">Legacy coverage</a>
         <a href="#all-run-inventory">All runs</a>
         <a href="#branch-explorer">Branch explorer</a>
         <a href="#reality-check">Reality table</a>
@@ -1678,8 +1726,6 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     {branch_tree}
 
     {validation_ladder}
-
-    {legacy_coverage}
 
     {all_run_inventory}
 
@@ -1728,12 +1774,11 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     <a href="#top">Top</a>
     <a href="#branch-tree">Branch tree</a>
     <a href="#validation-ladder">Validation ladder</a>
-    <a href="#legacy-coverage">Legacy coverage</a>
     <a href="#all-run-inventory">All runs</a>
     <a href="#branch-explorer">Branch explorer</a>
     <a href="#reality-check">Reality table</a>
     <button type="button" id="refreshReportButton" title="Runs the Python summarizer through the local report server">Refresh data</button>
-    <span class="floating-status" id="refreshReportStatus">server refresh runs Python</span>
+    <span class="floating-status" id="refreshReportStatus">runs Python via server</span>
   </nav>
   <script>
     (function() {{
@@ -1741,19 +1786,20 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       const status = document.getElementById("refreshReportStatus");
       if (!button || !status) return;
       button.addEventListener("click", async () => {{
-        if (window.location.protocol === "file:") {{
-          status.textContent = "Run python3 scripts/open_stf_report.py";
-          return;
-        }}
         button.disabled = true;
         status.textContent = "Refreshing...";
         try {{
-          const response = await fetch("/refresh", {{ method: "POST" }});
+          const refreshUrl = window.location.protocol === "file:"
+            ? "http://127.0.0.1:8765/refresh"
+            : "/refresh";
+          const response = await fetch(refreshUrl, {{ method: "POST" }});
           if (!response.ok) throw new Error(await response.text());
           status.textContent = "Updated, reloading...";
           window.location.reload();
         }} catch (error) {{
-          status.textContent = "Refresh failed";
+          status.textContent = window.location.protocol === "file:"
+            ? "Start once: python3 scripts/open_stf_report.py"
+            : "Refresh failed";
           console.error(error);
         }} finally {{
           button.disabled = false;
