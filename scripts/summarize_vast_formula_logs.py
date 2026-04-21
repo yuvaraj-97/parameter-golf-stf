@@ -354,8 +354,8 @@ def norm_good(value: float | None, low: float, high: float) -> float:
     return max(0.0, min(1.0, (high - value) / (high - low)))
 
 
-def render_outcome_dashboard(rows: list[Variant], width: int = 1120) -> str:
-    rows = rows[:14]
+def render_outcome_dashboard(rows: list[Variant], width: int = 1280) -> str:
+    rows = rows[:12]
     if not rows:
         return ""
 
@@ -368,10 +368,10 @@ def render_outcome_dashboard(rows: list[Variant], width: int = 1120) -> str:
     bpb_low, bpb_high = min(bpb_values), max(bpb_values)
     loss_low, loss_high = min(loss_values), max(loss_values)
     speed_low, speed_high = min(speed_values), max(speed_values)
-    row_h = 42
+    row_h = 46
     top = 82
-    left = 258
-    bar_w = width - left - 44
+    left = 420
+    bar_w = width - left - 48
     height = top + row_h * len(rows) + 38
     colors = {"quality": "#58f2d0", "learning": "#b8ff72", "speed": "#f3b45b"}
     parts = [
@@ -388,17 +388,15 @@ def render_outcome_dashboard(rows: list[Variant], width: int = 1120) -> str:
         quality = norm_good(variant.final_bpb, bpb_low, bpb_high)
         learning = norm_good(variant.last_train_loss, loss_low, loss_high)
         speed = norm_good(variant.last_step_avg_ms, speed_low, speed_high)
-        total = (quality + learning + speed) / 3.0
         label = f"{variant.branch} / {variant.score_fn}"
         parts.extend(
             [
-                f'<text x="24" y="{y + 18}" class="row-label">{html.escape(label)}</text>',
-                f'<text x="24" y="{y + 34}" class="row-detail">BPB {fmt(variant.final_bpb)} | loss {fmt(variant.last_train_loss)} | {fmt(variant.last_step_avg_ms, 1)} ms</text>',
+                f'<text x="24" y="{y + 18}" class="row-label">{html.escape(label[:46])}</text>',
+                f'<text x="24" y="{y + 36}" class="row-detail">BPB {fmt(variant.final_bpb)} | loss {fmt(variant.last_train_loss)} | {fmt(variant.last_step_avg_ms, 1)} ms</text>',
                 f'<rect x="{left}" y="{y}" width="{bar_w}" height="30" rx="15" class="outcome-track" />',
                 f'<rect x="{left}" y="{y}" width="{bar_w * quality * 0.32:.1f}" height="30" rx="15" fill="{colors["quality"]}" opacity=".82" />',
                 f'<rect x="{left + bar_w * 0.34}" y="{y}" width="{bar_w * learning * 0.30:.1f}" height="30" rx="15" fill="{colors["learning"]}" opacity=".78" />',
                 f'<rect x="{left + bar_w * 0.66}" y="{y}" width="{bar_w * speed * 0.30:.1f}" height="30" rx="15" fill="{colors["speed"]}" opacity=".78" />',
-                f'<circle cx="{left + bar_w * (0.98 * total):.1f}" cy="{y + 15}" r="7" class="total-dot" />',
             ]
         )
 
@@ -563,7 +561,7 @@ def render_validation_ladder(completed: list[Variant]) -> str:
         return ""
 
     return f"""
-    <div class="ladder-card">
+    <div class="ladder-card" id="validation-ladder">
       <div>
         <p class="eyebrow">Budget-aware validation ladder</p>
         <h2>What We Actually Proved</h2>
@@ -690,54 +688,100 @@ def render_branch_inventory(completed: list[Variant]) -> str:
 
 
 def render_branch_compare_picker(completed: list[Variant]) -> str:
-    best_by_branch: dict[str, Variant] = {}
+    by_branch: dict[str, list[Variant]] = defaultdict(list)
     for variant in completed:
-        current = best_by_branch.get(variant.branch)
-        if current is None or (variant.final_bpb or float("inf")) < (current.final_bpb or float("inf")):
-            best_by_branch[variant.branch] = variant
-    if not best_by_branch:
+        by_branch[variant.branch].append(variant)
+    if not by_branch:
         return ""
 
+    descriptions = {
+        "codex/stf-mlp-skip-runner": "Validated true-skip MLP path. Gathers active token rows through the MLP and scatters them back so logical freezing becomes real MLP compute savings.",
+        "codex/stf-adaptive-mlp-budget": "Validated adaptive active-budget schedule. Trades a small 10k BPB cost for higher actual skip than the fixed active-0.75 runner.",
+        "codex/stf-query-sparse-attn": "Attempted sparse attention plus MLP true-skip path. Current smoke attempts are failed/blocked and need redesign before more pod time.",
+        "stf-soft-freeze-telemetry": "Telemetry variant of soft-freeze. Shows high logical freeze while full-block-then-freeze still skips 0% actual compute.",
+        "stf-recurrence-telemetry": "Telemetry recurrence variant showing compute reality for recurrent frozen-state paths.",
+        "stf-learned-gate": "Learns a continuous gate instead of only using a fixed threshold. Good quality in some runs, but gate-open proxy can mean little true freezing.",
+        "stf-learned-gate-telemetry": "Telemetry variant of learned-gate that separates logical gates from actual skipped work.",
+    }
+
     records = []
-    for branch, variant in sorted(best_by_branch.items(), key=lambda item: item[1].final_bpb or float("inf")):
+    for branch, variants in sorted(
+        by_branch.items(),
+        key=lambda item: min(v.final_bpb if v.final_bpb is not None else float("inf") for v in item[1]),
+    ):
+        variants = sorted(
+            variants,
+            key=lambda v: (
+                variant_steps(v) or 0,
+                v.final_bpb if v.final_bpb is not None else float("inf"),
+                v.score_fn,
+            ),
+        )
+        best = min(variants, key=lambda v: v.final_bpb if v.final_bpb is not None else float("inf"))
         records.append(
             {
                 "branch": branch,
-                "formula": variant.score_fn,
-                "steps": variant_steps(variant),
-                "final_bpb": variant.final_bpb,
-                "last_val_bpb": variant.last_val_bpb,
-                "step_ms": variant.last_step_avg_ms,
-                "actual_skip": variant.stats.get("actual_skip_ratio"),
-                "computed": variant.stats.get("computed_token_ratio"),
+                "description": descriptions.get(branch, branch_status(branch)[1]),
+                "status": branch_status(branch)[0],
+                "best_formula": best.score_fn,
+                "best_final_bpb": best.final_bpb,
+                "best_steps": variant_steps(best),
+                "variants": [
+                    {
+                        "formula": variant.score_fn,
+                        "steps": variant_steps(variant),
+                        "final_bpb": variant.final_bpb,
+                        "last_val_bpb": variant.last_val_bpb,
+                        "step_ms": variant.last_step_avg_ms,
+                        "actual_skip": variant.stats.get("actual_skip_ratio"),
+                        "computed": variant.stats.get("computed_token_ratio"),
+                        "frozen": variant.stats.get("frozen_token_ratio", variant.frozen_proxy()),
+                        "active": variant.active_proxy(),
+                        "source": variant.source,
+                        "history": [{"step": step, "bpb": bpb} for step, bpb in variant.val_history],
+                    }
+                    for variant in variants
+                ],
             }
         )
-    default_branch = records[0]["branch"]
     payload = html.escape(json.dumps(records, separators=(",", ":")), quote=False)
 
     options = "".join(
-        f'<option value="{html.escape(record["branch"])}" {"selected" if record["branch"] == default_branch else ""}>{html.escape(record["branch"])}</option>'
+        f'<option value="{html.escape(record["branch"])}">{html.escape(record["branch"])}</option>'
         for record in records
     )
+    default_a = html.escape(records[0]["branch"])
+    default_b = html.escape(records[1]["branch"] if len(records) > 1 else records[0]["branch"])
 
     return f"""
-    <div class="compare-card">
+    <div class="compare-card" id="branch-explorer">
       <div class="compare-copy">
-        <p class="eyebrow">Branch comparison</p>
-        <h2>Compare Against Any Branch</h2>
-        <p class="note">Default baseline is the best branch by final BPB in the current parsed logs. You can switch the comparison branch below. `baseline-repro` remains visible in the branch inventory as the OpenAI direct baseline context; it only appears in this selector when matching parsed metrics are available.</p>
+        <p class="eyebrow">Branch graph and two-way comparison</p>
+        <h2>Branch Explorer</h2>
+        <p class="note">Pick any two branches. The chart draws every validation curve available for those branches, and the panels summarize what each branch was trying to prove plus its best metrics.</p>
       </div>
-      <div class="compare-controls">
-        <label for="branchBaselineSelect">Compare against</label>
-        <select id="branchBaselineSelect">{options}</select>
+      <div class="compare-controls two">
+        <label for="branchASelect">Branch A</label>
+        <select id="branchASelect">{options}</select>
+        <label for="branchBSelect">Branch B</label>
+        <select id="branchBSelect">{options}</select>
       </div>
+      <div class="branch-chart-wrap">
+        <svg id="branchCompareChart" class="branch-chart" viewBox="0 0 1120 420" role="img" aria-label="Selected branch validation BPB curves"></svg>
+      </div>
+      <div class="branch-panels">
+        <article class="branch-detail" id="branchADetail"></article>
+        <article class="branch-detail" id="branchBDetail"></article>
+      </div>
+      <article class="branch-detail branch-delta" id="branchDeltaDetail"></article>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Branch</th><th>Best Formula</th><th>Iterations</th><th>Final BPB</th><th>BPB vs Selected</th><th>Avg Iter</th><th>Speed vs Selected</th><th>Actual Skip</th><th>Computed</th></tr></thead>
+          <thead><tr><th>Branch</th><th>Formula</th><th>Iterations</th><th>Final BPB</th><th>Last BPB</th><th>Avg Iter</th><th>Actual Skip</th><th>Computed</th><th>Source</th></tr></thead>
           <tbody id="branchCompareRows"></tbody>
         </table>
       </div>
       <script type="application/json" id="branchCompareData">{payload}</script>
+      <script type="application/json" id="branchCompareDefaults">{{"a":"{default_a}","b":"{default_b}"}}</script>
     </div>
     """
 
@@ -750,7 +794,7 @@ def render_branch_tree(completed: list[Variant]) -> str:
     fixed_text = ", ".join(f"{steps // 1000}k" if steps >= 1000 else str(steps) for steps in sorted(set(fixed_done))) or "waiting"
     adaptive_text = ", ".join(f"{steps // 1000}k" if steps >= 1000 else str(steps) for steps in sorted(set(adaptive_done))) or "waiting"
     return f"""
-    <section class="branch-tree-card">
+    <section class="branch-tree-card" id="branch-tree">
       <div>
         <p class="eyebrow">Implementation map</p>
         <h2>Git Branch Tree</h2>
@@ -793,6 +837,223 @@ def render_branch_tree(completed: list[Variant]) -> str:
       <h3>All Repo Branches</h3>
       <p class="note">This list includes local branches and `origin/*` branches after stripping the remote prefix, so the report keeps every branch in context.</p>
       {render_branch_inventory(completed)}
+    </section>
+    """
+
+
+def discover_run_log_paths() -> list[Path]:
+    paths: set[Path] = set()
+    paths.update(Path(".").glob("vast*.log"))
+    vast_root = Path("vast") / "experiments"
+    if vast_root.exists():
+        paths.update(vast_root.rglob("console.log"))
+        paths.update(vast_root.rglob("train.log"))
+    return sorted(paths, key=lambda path: str(path))
+
+
+def run_group_key(path: Path) -> str:
+    if path.name in {"console.log", "train.log"} and len(path.parts) > 1:
+        return str(path.parent)
+    return str(path)
+
+
+def branch_from_path(path: Path) -> str:
+    parts = path.parts
+    if len(parts) >= 4 and parts[0] == "vast" and parts[1] == "experiments":
+        if len(parts) >= 6 and parts[3] == "codex":
+            return "codex/" + parts[4]
+        return parts[3]
+    stem = path.stem
+    if stem.startswith("vast_"):
+        return stem.removeprefix("vast_")
+    return path.parent.name or stem
+
+
+def parse_run_log_summary(path: Path) -> dict[str, object]:
+    summary: dict[str, object] = {
+        "path": str(path),
+        "group": run_group_key(path),
+        "branch": branch_from_path(path),
+        "score_fn": "-",
+        "last_val_step": None,
+        "max_steps": None,
+        "best_val_bpb": None,
+        "final_bpb": None,
+        "last_step_avg_ms": None,
+        "status": "seen",
+    }
+    try:
+        with path.open("r", encoding="utf-8", errors="replace") as handle:
+            for raw in handle:
+                line = raw.strip()
+                if line.startswith("branch=") or line.startswith("- Branch:"):
+                    summary["branch"] = line.split("=", 1)[-1].split(":", 1)[-1].strip()
+                if line.startswith("score_fn=") or line.startswith("- STF score function:"):
+                    summary["score_fn"] = line.split("=", 1)[-1].split(":", 1)[-1].strip()
+                val_match = VAL_RE.search(line)
+                if val_match:
+                    step = int(val_match.group(1))
+                    val_bpb = parse_float(val_match.group(4))
+                    summary["last_val_step"] = step
+                    summary["max_steps"] = int(val_match.group(2))
+                    current_best = summary.get("best_val_bpb")
+                    if val_bpb is not None and (current_best is None or val_bpb < current_best):
+                        summary["best_val_bpb"] = val_bpb
+                train_match = TRAIN_RE.search(line)
+                if train_match:
+                    summary["max_steps"] = int(train_match.group(2))
+                    summary["last_step_avg_ms"] = parse_float(train_match.group(5))
+                final_match = FINAL_RE.search(line)
+                if final_match:
+                    summary["final_bpb"] = parse_float(final_match.group(2))
+                    summary["status"] = "completed"
+                lowered = line.lower()
+                if "variant failed" in lowered or "traceback " in lowered or "out of memory" in lowered:
+                    summary["status"] = "failed"
+    except OSError:
+        summary["status"] = "unreadable"
+    if summary["status"] == "seen" and summary.get("best_val_bpb") is not None:
+        summary["status"] = "partial"
+    return summary
+
+
+def render_all_run_inventory() -> str:
+    paths = discover_run_log_paths()
+    if not paths:
+        return ""
+    parsed_variants = parse_logs(paths)
+    parsed_sources = {variant.source for variant in parsed_variants}
+    parsed_groups = {run_group_key(Path(source)) for source in parsed_sources}
+    rows_by_key: dict[tuple[object, ...], dict[str, object]] = {}
+    for variant in parsed_variants:
+        source_path = Path(variant.source)
+        best_val_bpb = min((bpb for _, bpb in variant.val_history), default=None)
+        row_key = (
+            variant.branch,
+            variant.score_fn,
+            variant.last_val_step,
+            variant_steps(variant),
+            round(best_val_bpb, 6) if best_val_bpb is not None else None,
+            round(variant.final_bpb, 6) if variant.final_bpb is not None else None,
+        )
+        existing = rows_by_key.get(row_key)
+        if existing is None:
+            rows_by_key[row_key] = {
+                "group": run_group_key(source_path),
+                "branch": variant.branch,
+                "score_fn": variant.score_fn,
+                "last_val_step": variant.last_val_step,
+                "max_steps": variant_steps(variant),
+                "best_val_bpb": best_val_bpb,
+                "final_bpb": variant.final_bpb,
+                "last_step_avg_ms": variant.last_step_avg_ms,
+                "status": "failed" if variant.failed else "completed" if variant.complete else "partial" if variant.last_val_bpb is not None else "seen",
+                "files": [source_path.name],
+                "groups": [run_group_key(source_path)],
+            }
+        else:
+            existing.setdefault("files", []).append(source_path.name)
+            existing.setdefault("groups", []).append(run_group_key(source_path))
+    generic_paths = [path for path in paths if str(path) not in parsed_sources and run_group_key(path) not in parsed_groups]
+    for path in generic_paths:
+        summary = parse_run_log_summary(path)
+        row_key = (
+            summary.get("branch"),
+            summary.get("score_fn"),
+            summary.get("last_val_step"),
+            summary.get("max_steps"),
+            round(float(summary["best_val_bpb"]), 6) if isinstance(summary.get("best_val_bpb"), float) else None,
+            round(float(summary["final_bpb"]), 6) if isinstance(summary.get("final_bpb"), float) else None,
+            summary.get("status"),
+        )
+        existing = rows_by_key.get(row_key)
+        if existing is None:
+            summary["files"] = [path.name]
+            summary["groups"] = [run_group_key(path)]
+            rows_by_key[row_key] = summary
+        else:
+            existing.setdefault("files", []).append(path.name)
+            existing.setdefault("groups", []).append(run_group_key(path))
+    rows = list(rows_by_key.values())
+    rows.sort(key=lambda item: (str(item.get("branch")), str(item.get("group")), str(item.get("score_fn"))))
+    completed = sum(1 for row in rows if row.get("status") == "completed")
+    partial = sum(1 for row in rows if row.get("status") == "partial")
+    failed = sum(1 for row in rows if row.get("status") == "failed")
+    branches = len({str(row.get("branch")) for row in rows})
+
+    cards = []
+    for row in rows:
+        status = str(row.get("status") or "seen")
+        status_class = "done" if status == "completed" else "blocked" if status == "failed" else "running" if status == "partial" else "archive"
+        last_step = f"{fmt(row.get('last_val_step') if isinstance(row.get('last_val_step'), int) else None)} / {fmt(row.get('max_steps') if isinstance(row.get('max_steps'), int) else None)}"
+        files = row.get("files") if isinstance(row.get("files"), list) else [row.get("files")]
+        groups = row.get("groups") if isinstance(row.get("groups"), list) else [row.get("group") or row.get("path")]
+        files_label = ", ".join(html.escape(str(item)) for item in files[:3] if item)
+        if len(files) > 3:
+            files_label += f" +{len(files) - 3} more"
+        groups_label = " | ".join(html.escape(str(item)) for item in groups[:2] if item)
+        if len(groups) > 2:
+            groups_label += f" | +{len(groups) - 2} more"
+        cards.append(
+            "<article class=\"run-row\">"
+            "<div class=\"run-main\">"
+            f"<strong>{html.escape(str(row.get('branch') or '-'))}</strong>"
+            f"<span>{html.escape(str(row.get('score_fn') or '-'))}</span>"
+            f"<span class=\"status {status_class}\">{html.escape(status)}</span>"
+            "</div>"
+            "<div class=\"run-metrics\">"
+            f"<span><b>{html.escape(last_step)}</b><small>steps</small></span>"
+            f"<span><b>{fmt(row.get('best_val_bpb') if isinstance(row.get('best_val_bpb'), float) else None)}</b><small>best BPB</small></span>"
+            f"<span><b>{fmt(row.get('final_bpb') if isinstance(row.get('final_bpb'), float) else None)}</b><small>final BPB</small></span>"
+            f"<span><b>{fmt(row.get('last_step_avg_ms') if isinstance(row.get('last_step_avg_ms'), float) else None, 1)}ms</b><small>avg iter</small></span>"
+            "</div>"
+            "<div class=\"run-paths\">"
+            f"<span>{files_label or '-'}</span>"
+            f"<code>{groups_label or '-'}</code>"
+            "</div>"
+            "</article>"
+        )
+    return f"""
+    <section class="compare-card" id="all-run-inventory">
+      <p class="eyebrow">Across-branch artifact audit</p>
+      <h2>All Discovered Run Logs</h2>
+      <p class="note">This ledger includes owned STF/Vast artifacts: top-level Vast logs and archived Vast experiment console/train logs. The separate non-STF records archive is intentionally excluded.</p>
+      <div class="metrics">
+        <div class="metric"><strong>{len(rows)}</strong><span>run groups discovered</span></div>
+        <div class="metric"><strong>{branches}</strong><span>branches or run families</span></div>
+        <div class="metric"><strong>{completed}</strong><span>completed artifacts</span></div>
+        <div class="metric warn"><strong>{partial + failed}</strong><span>partial or failed artifacts</span></div>
+      </div>
+      <details open>
+        <summary>Show all discovered runs</summary>
+        <div class="run-ledger">{''.join(cards)}</div>
+      </details>
+    </section>
+    """
+
+
+def render_legacy_analysis_coverage() -> str:
+    root = Path("My_approch") / "analysis"
+    reports = sorted(root.glob("*_branch_compare_data.json")) if root.exists() else []
+    if not reports:
+        return ""
+    cards = []
+    for path in reports:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        records = data.get("records", [])
+        ok = sum(1 for row in records if isinstance(row, dict) and row.get("status") == "ok")
+        cards.append(
+            f"<article class=\"branch-chip\"><span class=\"status archive\">legacy</span><strong>{html.escape(path.name)}</strong><small>{html.escape(str(data.get('iterations', '-')))} iterations | {ok}/{len(records)} ok rows</small></article>"
+        )
+    return f"""
+    <section class="compare-card" id="legacy-coverage">
+      <p class="eyebrow">Imported branch-comparison bundle</p>
+      <h2>Legacy Iteration Coverage</h2>
+      <p class="note">The older branch-comparison JSON bundle is embedded here as coverage context, while the detailed static pages remain in My_approch/analysis.</p>
+      <div class="branch-inventory">{''.join(cards)}</div>
     </section>
     """
 
@@ -1028,6 +1289,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     )
 
     best = completed[0] if completed else None
+    ten_k_completed = sum(1 for variant in completed if variant_steps(variant) == 10000)
     visual_rows = selected or completed[:12]
     rows_html = []
     for rank, variant in enumerate(completed, start=1):
@@ -1085,6 +1347,8 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     branch_tree = render_branch_tree(completed)
     validation_ladder = render_validation_ladder(completed)
     branch_compare = render_branch_compare_picker(completed)
+    legacy_coverage = render_legacy_analysis_coverage()
+    all_run_inventory = render_all_run_inventory()
     movie_cards = []
     for variant in visual_rows[:8]:
         movie_cards.append(
@@ -1120,6 +1384,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       --bad: #ff817d;
     }}
     * {{ box-sizing: border-box; letter-spacing: 0 !important; }}
+    html {{ scroll-padding-bottom: 110px; }}
     body {{
       margin: 0;
       color: var(--text);
@@ -1129,7 +1394,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
         linear-gradient(135deg, #020302, var(--bg) 48%, #0d100a);
       font-family: Avenir Next, Avenir, Optima, Candara, sans-serif;
     }}
-    main {{ width: min(1180px, calc(100vw - 32px)); margin: 0 auto; padding: 46px 0 72px; }}
+    main {{ width: min(1180px, calc(100vw - 32px)); margin: 0 auto; padding: 46px 0 150px; }}
     .hero {{
       border: 1px solid var(--line);
       border-radius: 32px;
@@ -1152,7 +1417,40 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     .hero p {{ color: var(--muted); max-width: 830px; font-size: 1.04rem; line-height: 1.65; }}
     .hero a, .link-row a {{ color: var(--active); font-weight: 800; text-decoration: none; }}
     .link-row {{ display: flex; flex-wrap: wrap; gap: 14px; margin-top: 18px; }}
-    .metrics {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 24px 0 34px; }}
+    .link-row a {{ border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; background: rgba(255,255,255,.045); }}
+    .floating-nav {{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 30;
+      width: min(1180px, calc(100vw - 24px));
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(8, 14, 10, .92);
+      box-shadow: 0 18px 60px rgba(0,0,0,.42);
+      backdrop-filter: blur(14px);
+    }}
+    .floating-nav a,
+    .floating-nav button {{
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: rgba(255,255,255,.055);
+      color: var(--active);
+      font: inherit;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+    }}
+    .floating-nav button {{ margin-left: auto; color: #061208; background: var(--active); }}
+    .floating-status {{ color: var(--muted); font-size: .86rem; min-width: 150px; }}
+    .metrics {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin: 24px 0 34px; }}
     .metric {{ padding: 18px; border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.035); }}
     .metric strong {{ display: block; font-size: 1.8rem; letter-spacing: -0.04em; }}
     .metric span {{ color: var(--muted); font-size: .86rem; }}
@@ -1212,18 +1510,17 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
         rgba(14, 22, 18, 0.86);
       overflow-x: auto;
     }}
-    .outcome-viz {{ width: 100%; min-width: 980px; display: block; }}
+    .outcome-viz {{ width: 100%; display: block; }}
     .outcome-title {{ fill: var(--text); font-size: 28px; font-weight: 800; letter-spacing: -0.04em; }}
     .outcome-subtitle, .axis-label, .row-detail {{ fill: var(--muted); font-size: 13px; }}
     .axis-label {{ text-transform: uppercase; letter-spacing: .12em; font-weight: 800; }}
     .row-label {{ fill: var(--text); font-size: 14px; font-weight: 800; }}
     .outcome-track {{ fill: rgba(255,255,255,.055); stroke: rgba(255,255,255,.08); }}
-    .total-dot {{ fill: #eef8ed; stroke: rgba(0,0,0,.42); stroke-width: 2; }}
     .table-wrap {{ overflow-x: auto; border: 1px solid var(--line); border-radius: 24px; background: var(--panel-2); }}
     .table-wrap.compact table {{ min-width: 460px; }}
     .speed-card {{
       display: grid;
-      grid-template-columns: minmax(260px, .9fr) 1.1fr;
+      grid-template-columns: 1fr;
       gap: 18px;
       align-items: start;
       border: 1px solid var(--line);
@@ -1255,6 +1552,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       margin: 18px 0;
     }}
     .compare-controls label {{ color: var(--muted); font-weight: 800; text-transform: uppercase; font-size: .78rem; }}
+    .compare-controls.two {{ grid-template-columns: 120px minmax(220px, 1fr) 120px minmax(220px, 1fr); }}
     select {{
       width: 100%;
       border: 1px solid var(--line);
@@ -1264,6 +1562,21 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       padding: 10px 12px;
       font: inherit;
     }}
+    .branch-chart-wrap {{ border: 1px solid var(--line); border-radius: 24px; background: rgba(0,0,0,.25); overflow-x: auto; margin: 18px 0; }}
+    .branch-chart {{ width: 100%; min-width: 920px; display: block; }}
+    .branch-panels {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 18px 0; }}
+    .branch-detail {{ border: 1px solid var(--line); border-radius: 18px; padding: 16px; background: rgba(255,255,255,.035); }}
+    .branch-delta {{ margin: -4px 0 18px; }}
+    .branch-detail p {{ color: var(--muted); line-height: 1.5; }}
+    .branch-stats {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }}
+    .branch-stat {{ border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: rgba(0,0,0,.18); }}
+    .branch-stat strong {{ display: block; color: var(--text); }}
+    .branch-stat span {{ color: var(--muted); font-size: .82rem; }}
+    .branch-axis {{ stroke: rgba(255,255,255,.26); stroke-width: 1; }}
+    .branch-grid {{ stroke: rgba(255,255,255,.08); stroke-width: 1; }}
+    .branch-line {{ fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }}
+    .branch-chart text {{ fill: var(--muted); font-size: 12px; font-weight: 700; }}
+    .branch-chart .chart-title {{ fill: var(--text); font-size: 20px; font-weight: 900; }}
     .branch-tree-card {{
       margin-top: 22px;
       border: 1px solid var(--line);
@@ -1295,6 +1608,23 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     .branch-chip {{ border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: rgba(255,255,255,.035); }}
     .branch-chip strong {{ display: block; margin: 8px 0 4px; }}
     .branch-chip small {{ color: var(--muted); line-height: 1.4; }}
+    details {{ margin-top: 18px; }}
+    summary {{ cursor: pointer; color: var(--active); font-weight: 800; margin-bottom: 12px; }}
+    .optional-section {{ margin-top: 42px; border: 1px solid var(--line); border-radius: 24px; padding: 18px; background: rgba(14, 22, 18, 0.70); }}
+    .optional-section > summary {{ font-size: clamp(1.25rem, 3vw, 2rem); color: var(--text); }}
+    .optional-section .viz-grid {{ margin-top: 16px; }}
+    .run-ledger {{ display: grid; gap: 10px; margin-top: 12px; }}
+    .run-row {{ display: grid; grid-template-columns: minmax(220px, .85fr) minmax(360px, 1fr) minmax(320px, 1.15fr); gap: 14px; align-items: center; border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: rgba(255,255,255,.032); }}
+    .run-main {{ display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }}
+    .run-main strong {{ font-size: 1rem; overflow-wrap: anywhere; }}
+    .run-main span:not(.status) {{ color: var(--muted); }}
+    .run-metrics {{ display: grid; grid-template-columns: repeat(4, minmax(70px, 1fr)); gap: 8px; }}
+    .run-metrics span {{ border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 8px; background: rgba(0,0,0,.16); }}
+    .run-metrics b {{ display: block; font-size: .95rem; }}
+    .run-metrics small {{ color: var(--muted); font-size: .72rem; text-transform: uppercase; }}
+    .run-paths {{ display: grid; gap: 4px; min-width: 0; }}
+    .run-paths span {{ color: var(--muted); }}
+    .run-paths code {{ color: var(--text); white-space: normal; overflow-wrap: anywhere; font-size: .88rem; }}
     .status {{
       display: inline-block;
       padding: 1px 7px;
@@ -1315,8 +1645,8 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     .status.branch {{ color: var(--muted); background: rgba(255,255,255,.08); }}
     .status.blocked {{ color: #220707; background: var(--bad); }}
     .status.todo {{ color: var(--muted); background: rgba(255,255,255,.08); }}
-    table {{ width: 100%; border-collapse: collapse; min-width: 1040px; }}
-    th, td {{ text-align: left; padding: 13px 14px; border-bottom: 1px solid rgba(255,255,255,.07); white-space: nowrap; }}
+    table {{ width: 100%; border-collapse: collapse; min-width: 0; table-layout: auto; }}
+    th, td {{ text-align: left; padding: 13px 14px; border-bottom: 1px solid rgba(255,255,255,.07); white-space: normal; overflow-wrap: anywhere; }}
     th {{ color: var(--muted); font-size: .78rem; text-transform: uppercase; }}
     td {{ font-variant-numeric: tabular-nums; }}
     .good {{ color: var(--good); }}
@@ -1326,11 +1656,17 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     @media (max-width: 820px) {{
       main {{ width: min(100vw - 20px, 1180px); padding-top: 20px; }}
       .hero {{ padding: 24px; border-radius: 24px; }}
+      .floating-nav {{ bottom: 8px; border-radius: 16px; }}
+      .floating-nav button {{ margin-left: 0; }}
       .metrics {{ grid-template-columns: repeat(2, 1fr); }}
       .viz-card {{ grid-template-columns: 1fr; }}
       .movie-grid {{ grid-template-columns: 1fr; }}
       .movie-card {{ grid-template-columns: 1fr; }}
       .speed-card {{ grid-template-columns: 1fr; }}
+      .compare-controls.two {{ grid-template-columns: 1fr; }}
+      .branch-panels {{ grid-template-columns: 1fr; }}
+      .run-row {{ grid-template-columns: 1fr; }}
+      .run-metrics {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .section-title {{ display: block; }}
     }}
   </style>
@@ -1338,26 +1674,34 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
 <body>
   <main>
     <section class="hero">
-      <p class="eyebrow">Pod A + Pod B, completed 2k telemetry sweep</p>
+      <p class="eyebrow">Unified STF report, Vast logs + imported branch-comparison data</p>
       <h1>{hero_title}</h1>
       <p>{hero_body}</p>
     <div class="metrics">
         <div class="metric"><strong>{len(completed)}</strong><span>completed variants</span></div>
         <div class="metric"><strong>{branch_count}</strong><span>branches compared</span></div>
+        <div class="metric"><strong>{ten_k_completed}</strong><span>completed 10k variants</span></div>
         <div class="metric"><strong>{pct(max_logical_frozen)}</strong><span>max logical freeze</span></div>
         <div class="metric warn"><strong>{pct(max_actual_skip)}</strong><span>actual compute skipped</span></div>
       </div>
       <p>{'Best run: <b>' + html.escape(best.branch) + ' / ' + html.escape(best.score_fn) + '</b> at <b>' + fmt(best.final_bpb) + ' BPB</b>.' if best else ''} Learned-gate is shown separately as a gate-open proxy, because a near-1.0 gate means it is mostly <i>not</i> freezing even when the score looks healthy.</p>
       <div class="link-row">
-        <a href="index.html">Report hub</a>
-        <a href="My_approch/analysis/index.html">Imported analysis bundle</a>
-        <a href="My_approch/stf_branch_tree.html">Standalone branch tree</a>
+        <a href="#branch-tree">Branch tree</a>
+        <a href="#validation-ladder">Validation ladder</a>
+        <a href="#legacy-coverage">Legacy coverage</a>
+        <a href="#all-run-inventory">All runs</a>
+        <a href="#branch-explorer">Branch explorer</a>
+        <a href="#reality-check">Reality table</a>
       </div>
     </section>
 
     {branch_tree}
 
     {validation_ladder}
+
+    {legacy_coverage}
+
+    {all_run_inventory}
 
     {branch_compare}
 
@@ -1369,15 +1713,15 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       {''.join(movie_cards)}
     </div>
 
-    <div class="section-title">
-      <h2>Layer Freezing Diagrams</h2>
-      <p class="note">Inspired by the provided layer-stack sketches: each slab is one STF-controlled layer, cyan is active/open, amber is frozen/closed, and the percentage under each slab comes from final `active_by_layer` or `gate_by_layer` telemetry.</p>
-    </div>
-    <div class="viz-grid">
-      {''.join(visual_cards)}
-    </div>
+    <details class="optional-section">
+      <summary>Per-layer final snapshots</summary>
+      <p class="note">These are final layer-by-layer telemetry snapshots. They are collapsed because the mini movies already show the same freezing idea over time.</p>
+      <div class="viz-grid">
+        {''.join(visual_cards)}
+      </div>
+    </details>
 
-    <div class="section-title">
+    <div class="section-title" id="reality-check">
       <h2>Non-Technical Outcome View</h2>
       <p class="note">This is the “single image” view: each row combines three things people care about without needing model-training jargon. Longer bars are better: lower validation BPB, lower training loss, and lower wall-clock iteration time. Wall-clock speed is not proof of token compute skipping; the compute columns below answer that.</p>
     </div>
@@ -1408,40 +1752,199 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       </table>
     </div>
   </main>
+  <nav class="floating-nav" aria-label="Report navigation">
+    <a href="#branch-tree">Branch tree</a>
+    <a href="#validation-ladder">Validation ladder</a>
+    <a href="#legacy-coverage">Legacy coverage</a>
+    <a href="#all-run-inventory">All runs</a>
+    <a href="#branch-explorer">Branch explorer</a>
+    <a href="#reality-check">Reality table</a>
+    <button type="button" id="refreshReportButton">Refresh data</button>
+    <span class="floating-status" id="refreshReportStatus"></span>
+  </nav>
   <script>
     (function() {{
+      const button = document.getElementById("refreshReportButton");
+      const status = document.getElementById("refreshReportStatus");
+      if (!button || !status) return;
+      button.addEventListener("click", async () => {{
+        if (window.location.protocol === "file:") {{
+          status.textContent = "Refresh needs local server";
+          return;
+        }}
+        button.disabled = true;
+        status.textContent = "Refreshing...";
+        try {{
+          const response = await fetch("/refresh", {{ method: "POST" }});
+          if (!response.ok) throw new Error(await response.text());
+          status.textContent = "Updated, reloading...";
+          window.location.reload();
+        }} catch (error) {{
+          status.textContent = "Refresh failed";
+          console.error(error);
+        }} finally {{
+          button.disabled = false;
+        }}
+      }});
+    }})();
+
+    (function() {{
       const dataEl = document.getElementById("branchCompareData");
-      const select = document.getElementById("branchBaselineSelect");
+      const defaultsEl = document.getElementById("branchCompareDefaults");
+      const selectA = document.getElementById("branchASelect");
+      const selectB = document.getElementById("branchBSelect");
       const body = document.getElementById("branchCompareRows");
-      if (!dataEl || !select || !body) return;
-      const rows = JSON.parse(dataEl.textContent || "[]");
+      const chart = document.getElementById("branchCompareChart");
+      const detailA = document.getElementById("branchADetail");
+      const detailB = document.getElementById("branchBDetail");
+      const deltaDetail = document.getElementById("branchDeltaDetail");
+      if (!dataEl || !selectA || !selectB || !body || !chart || !detailA || !detailB || !deltaDetail) return;
+      const branches = JSON.parse(dataEl.textContent || "[]");
+      const defaults = JSON.parse((defaultsEl && defaultsEl.textContent) || "{{}}");
+      const byName = new Map(branches.map((row) => [row.branch, row]));
+      if (defaults.a && byName.has(defaults.a)) selectA.value = defaults.a;
+      if (defaults.b && byName.has(defaults.b)) selectB.value = defaults.b;
       const fmt = (value, digits = 4) => Number.isFinite(value) ? value.toFixed(digits) : "-";
       const pctValue = (value) => Number.isFinite(value) ? (value * 100).toFixed(1) + "%" : "-";
-      function render() {{
-        const baseline = rows.find((row) => row.branch === select.value) || rows[0];
-        body.innerHTML = rows.map((row) => {{
-          const bpbDelta = Number.isFinite(row.final_bpb) && Number.isFinite(baseline.final_bpb)
-            ? row.final_bpb - baseline.final_bpb
-            : null;
-          const speedDelta = Number.isFinite(row.step_ms) && Number.isFinite(baseline.step_ms)
-            ? (baseline.step_ms - row.step_ms) / baseline.step_ms
-            : null;
-          const bpbClass = Number.isFinite(bpbDelta) ? (bpbDelta <= 0 ? "good" : "bad") : "neutral";
-          const speedClass = Number.isFinite(speedDelta) ? (speedDelta >= 0 ? "good" : "bad") : "neutral";
-          return `<tr>
-            <td>${{row.branch}}</td>
-            <td>${{row.formula}}</td>
-            <td>${{row.steps || "-"}}</td>
-            <td>${{fmt(row.final_bpb)}}</td>
-            <td class="${{bpbClass}}">${{fmt(bpbDelta)}}</td>
-            <td>${{fmt(row.step_ms, 1)}}ms</td>
-            <td class="${{speedClass}}">${{pctValue(speedDelta)}}</td>
-            <td>${{pctValue(row.actual_skip)}}</td>
-            <td>${{pctValue(row.computed)}}</td>
-          </tr>`;
-        }}).join("");
+      const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({{
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }}[char]));
+
+      function bestVariant(branch) {{
+        if (!branch || !Array.isArray(branch.variants)) return null;
+        return branch.variants.slice().sort((a, b) => (a.final_bpb ?? Infinity) - (b.final_bpb ?? Infinity))[0] || null;
       }}
-      select.addEventListener("change", render);
+
+      function selectedBranches() {{
+        const first = byName.get(selectA.value) || branches[0];
+        const second = byName.get(selectB.value) || branches[1] || first;
+        return [first, second].filter((branch, index, list) => branch && list.findIndex((item) => item.branch === branch.branch) === index);
+      }}
+
+      function renderDetail(branch, label) {{
+        if (!branch) return "";
+        const best = bestVariant(branch);
+        return `<span class="status ${{esc(branch.status)}}">${{esc(label)}}</span>
+          <h3>${{esc(branch.branch)}}</h3>
+          <p>${{esc(branch.description)}}</p>
+          <div class="branch-stats">
+            <div class="branch-stat"><strong>${{esc(best ? best.formula : "-")}}</strong><span>best formula</span></div>
+            <div class="branch-stat"><strong>${{fmt(best ? best.final_bpb : null)}}</strong><span>final BPB</span></div>
+            <div class="branch-stat"><strong>${{best && best.steps ? best.steps.toLocaleString() : "-"}}</strong><span>iterations</span></div>
+            <div class="branch-stat"><strong>${{fmt(best ? best.step_ms : null, 1)}}ms</strong><span>avg iteration</span></div>
+            <div class="branch-stat"><strong>${{pctValue(best ? best.actual_skip : null)}}</strong><span>actual skip</span></div>
+            <div class="branch-stat"><strong>${{pctValue(best ? best.computed : null)}}</strong><span>computed</span></div>
+          </div>`;
+      }}
+
+      function renderRows(selected) {{
+        const rows = selected.flatMap((branch) =>
+          (branch.variants || []).map((variant) => ({{ branch: branch.branch, ...variant }}))
+        ).sort((a, b) => (a.final_bpb ?? Infinity) - (b.final_bpb ?? Infinity));
+        body.innerHTML = rows.map((row) => `<tr>
+          <td>${{esc(row.branch)}}</td>
+          <td>${{esc(row.formula)}}</td>
+          <td>${{row.steps ? row.steps.toLocaleString() : "-"}}</td>
+          <td>${{fmt(row.final_bpb)}}</td>
+          <td>${{fmt(row.last_val_bpb)}}</td>
+          <td>${{fmt(row.step_ms, 1)}}ms</td>
+          <td>${{pctValue(row.actual_skip)}}</td>
+          <td>${{pctValue(row.computed)}}</td>
+          <td>${{esc(row.source)}}</td>
+        </tr>`).join("");
+      }}
+
+      function renderDelta(first, second) {{
+        const a = bestVariant(first);
+        const b = bestVariant(second);
+        if (!first || !second || !a || !b) {{
+          deltaDetail.innerHTML = "<p>Pick two branches to compare their best available variants.</p>";
+          return;
+        }}
+        const bpbDelta = Number.isFinite(a.final_bpb) && Number.isFinite(b.final_bpb) ? b.final_bpb - a.final_bpb : null;
+        const speedDelta = Number.isFinite(a.step_ms) && Number.isFinite(b.step_ms) ? (b.step_ms - a.step_ms) / a.step_ms : null;
+        const skipDelta = Number.isFinite(a.actual_skip) && Number.isFinite(b.actual_skip) ? b.actual_skip - a.actual_skip : null;
+        deltaDetail.innerHTML = `<span class="status branch">best-to-best</span>
+          <h3>${{esc(second.branch)}} vs ${{esc(first.branch)}}</h3>
+          <p>Compared by each branch's best final BPB row: ${{esc(second.branch)}} / ${{esc(b.formula)}} against ${{esc(first.branch)}} / ${{esc(a.formula)}}.</p>
+          <div class="branch-stats">
+            <div class="branch-stat"><strong>${{fmt(bpbDelta)}}</strong><span>BPB delta, lower is better</span></div>
+            <div class="branch-stat"><strong>${{pctValue(speedDelta)}}</strong><span>iteration-time delta, lower is faster</span></div>
+            <div class="branch-stat"><strong>${{pctValue(skipDelta)}}</strong><span>actual-skip delta, higher is more skipped compute</span></div>
+            <div class="branch-stat"><strong>${{fmt(b.final_bpb)}} / ${{fmt(a.final_bpb)}}</strong><span>final BPB pair</span></div>
+          </div>`;
+      }}
+
+      function renderChart(selected) {{
+        const colors = ["#58f26f", "#4aa8ff"];
+        const series = [];
+        selected.forEach((branch, branchIndex) => {{
+          (branch.variants || []).forEach((variant, variantIndex) => {{
+            const points = (variant.history || []).map((point) => ({{ step: Number(point.step), bpb: Number(point.bpb) }})).filter((point) => Number.isFinite(point.step) && Number.isFinite(point.bpb));
+            if (points.length) series.push({{ branch: branch.branch, formula: variant.formula, color: colors[branchIndex % colors.length], opacity: variantIndex === 0 ? 0.95 : 0.42, points }});
+          }});
+        }});
+        if (!series.length) {{
+          chart.innerHTML = '<text x="70" y="210" class="chart-title">No validation history found for the selected branch pair.</text>';
+          return;
+        }}
+        const width = 1120;
+        const height = 420;
+        const plot = {{ left: 72, top: 58, right: 34, bottom: 58 }};
+        const xMax = Math.max(...series.flatMap((item) => item.points.map((point) => point.step)));
+        const yValues = series.flatMap((item) => item.points.map((point) => point.bpb));
+        const yMinRaw = Math.min(...yValues);
+        const yMaxRaw = Math.max(...yValues);
+        const yPad = Math.max(0.002, (yMaxRaw - yMinRaw) * 0.12);
+        const yMin = yMinRaw - yPad;
+        const yMax = yMaxRaw + yPad;
+        const x = (step) => plot.left + (step / Math.max(1, xMax)) * (width - plot.left - plot.right);
+        const y = (bpb) => plot.top + ((yMax - bpb) / Math.max(0.0001, yMax - yMin)) * (height - plot.top - plot.bottom);
+        const parts = [
+          `<rect x="0" y="0" width="${{width}}" height="${{height}}" fill="rgba(0,0,0,.08)" />`,
+          `<text x="72" y="34" class="chart-title">Validation BPB curves for selected branches</text>`,
+          `<line x1="${{plot.left}}" y1="${{height - plot.bottom}}" x2="${{width - plot.right}}" y2="${{height - plot.bottom}}" class="branch-axis" />`,
+          `<line x1="${{plot.left}}" y1="${{plot.top}}" x2="${{plot.left}}" y2="${{height - plot.bottom}}" class="branch-axis" />`
+        ];
+        for (let i = 0; i <= 4; i += 1) {{
+          const gy = plot.top + ((height - plot.top - plot.bottom) * i / 4);
+          const value = yMax - ((yMax - yMin) * i / 4);
+          parts.push(`<line x1="${{plot.left}}" y1="${{gy}}" x2="${{width - plot.right}}" y2="${{gy}}" class="branch-grid" />`);
+          parts.push(`<text x="16" y="${{gy + 4}}">${{fmt(value, 3)}}</text>`);
+        }}
+        for (let i = 0; i <= 4; i += 1) {{
+          const gx = plot.left + ((width - plot.left - plot.right) * i / 4);
+          const value = Math.round(xMax * i / 4);
+          parts.push(`<line x1="${{gx}}" y1="${{plot.top}}" x2="${{gx}}" y2="${{height - plot.bottom}}" class="branch-grid" />`);
+          parts.push(`<text x="${{gx - 16}}" y="${{height - 24}}">${{value.toLocaleString()}}</text>`);
+        }}
+        series.forEach((item) => {{
+          const pointString = item.points.map((point) => `${{x(point.step).toFixed(1)}},${{y(point.bpb).toFixed(1)}}`).join(" ");
+          parts.push(`<polyline class="branch-line" points="${{pointString}}" stroke="${{item.color}}" opacity="${{item.opacity}}" />`);
+        }});
+        selected.forEach((branch, index) => {{
+          parts.push(`<circle cx="${{760}}" cy="${{26 + index * 22}}" r="6" fill="${{colors[index % colors.length]}}" />`);
+          parts.push(`<text x="776" y="${{31 + index * 22}}">${{esc(branch.branch)}}</text>`);
+        }});
+        parts.push(`<text x="${{width - 140}}" y="${{height - 24}}">step</text>`);
+        parts.push(`<text x="14" y="54">BPB</text>`);
+        chart.innerHTML = parts.join("");
+      }}
+
+      function render() {{
+        const selected = selectedBranches();
+        detailA.innerHTML = renderDetail(byName.get(selectA.value) || selected[0], "Branch A");
+        detailB.innerHTML = renderDetail(byName.get(selectB.value) || selected[1] || selected[0], "Branch B");
+        renderDelta(byName.get(selectA.value) || selected[0], byName.get(selectB.value) || selected[1] || selected[0]);
+        renderRows(selected);
+        renderChart(selected);
+      }}
+      selectA.addEventListener("change", render);
+      selectB.addEventListener("change", render);
       render();
     }})();
   </script>
