@@ -1024,7 +1024,7 @@ def render_all_run_inventory() -> str:
         <div class="metric"><strong>{completed}</strong><span>completed artifacts</span></div>
         <div class="metric warn"><strong>{partial + failed}</strong><span>partial or failed artifacts</span></div>
       </div>
-      <details open>
+      <details>
         <summary>Show all discovered runs</summary>
         <div class="run-ledger">{''.join(cards)}</div>
       </details>
@@ -1322,26 +1322,6 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
             "</tr>"
         )
 
-    visual_cards = []
-    for variant in visual_rows:
-        is_gate = variant.control_kind() == "gate"
-        frozen_label = "closed-gate proxy" if is_gate else "frozen"
-        active_label = "gate-open proxy" if is_gate else "active"
-        visual_cards.append(
-            f"""
-            <section class="viz-card" id="{variant_slug(variant)}">
-              <div class="viz-copy">
-                <p class="eyebrow">{html.escape(variant.branch)} / {html.escape(variant.score_fn)}</p>
-                <h3>{pct(variant.frozen_proxy())} {frozen_label}</h3>
-                <p><b>{pct(variant.active_proxy())}</b> {active_label}; final BPB <b>{fmt(variant.final_bpb)}</b>.</p>
-                <p class="small">The layer slabs show final telemetry. Cyan is active/open, amber is frozen/closed. The wiring is decorative, but the slab percentages are parsed from the logs.</p>
-                {render_telemetry_sparkline(variant)}
-              </div>
-              {render_layer_svg(variant)}
-            </section>
-            """
-        )
-
     outcome_dashboard = render_outcome_dashboard(completed)
     speed_reality = render_speed_reality(completed)
     branch_tree = render_branch_tree(completed)
@@ -1394,7 +1374,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
         linear-gradient(135deg, #020302, var(--bg) 48%, #0d100a);
       font-family: Avenir Next, Avenir, Optima, Candara, sans-serif;
     }}
-    main {{ width: min(1180px, calc(100vw - 32px)); margin: 0 auto; padding: 46px 0 150px; }}
+    main {{ width: min(1760px, calc(100vw - 32px)); margin: 0 auto; padding: 46px 0 150px; }}
     .hero {{
       border: 1px solid var(--line);
       border-radius: 32px;
@@ -1424,7 +1404,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       bottom: 18px;
       transform: translateX(-50%);
       z-index: 30;
-      width: min(1180px, calc(100vw - 24px));
+      width: min(1760px, calc(100vw - 24px));
       display: flex;
       flex-wrap: wrap;
       align-items: center;
@@ -1645,16 +1625,16 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     .status.branch {{ color: var(--muted); background: rgba(255,255,255,.08); }}
     .status.blocked {{ color: #220707; background: var(--bad); }}
     .status.todo {{ color: var(--muted); background: rgba(255,255,255,.08); }}
-    table {{ width: 100%; border-collapse: collapse; min-width: 0; table-layout: auto; }}
-    th, td {{ text-align: left; padding: 13px 14px; border-bottom: 1px solid rgba(255,255,255,.07); white-space: normal; overflow-wrap: anywhere; }}
-    th {{ color: var(--muted); font-size: .78rem; text-transform: uppercase; }}
+    table {{ width: 100%; border-collapse: collapse; min-width: 0; table-layout: auto; font-size: .92rem; }}
+    th, td {{ text-align: left; padding: 10px 11px; border-bottom: 1px solid rgba(255,255,255,.07); white-space: normal; overflow-wrap: anywhere; }}
+    th {{ color: var(--muted); font-size: .72rem; text-transform: uppercase; }}
     td {{ font-variant-numeric: tabular-nums; }}
     .good {{ color: var(--good); }}
     .bad {{ color: var(--bad); }}
     .neutral {{ color: var(--muted); }}
     .empty-viz {{ color: var(--muted); padding: 38px; border: 1px dashed var(--line); border-radius: 20px; }}
     @media (max-width: 820px) {{
-      main {{ width: min(100vw - 20px, 1180px); padding-top: 20px; }}
+      main {{ width: min(100vw - 20px, 1760px); padding-top: 20px; }}
       .hero {{ padding: 24px; border-radius: 24px; }}
       .floating-nav {{ bottom: 8px; border-radius: 16px; }}
       .floating-nav button {{ margin-left: 0; }}
@@ -1672,7 +1652,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
   </style>
 </head>
 <body>
-  <main>
+  <main id="top">
     <section class="hero">
       <p class="eyebrow">Unified STF report, Vast logs + imported branch-comparison data</p>
       <h1>{hero_title}</h1>
@@ -1713,14 +1693,6 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       {''.join(movie_cards)}
     </div>
 
-    <details class="optional-section">
-      <summary>Per-layer final snapshots</summary>
-      <p class="note">These are final layer-by-layer telemetry snapshots. They are collapsed because the mini movies already show the same freezing idea over time.</p>
-      <div class="viz-grid">
-        {''.join(visual_cards)}
-      </div>
-    </details>
-
     <div class="section-title" id="reality-check">
       <h2>Non-Technical Outcome View</h2>
       <p class="note">This is the “single image” view: each row combines three things people care about without needing model-training jargon. Longer bars are better: lower validation BPB, lower training loss, and lower wall-clock iteration time. Wall-clock speed is not proof of token compute skipping; the compute columns below answer that.</p>
@@ -1753,14 +1725,15 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
     </div>
   </main>
   <nav class="floating-nav" aria-label="Report navigation">
+    <a href="#top">Top</a>
     <a href="#branch-tree">Branch tree</a>
     <a href="#validation-ladder">Validation ladder</a>
     <a href="#legacy-coverage">Legacy coverage</a>
     <a href="#all-run-inventory">All runs</a>
     <a href="#branch-explorer">Branch explorer</a>
     <a href="#reality-check">Reality table</a>
-    <button type="button" id="refreshReportButton">Refresh data</button>
-    <span class="floating-status" id="refreshReportStatus"></span>
+    <button type="button" id="refreshReportButton" title="Runs the Python summarizer through the local report server">Refresh data</button>
+    <span class="floating-status" id="refreshReportStatus">server refresh runs Python</span>
   </nav>
   <script>
     (function() {{
@@ -1769,7 +1742,7 @@ def write_html_report(rows: list[Variant], selected: list[Variant], output: Path
       if (!button || !status) return;
       button.addEventListener("click", async () => {{
         if (window.location.protocol === "file:") {{
-          status.textContent = "Refresh needs local server";
+          status.textContent = "Run python3 scripts/open_stf_report.py";
           return;
         }}
         button.disabled = true;

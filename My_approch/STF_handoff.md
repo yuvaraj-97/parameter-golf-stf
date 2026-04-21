@@ -146,3 +146,9 @@ Validation performed during recovery:
 - Verified generated HTML does not contain the old `Report Hub` page text or `records/` paths.
 - Checked embedded browser script with `node --check`.
 - Started/reused the report server and confirmed `POST /refresh` returns HTTP 200.
+
+Follow-up correction after visual review:
+- The repeated per-layer final snapshot section was removed entirely from the root HTML report, not just collapsed.
+- The all-runs ledger now starts closed so the page remains navigable; it can still be expanded on demand.
+- The report canvas and floating nav were widened to use large desktop screens before tables need horizontal scrolling.
+- The bottom nav includes a `Top` link and the refresh status now makes clear that the server-backed refresh runs the Python summarizer. Opening the page from `file://` cannot start Python directly; use `python3 scripts/open_stf_report.py` once, then the in-page refresh button can regenerate data through the local server.
